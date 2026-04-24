@@ -2,27 +2,44 @@
 <html lang="cs">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>AI Label Studio: Fal.ai Powered</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>AI Label Agent</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@700;800&display=swap');
+        body { font-family: 'Plus Jakarta Sans', sans-serif; background-color: #050505; color: white;}
+        .input-style { background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); border-radius: 1rem; padding: 1rem; width: 100%; outline: none; transition: 0.3s; color: white; }
+        .input-style:focus { border-color: #3b82f6; box-shadow: 0 0 15px rgba(59,130,246,0.3); }
+    </style>
 </head>
-<body class="bg-[#020205] text-white min-h-screen flex items-center justify-center p-4">
+<body class="min-h-screen p-4 flex items-center justify-center">
 
-    <div class="max-w-md w-full bg-[#0a0a0f] p-8 rounded-[2rem] border border-white/10 shadow-2xl">
-        <h1 class="text-3xl font-black text-center mb-6 bg-gradient-to-r from-blue-400 to-indigo-500 bg-clip-text text-transparent">FAL ENGINE</h1>
+    <div class="max-w-md w-full bg-[#111] p-8 rounded-[2rem] border border-white/5 shadow-2xl">
+        <h1 class="text-3xl font-black text-center mb-6 bg-gradient-to-r from-blue-400 to-indigo-500 bg-clip-text text-transparent italic">AI AGENT</h1>
         
         <div class="space-y-4">
-            <input type="text" id="compName" value="SETOS" class="w-full bg-white/5 p-4 rounded-xl border border-white/10 outline-none focus:border-blue-500" placeholder="Název firmy">
-            <textarea id="compDesc" rows="3" class="w-full bg-white/5 p-4 rounded-xl border border-white/10 outline-none focus:border-blue-500 text-sm" placeholder="Popis grafiky (např. moderní dron, 3D čip...)"></textarea>
+            <input type="text" id="compName" value="SETOS" class="input-style font-bold py-3" placeholder="Název firmy">
+            <textarea id="compDesc" rows="2" class="input-style text-sm py-3" placeholder="Co má AI nakreslit? (např. 3D prémiový dron na bílém pozadí)"></textarea>
             
-            <button onclick="runFalAgent()" id="genBtn" class="w-full bg-blue-600 py-5 rounded-2xl font-black text-xl hover:bg-blue-500 transition-all uppercase italic">
-                Generovat přes AI
+            <input type="text" id="qrLink" value="https://www.setos.cz" class="input-style text-blue-400 font-mono text-xs py-3" placeholder="Odkaz pro QR kód">
+            
+            <div id="logoDrop" class="relative bg-white/5 p-4 rounded-xl border-2 border-dashed border-white/20 text-center transition-all">
+                <input type="file" id="logoInput" accept="image/png, image/jpeg" class="absolute inset-0 opacity-0 cursor-pointer z-20">
+                <div class="flex flex-col items-center justify-center space-y-2">
+                    <img id="logoPreview" src="" class="hidden h-10 w-10 object-contain bg-white/10 rounded-lg p-1">
+                    <p id="uploadText" class="text-xs text-slate-400 uppercase font-bold tracking-widest">Nahrát logo (PNG)</p>
+                </div>
+                <div id="logoStore" data-blob="" class="hidden"></div>
+            </div>
+
+            <button onclick="runAiAgent()" id="genBtn" class="w-full bg-blue-600 py-4 rounded-xl font-black text-lg hover:bg-blue-500 transition-all uppercase italic shadow-[0_0_20px_rgba(37,99,235,0.3)] mt-2">
+                Generovat Etiketu
             </button>
             
             <div id="loader" class="hidden text-center mt-4">
-                <p class="text-blue-400 animate-pulse text-xs font-bold uppercase tracking-widest">Agent komunikuje s Fal.ai...</p>
+                <p id="statusMsg" class="text-blue-400 animate-pulse text-[10px] font-bold uppercase tracking-widest">Spojuji se serverem Vercel...</p>
             </div>
         </div>
     </div>
@@ -30,42 +47,117 @@
     <div id="qr-hidden" class="hidden"></div>
 
     <script>
-        async function runFalAgent() {
+        const { jsPDF } = window.jspdf;
+
+        // ZPRACOVÁNÍ LOGA (s průhledností)
+        document.getElementById('logoInput').addEventListener('change', function(e) {
+            const file = e.target.files[0];
+            if (!file) return;
+            document.getElementById('uploadText').innerText = "Načítám...";
+            
+            const reader = new FileReader();
+            reader.onload = function(event) {
+                const img = new Image();
+                img.onload = function() {
+                    const canvas = document.createElement('canvas');
+                    canvas.width = 400; canvas.height = 400;
+                    const ctx = canvas.getContext('2d');
+                    ctx.clearRect(0, 0, 400, 400); 
+                    const s = Math.min(380/img.width, 380/img.height);
+                    ctx.drawImage(img, (400-img.width*s)/2, (400-img.height*s)/2, img.width*s, img.height*s);
+                    
+                    const data = canvas.toDataURL('image/png');
+                    document.getElementById('logoStore').setAttribute('data-blob', data);
+                    
+                    document.getElementById('logoPreview').src = data;
+                    document.getElementById('logoPreview').classList.remove('hidden');
+                    document.getElementById('uploadText').innerText = "LOGO PŘIPRAVENO ✅";
+                    document.getElementById('uploadText').classList.replace('text-slate-400', 'text-green-400');
+                    document.getElementById('logoDrop').classList.add('border-green-500/50', 'bg-green-500/5');
+                };
+                img.src = event.target.result;
+            };
+            reader.readAsDataURL(file);
+        });
+
+        async function runAiAgent() {
             const btn = document.getElementById('genBtn');
             const loader = document.getElementById('loader');
+            const statusMsg = document.getElementById('statusMsg');
+            
             const name = document.getElementById('compName').value;
             const desc = document.getElementById('compDesc').value;
+            const qrUrl = document.getElementById('qrLink').value;
+            const logoData = document.getElementById('logoStore').getAttribute('data-blob');
 
             btn.disabled = true;
             loader.classList.remove('hidden');
 
             try {
-                // 1. Volání tvého backendu na Vercelu
+                // 1. Spojení s backendem Vercelu (/api/generate.js)
+                statusMsg.innerText = "Agent generuje fotorealistický obraz...";
                 const res = await fetch('/api/generate', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ companyName: name, description: desc })
                 });
                 
-                const data = await res.json();
-                if (!data.imageUrl) throw new Error("Chyba při generování obrazu.");
+                // OŠETŘENÍ TVOJÍ CHYBY Z OBRÁZKU
+                if (!res.ok) {
+                    const errorText = await res.text();
+                    throw new Error(`Chyba serveru (${res.status}): Zkontroluj složku /api/generate.js na Vercelu.`);
+                }
 
-                // 2. Vytvoření PDF
-                const { jsPDF } = window.jspdf;
+                const data = await res.json();
+                if (!data.imageUrl) throw new Error("API Fal.ai nevrátilo obrázek. Zkontroluj API klíč.");
+
+                // 2. Tvorba QR kódu
+                statusMsg.innerText = "Sestavuji tiskové PDF...";
+                const qrDiv = document.getElementById('qr-hidden');
+                qrDiv.innerHTML = "";
+                new QRCode(qrDiv, { text: qrUrl, width: 300, height: 300 });
+                await new Promise(r => setTimeout(r, 600));
+                const qrImg = qrDiv.querySelector('canvas').toDataURL("image/png");
+
+                // 3. Stáhnutí AI obrázku
+                const aiImgBase64 = await getBase64(data.imageUrl);
+
+                // 4. SESTAVENÍ KOMPOZICE PDF
                 const doc = new jsPDF({ orientation: 'l', unit: 'mm', format: [200, 50] });
 
-                // Načtení obrazu a vložení do PDF
-                const img = await getBase64(data.imageUrl);
-                doc.addImage(img, 'JPEG', 0, 0, 160, 50); // Grafika vlevo
-                
-                // Zákonná bílá zóna vpravo
-                doc.setFillColor(255); doc.rect(160, 0, 40, 50, 'F');
-                doc.setTextColor(0); doc.setFontSize(22); doc.text(name, 10, 20); // Název přes grafiku
+                // A) Hlavní AI Grafika (Zabírá levých 160mm)
+                doc.addImage(aiImgBase64, 'JPEG', 0, 0, 160, 50);
 
-                doc.save(`Label_${name}.pdf`);
+                // B) Povinná bílá zóna pro tisk (Pravých 40mm)
+                doc.setFillColor(255, 255, 255); 
+                doc.rect(160, 0, 40, 50, 'F');
+                doc.setDrawColor(220, 220, 220); 
+                doc.setLineWidth(0.3); 
+                doc.line(160, 0, 160, 50);
+
+                // C) Logo (Pokud bylo nahráno)
+                let textStartX = 10;
+                if (logoData && logoData.length > 100) {
+                    doc.addImage(logoData, 'PNG', 10, 10, 25, 25);
+                    textStartX = 40; // Odsazení textu vedle loga
+                }
+
+                // D) Název firmy
+                doc.setTextColor(20, 20, 20); 
+                doc.setFontSize(26); 
+                doc.text(name.toUpperCase(), textStartX, 22);
+
+                // E) QR Kód a Zákonné údaje do pravé zóny
+                doc.addImage(qrImg, 'PNG', 170, 31, 16, 16);
+                doc.setTextColor(100, 100, 100); 
+                doc.setFontSize(5);
+                doc.text("LAW INFO | 300ml | BATCH 2026", 165, 5, {angle: -90});
+                doc.text(qrUrl.replace(/(^\w+:|^)\/\//, '').substring(0, 22), 178, 28, {align: 'center'});
+
+                doc.save(`Agent_Design_${name.replace(/\s+/g, '_')}.pdf`);
 
             } catch (err) {
-                alert("Chyba: " + err.message);
+                alert(err.message);
             } finally {
                 btn.disabled = false;
                 loader.classList.add('hidden');
