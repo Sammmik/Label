@@ -3,133 +3,35 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Designer Pro: Fixed Logo Edition</title>
+    <title>AI Studio: Master Release 2026</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
     <style>
-        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;700;900&display=swap');
-        body { font-family: 'Inter', sans-serif; background: #050505; }
-        .input-style { background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); border-radius: 1rem; padding: 1rem; width: 100%; outline: none; transition: 0.3s; }
-        .input-style:focus { border-color: #3b82f6; box-shadow: 0 0 15px rgba(59,130,246,0.3); }
+        @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;700;800&display=swap');
+        body { font-family: 'Plus Jakarta Sans', sans-serif; background-color: #030303; }
+        .input-card { background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.08); border-radius: 1.5rem; transition: all 0.3s; }
+        .input-card:focus-within { border-color: #3b82f6; background: rgba(255,255,255,0.05); }
     </style>
 </head>
-<body class="text-white min-h-screen flex items-center justify-center p-4">
+<body class="text-slate-200 min-h-screen flex items-center justify-center p-6">
 
-    <div class="max-w-md w-full bg-[#111] p-8 rounded-[2.5rem] border border-white/5 shadow-2xl">
-        <h1 class="text-3xl font-black text-center mb-8 bg-gradient-to-r from-blue-400 to-indigo-500 bg-clip-text text-transparent italic uppercase">Designer Engine</h1>
+    <div class="max-w-md w-full space-y-8">
+        <header class="text-center">
+            <h1 class="text-4xl font-extrabold tracking-tighter text-white uppercase italic italic">Studio <span class="text-blue-500 text-not-italic">AI</span></h1>
+            <p class="text-slate-500 text-[10px] tracking-[0.4em] uppercase mt-2 font-bold italic">Vercel Powered Label Engine</p>
+        </header>
 
         <div class="space-y-4">
-            <input type="text" id="compName" value="SETOS spol., s.r.o." class="input-style font-bold" placeholder="Název firmy">
-            <textarea id="compDesc" rows="2" class="input-style text-sm text-slate-400" placeholder="Popis (např. technologie, futurismus)"></textarea>
-            
-            <div class="relative group">
-                <div id="logoStatus" class="absolute right-4 top-1/2 -translate-y-1/2 text-[10px] font-bold uppercase text-slate-500">Nenahráno</div>
-                <input type="file" id="logoInput" accept="image/*" class="absolute inset-0 opacity-0 cursor-pointer z-10">
-                <div class="input-style flex items-center justify-center text-xs font-bold text-blue-400 border-dashed border-2 border-blue-500/30 group-hover:bg-blue-500/5">
-                    KLIKNI A VYBER LOGO
-                </div>
+            <div class="input-card p-4">
+                <label class="block text-[10px] uppercase font-bold text-slate-500 mb-1 ml-1">Značka / Firma</label>
+                <input type="text" id="compName" value="SETOS spol., s.r.o." class="w-full bg-transparent border-none outline-none text-white font-bold placeholder-slate-700">
             </div>
 
-            <button onclick="generateFinalPDF()" id="genBtn" class="w-full bg-blue-600 hover:bg-blue-500 py-5 rounded-2xl font-black text-xl shadow-lg transition-all active:scale-95 uppercase mt-4">
-                Generovat Etikety
-            </button>
-            
-            <p id="statusMsg" class="hidden text-center text-blue-400 text-[10px] font-bold animate-pulse uppercase mt-4">Vykreslování designu...</p>
-        </div>
-    </div>
+            <div class="input-card p-4">
+                <label class="block text-[10px] uppercase font-bold text-slate-500 mb-1 ml-1">Produktová vize</label>
+                <input type="text" id="compDesc" value="Prémiová elektronika a technologie" class="w-full bg-transparent border-none outline-none text-slate-400 text-sm">
+            </div>
 
-    <div id="qr-hidden" class="hidden"></div>
-
-    <script>
-        const { jsPDF } = window.jspdf;
-        let cachedLogo = null;
-
-        // Okamžité zpracování loga po výběru
-        document.getElementById('logoInput').addEventListener('change', function(e) {
-            const file = e.target.files[0];
-            const statusLabel = document.getElementById('logoStatus');
-            
-            if (file) {
-                statusLabel.innerText = "Zpracování...";
-                const reader = new FileReader();
-                reader.onload = function(event) {
-                    const img = new Image();
-                    img.onload = function() {
-                        const canvas = document.createElement('canvas');
-                        const ctx = canvas.getContext('2d');
-                        canvas.width = 400; canvas.height = 400;
-                        ctx.fillStyle = "#FFFFFF"; ctx.fillRect(0,0,400,400);
-                        const s = Math.min(350/img.width, 350/img.height);
-                        ctx.drawImage(img, (400-img.width*s)/2, (400-img.height*s)/2, img.width*s, img.height*s);
-                        cachedLogo = canvas.toDataURL('image/jpeg', 0.9);
-                        statusLabel.innerText = "OK ✅";
-                        statusLabel.classList.replace('text-slate-500', 'text-green-500');
-                    };
-                    img.src = event.target.result;
-                };
-                reader.readAsDataURL(file);
-            }
-        });
-
-        async function generateFinalPDF() {
-            const btn = document.getElementById('genBtn');
-            const name = document.getElementById('compName').value;
-            const desc = document.getElementById('compDesc').value;
-            
-            btn.disabled = true;
-            document.getElementById('statusMsg').classList.remove('hidden');
-
-            try {
-                // QR kód
-                const qrDiv = document.getElementById('qr-hidden');
-                qrDiv.innerHTML = "";
-                new QRCode(qrDiv, { text: "https://setos.cz", width: 200, height: 200 });
-                await new Promise(r => setTimeout(r, 500));
-                const qrImg = qrDiv.querySelector('canvas').toDataURL("image/png");
-
-                const doc = new jsPDF({ orientation: 'l', unit: 'mm', format: [200, 50] });
-
-                // STRANA 1: DESIGNER BLACK (Technický styl)
-                doc.setFillColor(15, 15, 20); doc.rect(0, 0, 200, 50, 'F');
-                doc.setDrawColor(50, 100, 255);
-                for(let i=0; i<160; i+=10) doc.line(i, 0, i+20, 50);
-                
-                doc.setTextColor(255, 255, 255); doc.setFontSize(24); doc.text(name.toUpperCase(), 15, 22);
-                doc.setTextColor(0, 150, 255); doc.setFontSize(8); doc.text(desc, 15, 30);
-
-                // STRANA 2: DESIGNER WHITE (Čistý styl)
-                doc.addPage([200, 50], 'l');
-                doc.setFillColor(255, 255, 255); doc.rect(0, 0, 200, 50, 'F');
-                doc.setTextColor(0, 0, 0); doc.setFontSize(26); doc.text(name, 15, 25);
-
-                // Společné prvky na všech stranách
-                for(let p=1; p<=2; p++) {
-                    doc.setPage(p);
-                    // Bílá info zóna vpravo (standardní pro produktový design)
-                    doc.setFillColor(255, 255, 255); doc.rect(162, 0, 38, 50, 'F');
-                    doc.setDrawColor(220); doc.line(162, 0, 162, 50);
-                    doc.addImage(qrImg, 'PNG', 173, 32, 16, 16);
-                    
-                    // Vložení loga, pokud existuje
-                    if (cachedLogo) {
-                        doc.setFillColor(255, 255, 255);
-                        doc.roundedRect(125, 10, 30, 30, 2, 2, 'F');
-                        doc.addImage(cachedLogo, 'JPEG', 127, 12, 26, 26);
-                    }
-                    
-                    doc.setTextColor(150); doc.setFontSize(5);
-                    doc.text("PRODUCT OF EU | 0.3L | BATCH 2026", 168, 5, {angle: -90});
-                }
-
-                doc.save(`Design_${name}.pdf`);
-            } catch (err) {
-                alert("Chyba: " + err);
-            } finally {
-                btn.disabled = false;
-                document.getElementById('statusMsg').classList.add('hidden');
-            }
-        }
-    </script>
-</body>
-</html>
+            <div class="input-card p-4 border-l-4 border-l-blue-500">
+                <label class="block text-[10px] uppercase font-bold text-blue-500 mb-1 ml-1">QR Odkaz (Web
