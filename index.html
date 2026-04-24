@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>AI Agent: Parallel Turbo Edition</title>
+    <title>AI Agent: Chaos & Design</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
@@ -12,40 +12,38 @@
         body { font-family: 'Plus Jakarta Sans', sans-serif; background-color: #050505; color: white; }
         .input-style { background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); border-radius: 1rem; padding: 1rem; width: 100%; outline: none; transition: 0.3s; color: white; }
         .input-style:focus { border-color: #3b82f6; box-shadow: 0 0 15px rgba(59,130,246,0.3); }
-        .progress-bar-inner { transition: width 0.4s ease-in-out; }
+        .btn-magic { background: linear-gradient(45deg, #3b82f6, #8b5cf6, #ec4899); background-size: 200% 200%; animation: gradient 5s ease infinite; }
+        @keyframes gradient { 0% {background-position: 0% 50%;} 50% {background-position: 100% 50%;} 100% {background-position: 0% 50%;} }
     </style>
 </head>
-<body class="min-h-screen p-4 flex items-start justify-center">
+<body class="min-h-screen p-4 flex items-start justify-center text-center">
 
-    <div class="max-w-md w-full bg-[#111] p-8 rounded-[2.5rem] border border-white/5 shadow-2xl mt-4 relative overflow-hidden">
-        <header class="text-center mb-8 relative z-10">
-            <h1 class="text-3xl font-black bg-gradient-to-r from-blue-400 to-indigo-500 bg-clip-text text-transparent uppercase italic tracking-tighter text-center">AI AGENT TURBO</h1>
-            <p class="text-slate-500 text-[9px] tracking-[0.4em] uppercase mt-1 font-bold">Parallel Generation Engine</p>
+    <div class="max-w-md w-full bg-[#111] p-8 rounded-[2.5rem] border border-white/5 shadow-2xl mt-4">
+        <header class="mb-8">
+            <h1 class="text-3xl font-black italic tracking-tighter uppercase">AI RANDOMIZER</h1>
+            <p class="text-slate-500 text-[9px] tracking-[0.4em] uppercase mt-1 font-bold">Infinite Style Engine</p>
         </header>
 
-        <div class="space-y-4 relative z-10">
-            <input type="text" id="compName" value="SETOS" class="input-style font-bold py-3" placeholder="Značka">
-            <textarea id="compDesc" rows="2" class="input-style text-sm py-3" placeholder="Abstraktní vize (barvy, tvary, emoce)"></textarea>
-            <input type="text" id="qrLink" value="https://www.setos.cz" class="input-style text-blue-400 font-mono text-xs py-3" placeholder="Odkaz pro QR">
+        <div class="space-y-4 text-left">
+            <input type="text" id="compName" value="SETOS" class="input-style font-bold">
+            <textarea id="compDesc" rows="2" class="input-style text-sm" placeholder="Vstupní idea (např. Budoucnost technologií)"></textarea>
+            <input type="text" id="qrLink" value="https://www.setos.cz" class="input-style text-blue-400 font-mono text-xs">
             
-            <div id="logoDrop" class="relative bg-white/5 p-4 rounded-xl border-2 border-dashed border-white/20 text-center transition-all">
-                <input type="file" id="logoInput" accept="image/png, image/jpeg" class="absolute inset-0 opacity-0 cursor-pointer z-20">
-                <div class="flex flex-col items-center justify-center space-y-2">
-                    <img id="logoPreview" src="" class="hidden h-10 w-10 object-contain bg-white/10 rounded-lg p-1">
-                    <p id="uploadText" class="text-xs text-slate-400 uppercase font-bold tracking-widest">Přidat Logo</p>
-                </div>
+            <div id="logoDrop" class="relative bg-white/5 p-4 rounded-xl border-2 border-dashed border-white/20 text-center cursor-pointer">
+                <input type="file" id="logoInput" accept="image/png, image/jpeg" class="absolute inset-0 opacity-0 cursor-pointer">
+                <p id="uploadText" class="text-xs text-slate-400 uppercase font-bold">Přidat Logo</p>
                 <div id="logoStore" data-blob="" class="hidden"></div>
             </div>
 
-            <button onclick="runParallelAgent()" id="genBtn" class="w-full bg-blue-600 py-5 rounded-[2rem] font-black text-xl shadow-2xl active:scale-95 transition-all uppercase italic mt-2 hover:bg-blue-500">
-                Generovat 3 návrhy
+            <button onclick="runRandomAgent()" id="genBtn" class="btn-magic w-full py-5 rounded-[2rem] font-black text-xl shadow-2xl active:scale-95 transition-all uppercase italic mt-2">
+                Generovat Kolekci
             </button>
             
-            <div id="loader" class="hidden text-center mt-6">
+            <div id="loader" class="hidden mt-6">
                 <div class="w-full bg-gray-900 h-2 rounded-full overflow-hidden mb-3">
-                    <div id="progressBar" class="progress-bar-inner bg-blue-500 h-full w-0"></div>
+                    <div id="progressBar" class="bg-blue-500 h-full w-0 transition-all duration-300"></div>
                 </div>
-                <p id="statusMsg" class="text-blue-400 animate-pulse text-[10px] font-bold uppercase tracking-widest">Agent pracuje paralelně...</p>
+                <p id="statusMsg" class="text-purple-400 animate-pulse text-[10px] font-bold uppercase tracking-widest text-center">Vybírám náhodné umělecké směry...</p>
             </div>
         </div>
     </div>
@@ -55,7 +53,7 @@
     <script>
         const { jsPDF } = window.jspdf;
 
-        // LOGO HANDLER
+        // Logo Handler
         document.getElementById('logoInput').addEventListener('change', function(e) {
             const file = e.target.files[0];
             if (!file) return;
@@ -70,8 +68,6 @@
                     const s = Math.min(380/img.width, 380/img.height);
                     ctx.drawImage(img, (400-img.width*s)/2, (400-img.height*s)/2, img.width*s, img.height*s);
                     document.getElementById('logoStore').setAttribute('data-blob', canvas.toDataURL('image/png'));
-                    document.getElementById('logoPreview').src = canvas.toDataURL('image/png');
-                    document.getElementById('logoPreview').classList.remove('hidden');
                     document.getElementById('uploadText').innerText = "LOGO PŘIPRAVENO ✅";
                 };
                 img.src = event.target.result;
@@ -79,18 +75,17 @@
             reader.readAsDataURL(file);
         });
 
-        async function fetchImage(desc, name) {
+        async function fetchRandomStyle(desc, name) {
             const res = await fetch('/api/generate', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ description: desc, companyName: name })
             });
-            if (!res.ok) throw new Error("Jeden z požadavků selhal");
-            const data = await res.json();
-            return data.imageUrl;
+            if (!res.ok) throw new Error("Chyba AI serveru");
+            return await res.json();
         }
 
-        async function runParallelAgent() {
+        async function runRandomAgent() {
             const btn = document.getElementById('genBtn');
             const loader = document.getElementById('loader');
             const statusMsg = document.getElementById('statusMsg');
@@ -104,37 +99,35 @@
             btn.disabled = true;
             loader.classList.remove('hidden');
             bar.style.width = "10%";
-            statusMsg.innerText = "Spouštím 3 AI instance najednou...";
 
             try {
-                // 1. GENERUJEME VŠE PARALELNĚ (To je ta hlavní oprava!)
-                const imagePromises = [
-                    fetchImage(desc, name),
-                    fetchImage(desc, name),
-                    fetchImage(desc, name)
+                // Generujeme 3 náhodné styly paralelně
+                const promises = [
+                    fetchRandomStyle(desc, name),
+                    fetchRandomStyle(desc, name),
+                    fetchRandomStyle(desc, name)
                 ];
 
-                const images = await Promise.all(imagePromises);
+                const results = await Promise.all(promises);
                 bar.style.width = "70%";
-                statusMsg.innerText = "Obrazy přijaty. Sestavuji PDF...";
+                statusMsg.innerText = "Komponuji PDF strany...";
 
-                // 2. QR KÓD
+                // QR
                 const qrDiv = document.getElementById('qr-hidden');
                 qrDiv.innerHTML = "";
                 new QRCode(qrDiv, { text: qrUrl, width: 300, height: 300 });
                 await new Promise(r => setTimeout(r, 400));
                 const qrImg = qrDiv.querySelector('canvas').toDataURL("image/png");
 
-                // 3. PDF KOMPOZICE
                 const doc = new jsPDF({ orientation: 'l', unit: 'mm', format: [200, 50] });
 
-                images.forEach((base64Img, index) => {
+                results.forEach((res, index) => {
                     if (index > 0) doc.addPage([200, 50], 'l');
 
-                    // Pozadí
-                    doc.addImage(base64Img, 'JPEG', 0, 0, 160, 50);
+                    // AI Pozadí
+                    doc.addImage(res.imageUrl, 'JPEG', 0, 0, 160, 50);
 
-                    // Bílá zóna
+                    // Bílá Info Zóna
                     doc.setFillColor(255); doc.rect(160, 0, 40, 50, 'F');
                     doc.setDrawColor(230); doc.line(160, 0, 160, 50);
 
@@ -144,23 +137,25 @@
                         doc.addImage(logoData, 'PNG', 10, 12, 25, 25);
                         startX = 40;
                     }
-                    doc.setTextColor(20); doc.setFontSize(26); 
+                    doc.setTextColor(20); doc.setFontSize(24); 
                     doc.text(name.toUpperCase(), startX, 24);
+                    
+                    // Popis stylu v PDF
+                    doc.setTextColor(120); doc.setFontSize(7); 
+                    doc.text(`AI STYLE: ${res.styleDescription}`, startX, 32);
 
-                    // QR a Zákonné údaje
+                    // QR a data
                     doc.addImage(qrImg, 'PNG', 171, 31, 17, 17);
                     doc.setTextColor(150); doc.setFontSize(5);
-                    doc.text(`AI TURBO VARIANT ${index+1} | BATCH 2026`, 166, 5, {angle: -90});
+                    doc.text(`BATCH 2026 | ${res.styleDescription.toUpperCase()}`, 166, 5, {angle: -90});
                     doc.text(qrUrl.replace(/(^\w+:|^)\/\//, '').substring(0, 24), 180, 28, {align: 'center'});
                 });
 
                 bar.style.width = "100%";
-                statusMsg.innerText = "Hotovo! Stahuji...";
-                doc.save(`AI_Turbo_Labels_${name}.pdf`);
+                doc.save(`Random_Collection_${name}.pdf`);
 
             } catch (err) {
-                alert("Chyba: Agentovi to trvalo moc dlouho nebo AI server neodpovídá. Zkus to prosím znovu.");
-                console.error(err);
+                alert("Zkuste to prosím znovu, AI server je přetížen.");
             } finally {
                 btn.disabled = false;
                 loader.classList.add('hidden');
