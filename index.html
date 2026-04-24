@@ -1,0 +1,86 @@
+<!DOCTYPE html>
+<html lang="cs">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI Label Studio: Fal.ai Powered</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+</head>
+<body class="bg-[#020205] text-white min-h-screen flex items-center justify-center p-4">
+
+    <div class="max-w-md w-full bg-[#0a0a0f] p-8 rounded-[2rem] border border-white/10 shadow-2xl">
+        <h1 class="text-3xl font-black text-center mb-6 bg-gradient-to-r from-blue-400 to-indigo-500 bg-clip-text text-transparent">FAL ENGINE</h1>
+        
+        <div class="space-y-4">
+            <input type="text" id="compName" value="SETOS" class="w-full bg-white/5 p-4 rounded-xl border border-white/10 outline-none focus:border-blue-500" placeholder="Název firmy">
+            <textarea id="compDesc" rows="3" class="w-full bg-white/5 p-4 rounded-xl border border-white/10 outline-none focus:border-blue-500 text-sm" placeholder="Popis grafiky (např. moderní dron, 3D čip...)"></textarea>
+            
+            <button onclick="runFalAgent()" id="genBtn" class="w-full bg-blue-600 py-5 rounded-2xl font-black text-xl hover:bg-blue-500 transition-all uppercase italic">
+                Generovat přes AI
+            </button>
+            
+            <div id="loader" class="hidden text-center mt-4">
+                <p class="text-blue-400 animate-pulse text-xs font-bold uppercase tracking-widest">Agent komunikuje s Fal.ai...</p>
+            </div>
+        </div>
+    </div>
+
+    <div id="qr-hidden" class="hidden"></div>
+
+    <script>
+        async function runFalAgent() {
+            const btn = document.getElementById('genBtn');
+            const loader = document.getElementById('loader');
+            const name = document.getElementById('compName').value;
+            const desc = document.getElementById('compDesc').value;
+
+            btn.disabled = true;
+            loader.classList.remove('hidden');
+
+            try {
+                // 1. Volání tvého backendu na Vercelu
+                const res = await fetch('/api/generate', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ companyName: name, description: desc })
+                });
+                
+                const data = await res.json();
+                if (!data.imageUrl) throw new Error("Chyba při generování obrazu.");
+
+                // 2. Vytvoření PDF
+                const { jsPDF } = window.jspdf;
+                const doc = new jsPDF({ orientation: 'l', unit: 'mm', format: [200, 50] });
+
+                // Načtení obrazu a vložení do PDF
+                const img = await getBase64(data.imageUrl);
+                doc.addImage(img, 'JPEG', 0, 0, 160, 50); // Grafika vlevo
+                
+                // Zákonná bílá zóna vpravo
+                doc.setFillColor(255); doc.rect(160, 0, 40, 50, 'F');
+                doc.setTextColor(0); doc.setFontSize(22); doc.text(name, 10, 20); // Název přes grafiku
+
+                doc.save(`Label_${name}.pdf`);
+
+            } catch (err) {
+                alert("Chyba: " + err.message);
+            } finally {
+                btn.disabled = false;
+                loader.classList.add('hidden');
+            }
+        }
+
+        async function getBase64(url) {
+            const response = await fetch(url);
+            const blob = await response.blob();
+            return new Promise((resolve) => {
+                const reader = new FileReader();
+                reader.onloadend = () => resolve(reader.result);
+                reader.readAsDataURL(blob);
+            });
+        }
+    </script>
+</body>
+</html>
