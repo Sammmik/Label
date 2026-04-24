@@ -3,25 +3,27 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>AI Studio: Premium Logo Edition Fixed</title>
+    <title>AI Studio: Nano-Liquid Edition</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@700;800&display=swap');
-        body { font-family: 'Plus Jakarta Sans', sans-serif; background-color: #030303; }
-        .input-style { background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); border-radius: 1rem; padding: 1rem; width: 100%; outline: none; transition: 0.3s; color: white;}
-        .input-style:focus { border-color: #3b82f6; box-shadow: 0 0 15px rgba(59,130,246,0.3); }
+        body { font-family: 'Plus Jakarta Sans', sans-serif; background-color: #030303; color: #fff;}
+        .glass-panel { background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.1); border-radius: 1.5rem; backdrop-filter: blur(10px); }
+        .input-style { background: rgba(0,0,0,0.3); border: 1px solid rgba(255,255,255,0.1); border-radius: 1rem; padding: 1rem; width: 100%; outline: none; transition: 0.3s; color: white;}
+        .input-style:focus { border-color: #8b5cf6; box-shadow: 0 0 15px rgba(139,92,246,0.4); }
     </style>
 </head>
-<body class="bg-black text-white min-h-screen p-4 flex items-start justify-center font-sans">
+<body class="min-h-screen p-4 flex items-center justify-center">
 
-    <div class="max-w-md w-full bg-[#111] p-8 rounded-[2.5rem] shadow-2xl border border-white/5 relative overflow-hidden mt-2">
-        <div class="absolute top-0 left-0 -mt-10 -ml-10 w-40 h-40 bg-blue-600/10 blur-[80px]"></div>
+    <div class="max-w-md w-full glass-panel p-8 shadow-2xl relative overflow-hidden">
+        <div class="absolute top-0 right-0 -mt-10 -mr-10 w-40 h-40 bg-purple-600/20 blur-[60px] rounded-full"></div>
+        <div class="absolute bottom-0 left-0 -mb-10 -ml-10 w-40 h-40 bg-blue-600/20 blur-[60px] rounded-full"></div>
         
         <header class="text-center mb-6 relative z-10">
-            <h1 class="text-3xl font-black bg-gradient-to-r from-blue-400 to-indigo-500 bg-clip-text text-transparent uppercase italic tracking-tighter">AI Studio</h1>
-            <p class="text-slate-500 text-[9px] tracking-[0.4em] uppercase mt-2 font-bold">Premium Label Engine</p>
+            <h1 class="text-3xl font-black bg-gradient-to-r from-purple-400 to-blue-500 bg-clip-text text-transparent uppercase italic tracking-tighter">NANO ENGINE</h1>
+            <p class="text-slate-400 text-[9px] tracking-[0.4em] uppercase mt-2 font-bold">Liquid AI Textures</p>
         </header>
 
         <div class="space-y-4 relative z-10">
@@ -31,29 +33,29 @@
             </div>
 
             <div>
-                <label class="text-[9px] uppercase font-bold text-slate-500 ml-2">Produktová řada</label>
+                <label class="text-[9px] uppercase font-bold text-slate-500 ml-2">Sémantika (Styl AI)</label>
                 <input type="text" id="compDesc" value="Prémiová elektronika a technologie" class="input-style text-slate-300 text-sm py-3">
             </div>
 
             <div>
-                <label class="text-[9px] uppercase font-bold text-blue-500 ml-2">QR Odkaz</label>
-                <input type="text" id="qrLink" value="https://www.setos.cz" class="input-style text-blue-400 font-mono text-xs py-3">
+                <label class="text-[9px] uppercase font-bold text-purple-400 ml-2">QR Odkaz</label>
+                <input type="text" id="qrLink" value="https://www.setos.cz" class="input-style text-purple-300 font-mono text-xs py-3">
             </div>
             
-            <div id="logoDrop" class="relative bg-white/5 p-4 rounded-2xl border-2 border-dashed border-white/20 text-center transition-all">
-                <input type="file" id="logoInput" accept="image/png, image/jpeg" class="absolute inset-0 opacity-0 cursor-pointer z-20">
+            <div id="logoDrop" class="relative bg-black/40 p-4 rounded-2xl border-2 border-dashed border-white/20 text-center transition-all cursor-pointer hover:bg-white/5">
+                <input type="file" id="logoInput" accept="image/png" class="absolute inset-0 opacity-0 cursor-pointer z-20">
                 <div class="flex flex-col items-center justify-center space-y-2">
-                    <img id="logoPreview" src="" class="hidden h-10 w-10 object-contain bg-white/10 rounded-lg p-1">
-                    <p id="uploadText" class="text-xs text-slate-400 uppercase font-bold tracking-widest">Nahrát logo (PNG)</p>
+                    <img id="logoPreview" src="" class="hidden h-10 w-10 object-contain bg-white/10 rounded-lg p-1 shadow-lg">
+                    <p id="uploadText" class="text-[10px] text-slate-400 uppercase font-bold tracking-widest">Nahrát PNG Logo</p>
                 </div>
                 <div id="logoStore" data-blob="" class="hidden"></div>
             </div>
 
-            <button onclick="generateMasterPDF()" id="genBtn" class="w-full bg-blue-600 hover:bg-blue-500 text-white py-5 rounded-[2rem] font-black text-xl shadow-[0_10px_30px_rgba(37,99,235,0.3)] transition-all active:scale-95 uppercase tracking-tighter mt-4">
-                Generovat Kolekci
+            <button onclick="generateLiquidPDF()" id="genBtn" class="w-full bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-500 hover:to-blue-500 text-white py-5 rounded-[2rem] font-black text-xl shadow-[0_10px_30px_rgba(139,92,246,0.3)] transition-all active:scale-95 uppercase tracking-tighter mt-4 border border-white/10">
+                Generovat AI Design
             </button>
             
-            <p id="status" class="hidden text-center text-blue-400 animate-pulse text-[10px] font-bold mt-4 uppercase tracking-widest">AI Renderuje data...</p>
+            <p id="status" class="hidden text-center text-purple-400 animate-pulse text-[10px] font-bold mt-4 uppercase tracking-widest">Generuji tekuté textury...</p>
         </div>
         <div id="qr-hidden" class="hidden"></div>
     </div>
@@ -61,13 +63,11 @@
     <script>
         const { jsPDF } = window.jspdf;
 
-        // ZPRACOVÁNÍ LOGA (s podporou průhlednosti pro tisk bez bílých čtverců)
+        // Vložení loga
         document.getElementById('logoInput').addEventListener('change', function(e) {
             const file = e.target.files[0];
             if (!file) return;
-            
-            document.getElementById('uploadText').innerText = "Zpracovávám...";
-            
+            document.getElementById('uploadText').innerText = "Načítám...";
             const reader = new FileReader();
             reader.onload = function(event) {
                 const img = new Image();
@@ -75,28 +75,67 @@
                     const canvas = document.createElement('canvas');
                     canvas.width = 400; canvas.height = 400;
                     const ctx = canvas.getContext('2d');
-                    
                     ctx.clearRect(0, 0, 400, 400); 
-                    
                     const s = Math.min(380/img.width, 380/img.height);
                     ctx.drawImage(img, (400-img.width*s)/2, (400-img.height*s)/2, img.width*s, img.height*s);
                     
                     const data = canvas.toDataURL('image/png');
                     document.getElementById('logoStore').setAttribute('data-blob', data);
-                    
                     document.getElementById('logoPreview').src = data;
                     document.getElementById('logoPreview').classList.remove('hidden');
-                    document.getElementById('uploadText').innerText = "LOGO PŘIPRAVENO ✅";
+                    document.getElementById('uploadText').innerText = "PNG PŘIPRAVENO ✅";
                     document.getElementById('uploadText').classList.replace('text-slate-400', 'text-green-400');
-                    document.getElementById('logoDrop').classList.add('border-green-500/50', 'bg-green-500/5');
+                    document.getElementById('logoDrop').classList.add('border-purple-500/50', 'bg-purple-500/10');
                 };
                 img.src = event.target.result;
             };
             reader.readAsDataURL(file);
         });
 
-        // GENEROVÁNÍ PDF
-        async function generateMasterPDF() {
+        // LIQUID TEXTURE ENGINE (Simulace pokročilého AI modelu)
+        function createAITexture(width, height, isDark) {
+            const canvas = document.createElement('canvas');
+            canvas.width = width; canvas.height = height;
+            const ctx = canvas.getContext('2d');
+
+            // Barvy podle režimu
+            const baseColor = isDark ? '#08080c' : '#f0f4f8';
+            const blobColor1 = isDark ? `rgba(${Math.random()*100}, ${Math.random()*150 + 100}, 255, 0.6)` : `rgba(${Math.random()*100 + 150}, ${Math.random()*100 + 150}, 255, 0.4)`;
+            const blobColor2 = isDark ? `rgba(139, 92, 246, 0.5)` : `rgba(236, 72, 153, 0.3)`;
+            const blobColor3 = isDark ? `rgba(16, 185, 129, 0.3)` : `rgba(251, 191, 36, 0.4)`;
+
+            // Podklad
+            ctx.fillStyle = baseColor;
+            ctx.fillRect(0, 0, width, height);
+
+            // Tvorba tekutých plynulých organických blobů (Jako z Midjourney/Nano Banana)
+            const drawBlob = (x, y, r, color) => {
+                const grad = ctx.createRadialGradient(x, y, 0, x, y, r);
+                grad.addColorStop(0, color);
+                grad.addColorStop(1, 'rgba(0,0,0,0)');
+                ctx.fillStyle = grad;
+                ctx.fillRect(0, 0, width, height);
+            };
+
+            drawBlob(width * (Math.random() * 0.8), height * (Math.random() * 0.8), width * 0.5, blobColor1);
+            drawBlob(width * (Math.random() * 0.8 + 0.2), height * (Math.random() * 0.8), width * 0.6, blobColor2);
+            drawBlob(width * (Math.random() * 0.5), height * (Math.random() * 0.5 + 0.5), width * 0.4, blobColor3);
+
+            // Aplikace prémiového tiskového šumu (Noise / Grain efekt)
+            const imgData = ctx.getImageData(0, 0, width, height);
+            const data = imgData.data;
+            for(let i = 0; i < data.length; i += 4) {
+                const noise = (Math.random() - 0.5) * 15; // Způsobí krásnou tiskovou texturu
+                data[i] += noise;
+                data[i+1] += noise;
+                data[i+2] += noise;
+            }
+            ctx.putImageData(imgData, 0, 0);
+
+            return canvas.toDataURL('image/jpeg', 0.85);
+        }
+
+        async function generateLiquidPDF() {
             const btn = document.getElementById('genBtn');
             const status = document.getElementById('status');
             const name = document.getElementById('compName').value;
@@ -108,6 +147,7 @@
             status.classList.remove('hidden');
 
             try {
+                // QR kód
                 const qrDiv = document.getElementById('qr-hidden');
                 qrDiv.innerHTML = "";
                 new QRCode(qrDiv, { text: qrUrl, width: 300, height: 300 });
@@ -119,53 +159,46 @@
                 for (let i = 0; i < 2; i++) {
                     if (i > 0) doc.addPage([200, 50], 'l');
 
+                    // Vygenerování vysoce kvalitní tekuté textury v paměti
+                    // 1200x300 pixelů zajistí ostrý tisk na 200x50 mm
+                    const aiTexture = createAITexture(1200, 300, i === 0); 
+                    
+                    // Vložení textury na celou plochu etikety
+                    doc.addImage(aiTexture, 'JPEG', 0, 0, 200, 50);
+
                     let textStartX = 15;
 
-                    // --- STRANA 1: PROFI DARK ---
-                    if (i === 0) {
-                        doc.setFillColor(15, 18, 25); doc.rect(0, 0, 200, 50, 'F');
-                        
-                        doc.setDrawColor(30, 40, 60); doc.setLineWidth(0.1);
-                        for(let x=0; x<160; x+=3) doc.line(x, 0, x, 50);
-                        for(let y=0; y<50; y+=3) doc.line(0, y, 160, y);
-                        
-                        doc.setTextColor(255, 255, 255);
-                    // --- STRANA 2: ULTRA WHITE ---
-                    } else {
-                        doc.setFillColor(255, 255, 255); doc.rect(0, 0, 200, 50, 'F');
-                        doc.setTextColor(0, 0, 0);
-                    }
-
-                    // Vložení transparentního loga
+                    // Vložení loga
                     if (logoData && logoData.length > 100) {
                         doc.addImage(logoData, 'PNG', 12, 10, 30, 30);
-                        textStartX = 48; // Odsazení textu vedle loga
+                        textStartX = 48; 
                     }
 
-                    // Zápis textů
+                    // Typografie (Bílá na tmavém, černá na světlém)
+                    doc.setTextColor(i === 0 ? 255 : 20);
                     doc.setFontSize(26); 
                     doc.text(name.toUpperCase(), textStartX, 24);
                     
-                    // OPRAVENÁ BARVA: Jasně definované argumenty
+                    // Barva podnadpisu
                     if (i === 0) {
-                        doc.setTextColor(0, 150, 255);
+                        doc.setTextColor(167, 139, 250); // Světle fialová
                     } else {
                         doc.setTextColor(100, 100, 100);
                     }
                     doc.setFontSize(9); 
                     doc.text(desc, textStartX, 32);
 
-                    // --- ZÁKONNÁ INFO ZÓNA (Pravý sloupec) ---
+                    // Pevná, funkční Info Zóna vpravo (Oddělí grafiku od dat)
                     doc.setFillColor(255, 255, 255); doc.rect(162, 0, 38, 50, 'F');
                     doc.setDrawColor(220, 220, 220); doc.setLineWidth(0.3); doc.line(162, 0, 162, 50);
                     doc.addImage(qrImg, 'PNG', 173, 31, 16, 16);
                     
                     doc.setTextColor(100, 100, 100); doc.setFontSize(5);
-                    doc.text("PRODUCT OF EU | 300ml | BATCH 2026", 168, 5, {angle: -90});
+                    doc.text("AI GENERATED | 300ml | BATCH 2026", 168, 5, {angle: -90});
                     doc.text(qrUrl.replace(/(^\w+:|^)\/\//, '').substring(0, 25), 181, 28, {align: 'center'});
                 }
 
-                doc.save(`Premium_Etikety_${name.replace(/\s+/g, '_')}.pdf`);
+                doc.save(`Nano_Kolekce_${name.replace(/\s+/g, '_')}.pdf`);
 
             } catch (err) {
                 alert("Systémová chyba: " + err);
