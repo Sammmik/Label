@@ -3,23 +3,22 @@ export default async function handler(req, res) {
 
     const { description } = req.body;
 
-    // MATICE ČISTĚ ABSTRAKTNÍCH DESIGNŮ (Bez konkrétních produktů)
     const abstractStyles = [
-        "Fluid liquid gradients, ethereal waves, soft transitions, silk texture",
-        "Geometric deconstructivism, minimal thin lines, architectural grid",
-        "Bioluminescent nebulae, organic smoke shapes, deep cinematic colors",
-        "Brushed metallic surface, industrial titanium texture, subtle light leaks",
-        "Frosted glass morphism, blurry organic shapes behind glass, premium soft focus",
-        "Japanese minimalist ink wash, sumi-e aesthetic, vast negative space",
-        "Holographic foil ripples, iridescent color shifts, futuristic plastic",
-        "Matte clay textures, earthy tones, minimalist sculptural shadows"
+        "Pure digital liquid gradients, floating silk waves, weightless fluid art",
+        "Cybernetic geometric patterns, glowing thin vector lines on pitch black",
+        "Ethereal smoke clouds, soft vapor gradients, atmospheric color mist",
+        "Macro brushed metal texture, iridescent titanium shimmer, cold industrial steel",
+        "Futuristic holographic ripples, refractive light play, prismatic surface",
+        "Minimalist generative noise, grainy sand texture, zen-like stone gradients",
+        "Deep monochromatic ink flow, matte charcoal and obsidian textures",
+        "Clean glassmorphism, blurred organic shapes, translucent depth"
     ];
 
     const randomStyle = abstractStyles[Math.floor(Math.random() * abstractStyles.length)];
     const seed = Math.floor(Math.random() * 1000000);
 
-    // Prompt striktně zakazuje objekty (objektivy, mobily, auta atd.)
-    const prompt = `High-end abstract aesthetic background for commercial packaging. Concept: ${description}. Visuals: ${randomStyle}. Style: Masterpiece graphic design, ultra-minimal, professional color palette. NO products, NO objects, NO people, NO text, NO letters.`;
+    // Prompt striktně zakazuje jakýkoliv náznak interiéru nebo reality
+    const prompt = `Pure abstract graphic design. Concept: ${description}. Visuals: ${randomStyle}. Style: Masterpiece digital art, flat lighting, 2D/3D abstract texture. STRICTLY NO interiors, NO rooms, NO walls, NO furniture, NO floors, NO objects, NO products, NO text.`;
 
     try {
         const encodedPrompt = encodeURIComponent(prompt);
