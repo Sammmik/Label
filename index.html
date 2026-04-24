@@ -2,36 +2,115 @@
 <html lang="cs">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>AI Studio: Master Release 2026</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>AI Studio: Mobile Fix</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;700;800&display=swap');
-        body { font-family: 'Plus Jakarta Sans', sans-serif; background-color: #030303; }
-        .input-card { background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.08); border-radius: 1.5rem; transition: all 0.3s; }
-        .input-card:focus-within { border-color: #3b82f6; background: rgba(255,255,255,0.05); }
+        body { font-family: 'Plus Jakarta Sans', sans-serif; background-color: #000; overflow-x: hidden; }
+        .input-card { background: #111; border: 1px solid #222; border-radius: 1rem; transition: 0.3s; }
+        .input-card:focus-within { border-color: #3b82f6; }
+        input { background: transparent; border: none; outline: none; width: 100%; color: white; font-size: 0.9rem; }
     </style>
 </head>
-<body class="text-slate-200 min-h-screen flex items-center justify-center p-6">
+<body class="text-slate-200 min-h-screen flex items-start justify-center p-4">
 
-    <div class="max-w-md w-full space-y-8">
-        <header class="text-center">
-            <h1 class="text-4xl font-extrabold tracking-tighter text-white uppercase italic italic">Studio <span class="text-blue-500 text-not-italic">AI</span></h1>
-            <p class="text-slate-500 text-[10px] tracking-[0.4em] uppercase mt-2 font-bold italic">Vercel Powered Label Engine</p>
+    <div class="max-w-md w-full space-y-3 mt-2">
+        <header class="text-center pb-2">
+            <h1 class="text-2xl font-extrabold tracking-tighter text-white uppercase italic">Studio <span class="text-blue-500 text-not-italic">AI</span></h1>
         </header>
 
-        <div class="space-y-4">
-            <div class="input-card p-4">
-                <label class="block text-[10px] uppercase font-bold text-slate-500 mb-1 ml-1">Značka / Firma</label>
-                <input type="text" id="compName" value="SETOS spol., s.r.o." class="w-full bg-transparent border-none outline-none text-white font-bold placeholder-slate-700">
-            </div>
+        <div class="input-card px-4 py-2">
+            <label class="block text-[9px] uppercase font-bold text-slate-500 mb-0.5">Značka / Firma</label>
+            <input type="text" id="compName" value="SETOS spol., s.r.o.">
+        </div>
 
-            <div class="input-card p-4">
-                <label class="block text-[10px] uppercase font-bold text-slate-500 mb-1 ml-1">Produktová vize</label>
-                <input type="text" id="compDesc" value="Prémiová elektronika a technologie" class="w-full bg-transparent border-none outline-none text-slate-400 text-sm">
-            </div>
+        <div class="input-card px-4 py-2">
+            <label class="block text-[9px] uppercase font-bold text-slate-500 mb-0.5">Produktová vize</label>
+            <input type="text" id="compDesc" value="Prémiová elektronika a technologie">
+        </div>
 
-            <div class="input-card p-4 border-l-4 border-l-blue-500">
-                <label class="block text-[10px] uppercase font-bold text-blue-500 mb-1 ml-1">QR Odkaz (Web
+        <div class="input-card px-4 py-2 border-l-2 border-l-blue-500">
+            <label class="block text-[9px] uppercase font-bold text-blue-500 mb-0.5">QR Odkaz (Web)</label>
+            <input type="text" id="qrLink" value="https://www.setos.cz">
+        </div>
+        
+        <div class="relative overflow-hidden bg-blue-900/20 border-2 border-dashed border-blue-500/30 rounded-2xl p-4 flex items-center justify-center">
+            <input type="file" id="logoInput" accept="image/*" class="absolute inset-0 opacity-0 cursor-pointer z-20">
+            <div class="text-center">
+                <div id="previewContainer" class="hidden mb-1 flex justify-center">
+                    <img id="logoPreview" src="#" class="h-8 w-8 object-contain rounded border border-white/20">
+                </div>
+                <p id="uploadText" class="text-[10px] font-black uppercase text-blue-400 tracking-widest">Přidat Logo</p>
+            </div>
+        </div>
+
+        <button onclick="generateMasterPDF()" id="genBtn" class="w-full bg-blue-600 hover:bg-blue-500 text-white py-4 rounded-2xl font-black text-lg shadow-xl active:scale-95 transition-all uppercase tracking-tighter">
+            Generovat PDF
+        </button>
+        
+        <p id="statusMsg" class="hidden text-center text-blue-400 text-[9px] font-bold animate-pulse uppercase">Vykreslování...</p>
+    </div>
+
+    <div id="qr-hidden" class="hidden"></div>
+
+    <script>
+        const { jsPDF } = window.jspdf;
+        let cachedLogo = null;
+
+        document.getElementById('logoInput').addEventListener('change', function(e) {
+            const file = e.target.files[0];
+            if (file) {
+                const reader = new FileReader();
+                reader.onload = function(event) {
+                    const img = new Image();
+                    img.onload = function() {
+                        document.getElementById('logoPreview').src = event.target.result;
+                        document.getElementById('previewContainer').classList.remove('hidden');
+                        document.getElementById('uploadText').innerText = "Logo OK ✅";
+                        document.getElementById('uploadText').classList.replace('text-blue-400', 'text-green-400');
+
+                        const canvas = document.createElement('canvas');
+                        const ctx = canvas.getContext('2d');
+                        canvas.width = 400; canvas.height = 400;
+                        ctx.fillStyle = "#FFFFFF"; ctx.fillRect(0,0,400,400);
+                        const s = Math.min(320/img.width, 320/img.height);
+                        ctx.drawImage(img, (400-img.width*s)/2, (400-img.height*s)/2, img.width*s, img.height*s);
+                        cachedLogo = canvas.toDataURL('image/jpeg', 0.9);
+                    };
+                    img.src = event.target.result;
+                };
+                reader.readAsDataURL(file);
+            }
+        });
+
+        async function generateMasterPDF() {
+            const btn = document.getElementById('genBtn');
+            const name = document.getElementById('compName').value;
+            const desc = document.getElementById('compDesc').value;
+            const link = document.getElementById('qrLink').value;
+            
+            btn.disabled = true;
+            document.getElementById('statusMsg').classList.remove('hidden');
+
+            try {
+                const qrDiv = document.getElementById('qr-hidden');
+                qrDiv.innerHTML = "";
+                new QRCode(qrDiv, { text: link, width: 256, height: 256 });
+                await new Promise(r => setTimeout(r, 600));
+                const qrImg = qrDiv.querySelector('canvas').toDataURL("image/png");
+
+                const doc = new jsPDF({ orientation: 'l', unit: 'mm', format: [200, 50] });
+
+                for (let i = 0; i < 3; i++) {
+                    if (i > 0) doc.addPage([200, 50], 'l');
+                    if (i === 0) {
+                        doc.setFillColor(5, 10, 25); doc.rect(0, 0, 200, 50, 'F');
+                        doc.setDrawColor(0, 100, 255); doc.setLineWidth(0.2);
+                        for(let x=0; x<160; x+=15) { doc.line(x, 0, x+20, 50); doc.line(x+20, 0, x, 50); }
+                        doc.setTextColor(255);
+                    } else if (i === 1) {
+                        doc.setFillColor(255); doc.rect(0, 0, 200, 50, 'F');
+                        doc.setTextColor(0
