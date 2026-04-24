@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>AI Studio: Agent Edition</title>
+    <title>AI Agent: Triple Design Studio</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
@@ -12,17 +12,16 @@
         body { font-family: 'Plus Jakarta Sans', sans-serif; background-color: #050505; color: white; }
         .input-style { background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); border-radius: 1rem; padding: 1rem; width: 100%; outline: none; transition: 0.3s; color: white; }
         .input-style:focus { border-color: #3b82f6; box-shadow: 0 0 15px rgba(59,130,246,0.3); }
-        .btn-gradient { background: linear-gradient(135deg, #2563eb 0%, #4f46e5 100%); }
     </style>
 </head>
 <body class="min-h-screen p-4 flex items-start justify-center">
 
-    <div class="max-w-md w-full bg-[#111] p-8 rounded-[2.5rem] border border-white/5 shadow-2xl mt-4 relative overflow-hidden">
+    <div class="max-w-md w-full bg-[#111] p-8 rounded-[2rem] border border-white/5 shadow-2xl mt-4 relative overflow-hidden">
         <div class="absolute top-0 left-0 -mt-10 -ml-10 w-40 h-40 bg-blue-600/10 blur-[80px]"></div>
         
         <header class="text-center mb-8 relative z-10">
-            <h1 class="text-3xl font-black bg-gradient-to-r from-blue-400 to-indigo-500 bg-clip-text text-transparent uppercase italic tracking-tighter">AI AGENT</h1>
-            <p class="text-slate-500 text-[9px] tracking-[0.4em] uppercase mt-1 font-bold">Vercel & Fal.ai Studio</p>
+            <h1 class="text-3xl font-black bg-gradient-to-r from-blue-400 to-indigo-500 bg-clip-text text-transparent uppercase italic tracking-tighter text-center">AI AGENT PRO</h1>
+            <p class="text-slate-500 text-[9px] tracking-[0.4em] uppercase mt-1 font-bold">Triple Design Label Engine</p>
         </header>
 
         <div class="space-y-4 relative z-10">
@@ -32,33 +31,33 @@
             </div>
 
             <div>
-                <label class="text-[9px] uppercase font-bold text-slate-500 ml-2">Zadání pro AI grafiku</label>
-                <textarea id="compDesc" rows="2" class="input-style text-sm py-3" placeholder="Např. 3D prémiový dron, futuristický styl, bílé pozadí"></textarea>
+                <label class="text-[9px] uppercase font-bold text-slate-500 ml-2">Abstraktní vize (např. Tekutý kov, neonový kouř)</label>
+                <textarea id="compDesc" rows="2" class="input-style text-sm py-3" placeholder="Popiš náladu, barvy a styl..."></textarea>
             </div>
 
             <div>
-                <label class="text-[9px] uppercase font-bold text-blue-500 ml-2">Cílový web pro QR kód</label>
+                <label class="text-[9px] uppercase font-bold text-blue-500 ml-2">QR Odkaz</label>
                 <input type="text" id="qrLink" value="https://www.setos.cz" class="input-style text-blue-400 font-mono text-xs py-3">
             </div>
             
-            <div id="logoDrop" class="relative bg-white/5 p-4 rounded-2xl border-2 border-dashed border-white/20 text-center transition-all">
+            <div id="logoDrop" class="relative bg-white/5 p-4 rounded-xl border-2 border-dashed border-white/20 text-center transition-all">
                 <input type="file" id="logoInput" accept="image/png, image/jpeg" class="absolute inset-0 opacity-0 cursor-pointer z-20">
                 <div class="flex flex-col items-center justify-center space-y-2">
-                    <img id="logoPreview" src="" class="hidden h-10 w-10 object-contain bg-white/10 rounded-lg p-1 shadow-lg">
-                    <p id="uploadText" class="text-[10px] text-slate-400 uppercase font-bold tracking-widest">Přidat PNG Logo</p>
+                    <img id="logoPreview" src="" class="hidden h-10 w-10 object-contain bg-white/10 rounded-lg p-1">
+                    <p id="uploadText" class="text-xs text-slate-400 uppercase font-bold tracking-widest">Logo (volitelné)</p>
                 </div>
                 <div id="logoStore" data-blob="" class="hidden"></div>
             </div>
 
-            <button onclick="runAiAgent()" id="genBtn" class="w-full btn-gradient py-5 rounded-[2rem] font-black text-xl shadow-2xl active:scale-95 transition-all uppercase italic mt-2">
-                Generovat Etiketu
+            <button onclick="runTripleAgent()" id="genBtn" class="w-full bg-blue-600 py-5 rounded-[2rem] font-black text-xl shadow-2xl active:scale-95 transition-all uppercase italic mt-2">
+                Generovat 3 návrhy
             </button>
             
             <div id="loader" class="hidden text-center mt-6">
-                <div class="w-full bg-gray-900 h-1.5 rounded-full overflow-hidden mb-3">
-                    <div id="progressBar" class="bg-blue-500 h-full w-0 transition-all duration-500"></div>
+                <div class="w-full bg-gray-900 h-2 rounded-full overflow-hidden mb-3">
+                    <div id="progressBar" class="bg-blue-500 h-full w-0 transition-all duration-300"></div>
                 </div>
-                <p id="statusMsg" class="text-blue-400 animate-pulse text-[10px] font-bold uppercase tracking-widest">Inicializace agenta...</p>
+                <p id="statusMsg" class="text-blue-400 animate-pulse text-[10px] font-bold uppercase tracking-widest">Agent připravuje varianty...</p>
             </div>
         </div>
     </div>
@@ -82,20 +81,17 @@
                     ctx.clearRect(0, 0, 400, 400); 
                     const s = Math.min(380/img.width, 380/img.height);
                     ctx.drawImage(img, (400-img.width*s)/2, (400-img.height*s)/2, img.width*s, img.height*s);
-                    const data = canvas.toDataURL('image/png');
-                    document.getElementById('logoStore').setAttribute('data-blob', data);
-                    document.getElementById('logoPreview').src = data;
+                    document.getElementById('logoStore').setAttribute('data-blob', canvas.toDataURL('image/png'));
+                    document.getElementById('logoPreview').src = canvas.toDataURL('image/png');
                     document.getElementById('logoPreview').classList.remove('hidden');
-                    document.getElementById('uploadText').innerText = "LOGO PŘIPRAVENO ✅";
-                    document.getElementById('uploadText').classList.replace('text-slate-400', 'text-green-400');
-                    document.getElementById('logoDrop').classList.add('border-green-500/30', 'bg-green-500/5');
+                    document.getElementById('uploadText').innerText = "LOGO ULOŽENO ✅";
                 };
                 img.src = event.target.result;
             };
             reader.readAsDataURL(file);
         });
 
-        async function runAiAgent() {
+        async function runTripleAgent() {
             const btn = document.getElementById('genBtn');
             const loader = document.getElementById('loader');
             const statusMsg = document.getElementById('statusMsg');
@@ -110,64 +106,59 @@
             loader.classList.remove('hidden');
 
             try {
-                // KROK 1: VOLÁNÍ BACKENDU
-                statusMsg.innerText = "Agent generuje AI obraz...";
-                bar.style.width = "40%";
-                
-                const res = await fetch('/api/generate', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ companyName: name, description: desc })
-                });
-                
-                if (!res.ok) {
-                    const errData = await res.json().catch(() => ({}));
-                    throw new Error(errData.error || "Chyba na Vercel serveru.");
-                }
-
-                const data = await res.json();
-                
-                // KROK 2: PŘÍPRAVA QR KÓDU
-                statusMsg.innerText = "Finalizace tiskových dat...";
-                bar.style.width = "70%";
+                // 1. QR KÓD
                 const qrDiv = document.getElementById('qr-hidden');
                 qrDiv.innerHTML = "";
                 new QRCode(qrDiv, { text: qrUrl, width: 300, height: 300 });
                 await new Promise(r => setTimeout(r, 600));
                 const qrImg = qrDiv.querySelector('canvas').toDataURL("image/png");
 
-                // KROK 3: STAŽENÍ AI OBRÁZKU
-                const aiImgBase64 = await getBase64(data.imageUrl);
-
-                // KROK 4: SESTAVENÍ PDF
                 const doc = new jsPDF({ orientation: 'l', unit: 'mm', format: [200, 50] });
 
-                // A) Pozadí z AI
-                doc.addImage(aiImgBase64, 'JPEG', 0, 0, 160, 50);
+                // CYKLUS PRO 3 NÁVRHY
+                for (let i = 0; i < 3; i++) {
+                    if (i > 0) doc.addPage([200, 50], 'l');
+                    
+                    statusMsg.innerText = `Generuji unikátní návrh ${i + 1} ze 3...`;
+                    bar.style.width = `${(i + 1) * 33}%`;
 
-                // B) Bílá zóna pro tisk
-                doc.setFillColor(255, 255, 255); doc.rect(160, 0, 40, 50, 'F');
-                doc.setDrawColor(220, 220, 220); doc.setLineWidth(0.3); doc.line(160, 0, 160, 50);
+                    // Volání backendu pro každou stránku zvlášť
+                    const res = await fetch('/api/generate', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ description: desc })
+                    });
+                    
+                    if (!res.ok) throw new Error("Chyba při komunikaci s AI agentem.");
+                    const data = await res.json();
+                    const aiImg = await getBase64(data.imageUrl);
 
-                // C) Logo & Texty
-                let startX = 10;
-                if (logoData && logoData.length > 100) {
-                    doc.addImage(logoData, 'PNG', 10, 12, 25, 25);
-                    startX = 40;
+                    // A) AI POZADÍ
+                    doc.addImage(aiImg, 'JPEG', 0, 0, 160, 50);
+
+                    // B) BÍLÁ ZÓNA
+                    doc.setFillColor(255); doc.rect(160, 0, 40, 50, 'F');
+                    doc.setDrawColor(230); doc.line(160, 0, 160, 50);
+
+                    // C) LOGO A TEXTY
+                    let startX = 10;
+                    if (logoData) {
+                        doc.addImage(logoData, 'PNG', 10, 12, 25, 25);
+                        startX = 40;
+                    }
+
+                    doc.setTextColor(20); doc.setFontSize(26); 
+                    doc.text(name.toUpperCase(), startX, 24);
+
+                    // D) QR A INFO
+                    doc.addImage(qrImg, 'PNG', 171, 31, 17, 17);
+                    doc.setTextColor(150); doc.setFontSize(5);
+                    doc.text(`DESIGN VAR ${i+1} | BATCH 2026`, 166, 5, {angle: -90});
+                    doc.text(qrUrl.replace(/(^\w+:|^)\/\//, '').substring(0, 24), 180, 28, {align: 'center'});
                 }
 
-                doc.setTextColor(20, 20, 20); 
-                doc.setFontSize(26); 
-                doc.text(name.toUpperCase(), startX, 24);
-
-                // D) QR & Info
-                doc.addImage(qrImg, 'PNG', 171, 31, 17, 17);
-                doc.setTextColor(120, 120, 120); doc.setFontSize(5);
-                doc.text("AI PRODUCT DESIGN | BATCH 2026", 166, 5, {angle: -90});
-                doc.text(qrUrl.replace(/(^\w+:|^)\/\//, '').substring(0, 24), 180, 28, {align: 'center'});
-
                 bar.style.width = "100%";
-                doc.save(`AI_Label_${name}.pdf`);
+                doc.save(`AI_Label_Collection_${name}.pdf`);
 
             } catch (err) {
                 alert("Chyba: " + err.message);
