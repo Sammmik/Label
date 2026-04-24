@@ -3,47 +3,46 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>AI Agent: Chaos & Design</title>
+    <title>AI Designer: Abstract & Type</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
     <style>
-        @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@700;800&display=swap');
-        body { font-family: 'Plus Jakarta Sans', sans-serif; background-color: #050505; color: white; }
-        .input-style { background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); border-radius: 1rem; padding: 1rem; width: 100%; outline: none; transition: 0.3s; color: white; }
-        .input-style:focus { border-color: #3b82f6; box-shadow: 0 0 15px rgba(59,130,246,0.3); }
-        .btn-magic { background: linear-gradient(45deg, #3b82f6, #8b5cf6, #ec4899); background-size: 200% 200%; animation: gradient 5s ease infinite; }
-        @keyframes gradient { 0% {background-position: 0% 50%;} 50% {background-position: 100% 50%;} 100% {background-position: 0% 50%;} }
+        @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@200;400;800&family=JetBrains+Mono:wght@400;800&display=swap');
+        body { font-family: 'Plus Jakarta Sans', sans-serif; background: #000; color: #fff; }
+        .glass { background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.1); border-radius: 2rem; }
+        .input-box { background: rgba(0,0,0,0.4); border: 1px solid rgba(255,255,255,0.1); border-radius: 1rem; padding: 1rem; width: 100%; outline: none; color: #fff; }
+        .btn-ai { background: linear-gradient(135deg, #6366f1 0%, #a855f7 100%); transition: 0.3s; }
     </style>
 </head>
-<body class="min-h-screen p-4 flex items-start justify-center text-center">
+<body class="min-h-screen p-4 flex items-start justify-center">
 
-    <div class="max-w-md w-full bg-[#111] p-8 rounded-[2.5rem] border border-white/5 shadow-2xl mt-4">
-        <header class="mb-8">
-            <h1 class="text-3xl font-black italic tracking-tighter uppercase">AI RANDOMIZER</h1>
-            <p class="text-slate-500 text-[9px] tracking-[0.4em] uppercase mt-1 font-bold">Infinite Style Engine</p>
+    <div class="max-w-md w-full glass p-8 shadow-2xl mt-4 relative">
+        <header class="text-center mb-8">
+            <h1 class="text-2xl font-extrabold tracking-tighter uppercase italic">Designer <span class="text-purple-500">Agent</span></h1>
+            <p class="text-[9px] text-gray-500 tracking-[0.5em] font-bold uppercase">Abstract & Typography Engine</p>
         </header>
 
-        <div class="space-y-4 text-left">
-            <input type="text" id="compName" value="SETOS" class="input-style font-bold">
-            <textarea id="compDesc" rows="2" class="input-style text-sm" placeholder="Vstupní idea (např. Budoucnost technologií)"></textarea>
-            <input type="text" id="qrLink" value="https://www.setos.cz" class="input-style text-blue-400 font-mono text-xs">
+        <div class="space-y-4">
+            <input type="text" id="compName" value="SETOS" class="input-box font-bold uppercase tracking-widest">
+            <textarea id="compDesc" rows="2" class="input-box text-sm" placeholder="Vize (např. Temná hlubina, zlatý prach, ledový klid)"></textarea>
+            <input type="text" id="qrLink" value="https://www.setos.cz" class="input-box text-xs text-purple-400 font-mono">
             
-            <div id="logoDrop" class="relative bg-white/5 p-4 rounded-xl border-2 border-dashed border-white/20 text-center cursor-pointer">
-                <input type="file" id="logoInput" accept="image/png, image/jpeg" class="absolute inset-0 opacity-0 cursor-pointer">
-                <p id="uploadText" class="text-xs text-slate-400 uppercase font-bold">Přidat Logo</p>
+            <div class="relative bg-white/5 p-4 rounded-xl border border-dashed border-white/20 text-center cursor-pointer hover:bg-white/10 transition">
+                <input type="file" id="logoInput" accept="image/png" class="absolute inset-0 opacity-0 cursor-pointer">
+                <p id="uploadText" class="text-[10px] uppercase font-bold text-gray-400 italic">Logo (PNG)</p>
                 <div id="logoStore" data-blob="" class="hidden"></div>
             </div>
 
-            <button onclick="runRandomAgent()" id="genBtn" class="btn-magic w-full py-5 rounded-[2rem] font-black text-xl shadow-2xl active:scale-95 transition-all uppercase italic mt-2">
-                Generovat Kolekci
+            <button onclick="runDesigner()" id="genBtn" class="btn-ai w-full py-5 rounded-2xl font-black text-lg uppercase italic shadow-xl active:scale-95">
+                Vytvořit 3 koncepty
             </button>
             
-            <div id="loader" class="hidden mt-6">
-                <div class="w-full bg-gray-900 h-2 rounded-full overflow-hidden mb-3">
-                    <div id="progressBar" class="bg-blue-500 h-full w-0 transition-all duration-300"></div>
+            <div id="loader" class="hidden mt-6 text-center">
+                <div class="w-full bg-white/5 h-1 rounded-full overflow-hidden mb-2">
+                    <div id="bar" class="bg-purple-500 h-full w-0 transition-all duration-300"></div>
                 </div>
-                <p id="statusMsg" class="text-purple-400 animate-pulse text-[10px] font-bold uppercase tracking-widest text-center">Vybírám náhodné umělecké směry...</p>
+                <p id="status" class="text-[9px] font-bold text-purple-400 uppercase animate-pulse tracking-widest">Generuji umělecké podklady...</p>
             </div>
         </div>
     </div>
@@ -64,55 +63,49 @@
                     const canvas = document.createElement('canvas');
                     canvas.width = 400; canvas.height = 400;
                     const ctx = canvas.getContext('2d');
-                    ctx.clearRect(0, 0, 400, 400); 
+                    ctx.clearRect(0,0,400,400);
                     const s = Math.min(380/img.width, 380/img.height);
                     ctx.drawImage(img, (400-img.width*s)/2, (400-img.height*s)/2, img.width*s, img.height*s);
                     document.getElementById('logoStore').setAttribute('data-blob', canvas.toDataURL('image/png'));
-                    document.getElementById('uploadText').innerText = "LOGO PŘIPRAVENO ✅";
+                    document.getElementById('uploadText').innerText = "LOGO PŘIPRAVENO";
                 };
                 img.src = event.target.result;
             };
             reader.readAsDataURL(file);
         });
 
-        async function fetchRandomStyle(desc, name) {
+        async function fetchDesign(desc, name) {
             const res = await fetch('/api/generate', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ description: desc, companyName: name })
             });
-            if (!res.ok) throw new Error("Chyba AI serveru");
             return await res.json();
         }
 
-        async function runRandomAgent() {
+        async function runDesigner() {
             const btn = document.getElementById('genBtn');
-            const loader = document.getElementById('loader');
-            const statusMsg = document.getElementById('statusMsg');
-            const bar = document.getElementById('progressBar');
-            
+            const bar = document.getElementById('bar');
             const name = document.getElementById('compName').value;
             const desc = document.getElementById('compDesc').value;
             const qrUrl = document.getElementById('qrLink').value;
             const logoData = document.getElementById('logoStore').getAttribute('data-blob');
 
             btn.disabled = true;
-            loader.classList.remove('hidden');
+            document.getElementById('loader').classList.remove('hidden');
             bar.style.width = "10%";
 
             try {
-                // Generujeme 3 náhodné styly paralelně
-                const promises = [
-                    fetchRandomStyle(desc, name),
-                    fetchRandomStyle(desc, name),
-                    fetchRandomStyle(desc, name)
-                ];
+                // Paralelní generování 3 abstraktů
+                const results = await Promise.all([
+                    fetchDesign(desc, name),
+                    fetchDesign(desc, name),
+                    fetchDesign(desc, name)
+                ]);
 
-                const results = await Promise.all(promises);
                 bar.style.width = "70%";
-                statusMsg.innerText = "Komponuji PDF strany...";
 
-                // QR
+                // QR kód
                 const qrDiv = document.getElementById('qr-hidden');
                 qrDiv.innerHTML = "";
                 new QRCode(qrDiv, { text: qrUrl, width: 300, height: 300 });
@@ -121,44 +114,50 @@
 
                 const doc = new jsPDF({ orientation: 'l', unit: 'mm', format: [200, 50] });
 
-                results.forEach((res, index) => {
-                    if (index > 0) doc.addPage([200, 50], 'l');
+                results.forEach((res, i) => {
+                    if (i > 0) doc.addPage([200, 50], 'l');
+                    doc.addImage(res.imageUrl, 'JPEG', 0, 0, 162, 50);
 
-                    // AI Pozadí
-                    doc.addImage(res.imageUrl, 'JPEG', 0, 0, 160, 50);
+                    // Bílá info zóna
+                    doc.setFillColor(255); doc.rect(162, 0, 38, 50, 'F');
+                    doc.setDrawColor(230); doc.line(162, 0, 162, 50);
 
-                    // Bílá Info Zóna
-                    doc.setFillColor(255); doc.rect(160, 0, 40, 50, 'F');
-                    doc.setDrawColor(230); doc.line(160, 0, 160, 50);
+                    // HRÁTKY S FONTEM (Dynamická typografie)
+                    const fontStyles = [
+                        { font: "helvetica", weight: "bold", size: 28, charSpace: 1 },
+                        { font: "courier", weight: "bold", size: 24, charSpace: 0 },
+                        { font: "times", weight: "italic", size: 30, charSpace: 2 }
+                    ];
+                    const style = fontStyles[i];
 
-                    // Branding
-                    let startX = 10;
-                    if (logoData) {
-                        doc.addImage(logoData, 'PNG', 10, 12, 25, 25);
-                        startX = 40;
-                    }
-                    doc.setTextColor(20); doc.setFontSize(24); 
-                    doc.text(name.toUpperCase(), startX, 24);
-                    
-                    // Popis stylu v PDF
-                    doc.setTextColor(120); doc.setFontSize(7); 
-                    doc.text(`AI STYLE: ${res.styleDescription}`, startX, 32);
+                    doc.setFont(style.font, style.weight);
+                    doc.setFontSize(style.size);
+                    doc.setTextColor(20);
+                    doc.text(name, 15, 25, { charSpace: style.charSpace });
 
-                    // QR a data
-                    doc.addImage(qrImg, 'PNG', 171, 31, 17, 17);
+                    // Doplňkový text pod názvem
+                    doc.setFont("helvetica", "normal");
+                    doc.setFontSize(8);
+                    doc.setTextColor(100);
+                    doc.text(`CONCEPT / ${res.styleName.toUpperCase()}`, 15, 33);
+
+                    // Logo
+                    if (logoData) doc.addImage(logoData, 'PNG', 130, 10, 25, 25);
+
+                    // QR v tiskové zóně
+                    doc.addImage(qrImg, 'PNG', 173, 31, 16, 16);
                     doc.setTextColor(150); doc.setFontSize(5);
-                    doc.text(`BATCH 2026 | ${res.styleDescription.toUpperCase()}`, 166, 5, {angle: -90});
-                    doc.text(qrUrl.replace(/(^\w+:|^)\/\//, '').substring(0, 24), 180, 28, {align: 'center'});
+                    doc.text("RELEASE 2026 | ABSTR-ID: " + Math.random().toString(36).substr(2,4).toUpperCase(), 168, 5, {angle: -90});
+                    doc.text(qrUrl.replace('https://',''), 181, 28, {align: 'center'});
                 });
 
                 bar.style.width = "100%";
-                doc.save(`Random_Collection_${name}.pdf`);
+                doc.save(`Designer_Collection_${name}.pdf`);
 
-            } catch (err) {
-                alert("Zkuste to prosím znovu, AI server je přetížen.");
-            } finally {
+            } catch (err) { alert("Chyba: " + err.message); }
+            finally {
                 btn.disabled = false;
-                loader.classList.add('hidden');
+                document.getElementById('loader').classList.add('hidden');
                 bar.style.width = "0%";
             }
         }

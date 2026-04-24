@@ -1,32 +1,27 @@
 export default async function handler(req, res) {
     if (req.method !== 'POST') return res.status(405).json({ error: 'Metoda nepovolena' });
 
-    const { description, companyName } = req.body;
+    const { description } = req.body;
 
-    // MATICE NÁHODNÝCH STYLŮ
-    const styles = [
-        "Photorealistic 3D octane render, studio lighting, hyper-detailed",
-        "Abstract fluid art, liquid metal textures, organic flowing shapes",
-        "Minimalist flat vector illustration, clean lines, corporate swiss design",
-        "Cyberpunk aesthetic, neon glow, futuristic tech textures",
-        "Luxury marble and gold leaf texture, elegant sophisticated background",
-        "Blueprint technical drawing, architectural lines, engineering style",
-        "Macro photography of high-tech materials, bokeh background, sleek",
-        "Pop-art vibrant colors, bold graphic shapes, modern contrast"
+    // MATICE ČISTĚ ABSTRAKTNÍCH DESIGNŮ (Bez konkrétních produktů)
+    const abstractStyles = [
+        "Fluid liquid gradients, ethereal waves, soft transitions, silk texture",
+        "Geometric deconstructivism, minimal thin lines, architectural grid",
+        "Bioluminescent nebulae, organic smoke shapes, deep cinematic colors",
+        "Brushed metallic surface, industrial titanium texture, subtle light leaks",
+        "Frosted glass morphism, blurry organic shapes behind glass, premium soft focus",
+        "Japanese minimalist ink wash, sumi-e aesthetic, vast negative space",
+        "Holographic foil ripples, iridescent color shifts, futuristic plastic",
+        "Matte clay textures, earthy tones, minimalist sculptural shadows"
     ];
 
-    const materials = ["glass", "brushed aluminum", "liquid chrome", "matte carbon", "iridescent silk", "neon gas"];
-    const lighting = ["dramatic shadows", "soft studio light", "vibrant neon", "clean minimalist white", "golden hour"];
+    const randomStyle = abstractStyles[Math.floor(Math.random() * abstractStyles.length)];
+    const seed = Math.floor(Math.random() * 1000000);
 
-    // Losování unikátní kombinace
-    const randomStyle = styles[Math.floor(Math.random() * styles.length)];
-    const randomMat = materials[Math.floor(Math.random() * materials.length)];
-    const randomLight = lighting[Math.floor(Math.random() * lighting.length)];
-
-    const prompt = `Premium commercial label for ${companyName}. Topic: ${description}. Style: ${randomStyle}. Material: ${randomMat}. Lighting: ${randomLight}. NO text, NO letters, NO words. High-end graphic design.`;
+    // Prompt striktně zakazuje objekty (objektivy, mobily, auta atd.)
+    const prompt = `High-end abstract aesthetic background for commercial packaging. Concept: ${description}. Visuals: ${randomStyle}. Style: Masterpiece graphic design, ultra-minimal, professional color palette. NO products, NO objects, NO people, NO text, NO letters.`;
 
     try {
-        const seed = Math.floor(Math.random() * 1000000);
         const encodedPrompt = encodeURIComponent(prompt);
         const imageUrl = `https://image.pollinations.ai/prompt/${encodedPrompt}?width=1200&height=500&nologo=true&seed=${seed}`;
 
@@ -35,15 +30,13 @@ export default async function handler(req, res) {
 
         const arrayBuffer = await imageResponse.arrayBuffer();
         const buffer = Buffer.from(arrayBuffer);
-        const dataUrl = `data:image/jpeg;base64,${buffer.toString('base64')}`;
-
-        // Pošleme zpět i informaci o tom, co jsme vygenerovali (pro popis v PDF)
+        
         res.status(200).json({ 
-            imageUrl: dataUrl, 
-            styleDescription: `${randomStyle.split(',')[0]} (${randomMat})` 
+            imageUrl: `data:image/jpeg;base64,${buffer.toString('base64')}`,
+            styleName: randomStyle.split(',')[0]
         });
 
     } catch (error) {
-        res.status(500).json({ error: `Chyba backendu: ${error.message}` });
+        res.status(500).json({ error: error.message });
     }
 }
