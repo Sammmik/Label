@@ -3,43 +3,62 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>AI Label Agent</title>
+    <title>AI Studio: Agent Edition</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@700;800&display=swap');
-        body { font-family: 'Plus Jakarta Sans', sans-serif; background-color: #050505; color: white;}
+        body { font-family: 'Plus Jakarta Sans', sans-serif; background-color: #050505; color: white; }
         .input-style { background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); border-radius: 1rem; padding: 1rem; width: 100%; outline: none; transition: 0.3s; color: white; }
         .input-style:focus { border-color: #3b82f6; box-shadow: 0 0 15px rgba(59,130,246,0.3); }
+        .btn-gradient { background: linear-gradient(135deg, #2563eb 0%, #4f46e5 100%); }
     </style>
 </head>
-<body class="min-h-screen p-4 flex items-center justify-center">
+<body class="min-h-screen p-4 flex items-start justify-center">
 
-    <div class="max-w-md w-full bg-[#111] p-8 rounded-[2rem] border border-white/5 shadow-2xl">
-        <h1 class="text-3xl font-black text-center mb-6 bg-gradient-to-r from-blue-400 to-indigo-500 bg-clip-text text-transparent italic">AI AGENT</h1>
+    <div class="max-w-md w-full bg-[#111] p-8 rounded-[2.5rem] border border-white/5 shadow-2xl mt-4 relative overflow-hidden">
+        <div class="absolute top-0 left-0 -mt-10 -ml-10 w-40 h-40 bg-blue-600/10 blur-[80px]"></div>
         
-        <div class="space-y-4">
-            <input type="text" id="compName" value="SETOS" class="input-style font-bold py-3" placeholder="Název firmy">
-            <textarea id="compDesc" rows="2" class="input-style text-sm py-3" placeholder="Co má AI nakreslit? (např. 3D prémiový dron na bílém pozadí)"></textarea>
+        <header class="text-center mb-8 relative z-10">
+            <h1 class="text-3xl font-black bg-gradient-to-r from-blue-400 to-indigo-500 bg-clip-text text-transparent uppercase italic tracking-tighter">AI AGENT</h1>
+            <p class="text-slate-500 text-[9px] tracking-[0.4em] uppercase mt-1 font-bold">Vercel & Fal.ai Studio</p>
+        </header>
+
+        <div class="space-y-4 relative z-10">
+            <div>
+                <label class="text-[9px] uppercase font-bold text-slate-500 ml-2">Název značky</label>
+                <input type="text" id="compName" value="SETOS" class="input-style font-bold py-3">
+            </div>
+
+            <div>
+                <label class="text-[9px] uppercase font-bold text-slate-500 ml-2">Zadání pro AI grafiku</label>
+                <textarea id="compDesc" rows="2" class="input-style text-sm py-3" placeholder="Např. 3D prémiový dron, futuristický styl, bílé pozadí"></textarea>
+            </div>
+
+            <div>
+                <label class="text-[9px] uppercase font-bold text-blue-500 ml-2">Cílový web pro QR kód</label>
+                <input type="text" id="qrLink" value="https://www.setos.cz" class="input-style text-blue-400 font-mono text-xs py-3">
+            </div>
             
-            <input type="text" id="qrLink" value="https://www.setos.cz" class="input-style text-blue-400 font-mono text-xs py-3" placeholder="Odkaz pro QR kód">
-            
-            <div id="logoDrop" class="relative bg-white/5 p-4 rounded-xl border-2 border-dashed border-white/20 text-center transition-all">
+            <div id="logoDrop" class="relative bg-white/5 p-4 rounded-2xl border-2 border-dashed border-white/20 text-center transition-all">
                 <input type="file" id="logoInput" accept="image/png, image/jpeg" class="absolute inset-0 opacity-0 cursor-pointer z-20">
                 <div class="flex flex-col items-center justify-center space-y-2">
-                    <img id="logoPreview" src="" class="hidden h-10 w-10 object-contain bg-white/10 rounded-lg p-1">
-                    <p id="uploadText" class="text-xs text-slate-400 uppercase font-bold tracking-widest">Nahrát logo (PNG)</p>
+                    <img id="logoPreview" src="" class="hidden h-10 w-10 object-contain bg-white/10 rounded-lg p-1 shadow-lg">
+                    <p id="uploadText" class="text-[10px] text-slate-400 uppercase font-bold tracking-widest">Přidat PNG Logo</p>
                 </div>
                 <div id="logoStore" data-blob="" class="hidden"></div>
             </div>
 
-            <button onclick="runAiAgent()" id="genBtn" class="w-full bg-blue-600 py-4 rounded-xl font-black text-lg hover:bg-blue-500 transition-all uppercase italic shadow-[0_0_20px_rgba(37,99,235,0.3)] mt-2">
+            <button onclick="runAiAgent()" id="genBtn" class="w-full btn-gradient py-5 rounded-[2rem] font-black text-xl shadow-2xl active:scale-95 transition-all uppercase italic mt-2">
                 Generovat Etiketu
             </button>
             
-            <div id="loader" class="hidden text-center mt-4">
-                <p id="statusMsg" class="text-blue-400 animate-pulse text-[10px] font-bold uppercase tracking-widest">Spojuji se serverem Vercel...</p>
+            <div id="loader" class="hidden text-center mt-6">
+                <div class="w-full bg-gray-900 h-1.5 rounded-full overflow-hidden mb-3">
+                    <div id="progressBar" class="bg-blue-500 h-full w-0 transition-all duration-500"></div>
+                </div>
+                <p id="statusMsg" class="text-blue-400 animate-pulse text-[10px] font-bold uppercase tracking-widest">Inicializace agenta...</p>
             </div>
         </div>
     </div>
@@ -49,31 +68,27 @@
     <script>
         const { jsPDF } = window.jspdf;
 
-        // ZPRACOVÁNÍ LOGA (s průhledností)
+        // LOGO HANDLER
         document.getElementById('logoInput').addEventListener('change', function(e) {
             const file = e.target.files[0];
             if (!file) return;
-            document.getElementById('uploadText').innerText = "Načítám...";
-            
             const reader = new FileReader();
-            reader.onload = function(event) {
+            reader.onload = (event) => {
                 const img = new Image();
-                img.onload = function() {
+                img.onload = () => {
                     const canvas = document.createElement('canvas');
                     canvas.width = 400; canvas.height = 400;
                     const ctx = canvas.getContext('2d');
                     ctx.clearRect(0, 0, 400, 400); 
                     const s = Math.min(380/img.width, 380/img.height);
                     ctx.drawImage(img, (400-img.width*s)/2, (400-img.height*s)/2, img.width*s, img.height*s);
-                    
                     const data = canvas.toDataURL('image/png');
                     document.getElementById('logoStore').setAttribute('data-blob', data);
-                    
                     document.getElementById('logoPreview').src = data;
                     document.getElementById('logoPreview').classList.remove('hidden');
                     document.getElementById('uploadText').innerText = "LOGO PŘIPRAVENO ✅";
                     document.getElementById('uploadText').classList.replace('text-slate-400', 'text-green-400');
-                    document.getElementById('logoDrop').classList.add('border-green-500/50', 'bg-green-500/5');
+                    document.getElementById('logoDrop').classList.add('border-green-500/30', 'bg-green-500/5');
                 };
                 img.src = event.target.result;
             };
@@ -84,6 +99,7 @@
             const btn = document.getElementById('genBtn');
             const loader = document.getElementById('loader');
             const statusMsg = document.getElementById('statusMsg');
+            const bar = document.getElementById('progressBar');
             
             const name = document.getElementById('compName').value;
             const desc = document.getElementById('compDesc').value;
@@ -94,82 +110,80 @@
             loader.classList.remove('hidden');
 
             try {
-                // 1. Spojení s backendem Vercelu (/api/generate.js)
-                statusMsg.innerText = "Agent generuje fotorealistický obraz...";
+                // KROK 1: VOLÁNÍ BACKENDU
+                statusMsg.innerText = "Agent generuje AI obraz...";
+                bar.style.width = "40%";
+                
                 const res = await fetch('/api/generate', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ companyName: name, description: desc })
                 });
                 
-                // OŠETŘENÍ TVOJÍ CHYBY Z OBRÁZKU
                 if (!res.ok) {
-                    const errorText = await res.text();
-                    throw new Error(`Chyba serveru (${res.status}): Zkontroluj složku /api/generate.js na Vercelu.`);
+                    const errData = await res.json().catch(() => ({}));
+                    throw new Error(errData.error || "Chyba na Vercel serveru.");
                 }
 
                 const data = await res.json();
-                if (!data.imageUrl) throw new Error("API Fal.ai nevrátilo obrázek. Zkontroluj API klíč.");
-
-                // 2. Tvorba QR kódu
-                statusMsg.innerText = "Sestavuji tiskové PDF...";
+                
+                // KROK 2: PŘÍPRAVA QR KÓDU
+                statusMsg.innerText = "Finalizace tiskových dat...";
+                bar.style.width = "70%";
                 const qrDiv = document.getElementById('qr-hidden');
                 qrDiv.innerHTML = "";
                 new QRCode(qrDiv, { text: qrUrl, width: 300, height: 300 });
                 await new Promise(r => setTimeout(r, 600));
                 const qrImg = qrDiv.querySelector('canvas').toDataURL("image/png");
 
-                // 3. Stáhnutí AI obrázku
+                // KROK 3: STAŽENÍ AI OBRÁZKU
                 const aiImgBase64 = await getBase64(data.imageUrl);
 
-                // 4. SESTAVENÍ KOMPOZICE PDF
+                // KROK 4: SESTAVENÍ PDF
                 const doc = new jsPDF({ orientation: 'l', unit: 'mm', format: [200, 50] });
 
-                // A) Hlavní AI Grafika (Zabírá levých 160mm)
+                // A) Pozadí z AI
                 doc.addImage(aiImgBase64, 'JPEG', 0, 0, 160, 50);
 
-                // B) Povinná bílá zóna pro tisk (Pravých 40mm)
-                doc.setFillColor(255, 255, 255); 
-                doc.rect(160, 0, 40, 50, 'F');
-                doc.setDrawColor(220, 220, 220); 
-                doc.setLineWidth(0.3); 
-                doc.line(160, 0, 160, 50);
+                // B) Bílá zóna pro tisk
+                doc.setFillColor(255, 255, 255); doc.rect(160, 0, 40, 50, 'F');
+                doc.setDrawColor(220, 220, 220); doc.setLineWidth(0.3); doc.line(160, 0, 160, 50);
 
-                // C) Logo (Pokud bylo nahráno)
-                let textStartX = 10;
+                // C) Logo & Texty
+                let startX = 10;
                 if (logoData && logoData.length > 100) {
-                    doc.addImage(logoData, 'PNG', 10, 10, 25, 25);
-                    textStartX = 40; // Odsazení textu vedle loga
+                    doc.addImage(logoData, 'PNG', 10, 12, 25, 25);
+                    startX = 40;
                 }
 
-                // D) Název firmy
                 doc.setTextColor(20, 20, 20); 
                 doc.setFontSize(26); 
-                doc.text(name.toUpperCase(), textStartX, 22);
+                doc.text(name.toUpperCase(), startX, 24);
 
-                // E) QR Kód a Zákonné údaje do pravé zóny
-                doc.addImage(qrImg, 'PNG', 170, 31, 16, 16);
-                doc.setTextColor(100, 100, 100); 
-                doc.setFontSize(5);
-                doc.text("LAW INFO | 300ml | BATCH 2026", 165, 5, {angle: -90});
-                doc.text(qrUrl.replace(/(^\w+:|^)\/\//, '').substring(0, 22), 178, 28, {align: 'center'});
+                // D) QR & Info
+                doc.addImage(qrImg, 'PNG', 171, 31, 17, 17);
+                doc.setTextColor(120, 120, 120); doc.setFontSize(5);
+                doc.text("AI PRODUCT DESIGN | BATCH 2026", 166, 5, {angle: -90});
+                doc.text(qrUrl.replace(/(^\w+:|^)\/\//, '').substring(0, 24), 180, 28, {align: 'center'});
 
-                doc.save(`Agent_Design_${name.replace(/\s+/g, '_')}.pdf`);
+                bar.style.width = "100%";
+                doc.save(`AI_Label_${name}.pdf`);
 
             } catch (err) {
-                alert(err.message);
+                alert("Chyba: " + err.message);
             } finally {
                 btn.disabled = false;
                 loader.classList.add('hidden');
+                bar.style.width = "0%";
             }
         }
 
         async function getBase64(url) {
-            const response = await fetch(url);
-            const blob = await response.blob();
-            return new Promise((resolve) => {
+            const res = await fetch(url);
+            const blob = await res.blob();
+            return new Promise((r) => {
                 const reader = new FileReader();
-                reader.onloadend = () => resolve(reader.result);
+                reader.onloadend = () => r(reader.result);
                 reader.readAsDataURL(blob);
             });
         }
