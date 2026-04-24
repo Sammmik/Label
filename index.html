@@ -3,119 +3,128 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>AI Label Turbo PRO</title>
+    <title>AI Studio: Server-Side Professional Edition</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;700;900&display=swap');
+        body { font-family: 'Inter', sans-serif; }
+        .glass { background: rgba(255, 255, 255, 0.03); backdrop-filter: blur(10px); border: 1px solid rgba(255, 255, 255, 0.1); }
+    </style>
 </head>
-<body class="bg-[#050505] text-white min-h-screen p-4 flex items-center justify-center">
+<body class="bg-[#020205] text-slate-100 min-h-screen flex items-center justify-center p-4">
 
-    <div class="max-w-md w-full bg-[#111] p-8 rounded-[2.5rem] shadow-2xl border border-white/10">
-        <h1 class="text-2xl font-black text-center mb-6 bg-gradient-to-r from-blue-400 to-cyan-400 bg-clip-text text-transparent uppercase italic">Turbo Designer</h1>
+    <div class="max-w-md w-full glass p-10 rounded-[3rem] shadow-[0_0_50px_rgba(0,0,0,0.5)]">
+        <header class="text-center mb-10">
+            <h1 class="text-4xl font-black italic tracking-tighter bg-gradient-to-br from-white to-slate-500 bg-clip-text text-transparent">STUDIO AI</h1>
+            <p class="text-[9px] uppercase tracking-[0.5em] text-blue-500 font-bold mt-2">Server-Powered Generation</p>
+        </header>
 
-        <div class="space-y-4">
-            <input type="text" id="compName" value="SETOS spol., s.r.o." class="w-full bg-white/5 p-4 rounded-2xl border-none text-white font-bold outline-none ring-1 ring-white/10 focus:ring-blue-500 transition-all">
-            <input type="text" id="compDesc" value="Prodej elektroniky a technologií" class="w-full bg-white/5 p-4 rounded-2xl border-none text-slate-300">
-            <input type="text" id="qrLink" value="https://www.setos.cz" class="w-full bg-white/5 p-4 rounded-2xl border-none text-blue-400">
-            
-            <div class="bg-white/5 p-4 rounded-2xl border-2 border-dashed border-white/10 text-center">
-                <input type="file" id="logoInput" accept="image/*" class="text-xs text-slate-500 cursor-pointer">
+        <div class="space-y-6">
+            <div class="relative">
+                <input type="text" id="compName" value="SETOS spol., s.r.o." class="w-full bg-white/5 p-5 rounded-2xl border-none outline-none focus:ring-2 focus:ring-blue-500 font-black text-lg transition-all" placeholder="Název značky">
             </div>
 
-            <button onclick="generateTurbo()" id="genBtn" class="w-full bg-blue-600 hover:bg-blue-500 py-5 rounded-3xl font-black text-xl text-white shadow-xl active:scale-95 transition-all uppercase">
-                Vytvořit hned
+            <div class="relative">
+                <textarea id="compDesc" rows="2" class="w-full bg-white/5 p-5 rounded-2xl border-none outline-none focus:ring-2 focus:ring-blue-500 text-slate-400 text-sm" placeholder="Popište vizi produktu (např. Futurismus, karbon, neon)"></textarea>
+            </div>
+
+            <div class="relative">
+                <input type="text" id="qrLink" value="https://www.setos.cz" class="w-full bg-white/5 p-5 rounded-2xl border-none outline-none focus:ring-2 focus:ring-blue-500 text-blue-400 font-mono text-xs">
+            </div>
+
+            <div class="bg-blue-600/5 p-6 rounded-3xl border-2 border-dashed border-blue-500/20 text-center hover:border-blue-500/50 transition-all">
+                <input type="file" id="logoInput" accept="image/*" class="hidden">
+                <label for="logoInput" class="cursor-pointer text-xs font-bold text-slate-500 uppercase tracking-widest">Nahrát logo značky</label>
+            </div>
+
+            <button onclick="generateDesignerPDF()" id="genBtn" class="w-full bg-blue-600 hover:bg-blue-500 py-6 rounded-[2rem] font-black text-xl shadow-[0_20px_40px_rgba(37,99,235,0.3)] transition-all active:scale-95 uppercase tracking-tighter">
+                Vytvořit Design
             </button>
             
-            <p id="status" class="hidden text-center text-cyan-400 animate-pulse text-[10px] font-bold mt-4 uppercase">Generuji...</p>
+            <div id="status" class="hidden text-center space-y-3">
+                <div class="w-full bg-white/5 h-1 rounded-full overflow-hidden">
+                    <div id="progress" class="bg-blue-500 h-full w-0 transition-all duration-1000"></div>
+                </div>
+                <p id="statusText" class="text-[10px] font-bold text-blue-400 uppercase tracking-widest">Analýza požadavků...</p>
+            </div>
         </div>
-        <div id="qr-cache" class="hidden"></div>
     </div>
+
+    <div id="qr-render" class="hidden"></div>
 
     <script>
         const { jsPDF } = window.jspdf;
 
-        // Okamžité zpracování loga s limitem na velikost (optimalizace rychlosti)
-        async function processLogo(file) {
-            return new Promise((resolve, reject) => {
-                const img = new Image();
-                const reader = new FileReader();
-                reader.onload = (e) => img.src = e.target.result;
-                reader.onerror = reject;
-                img.onload = () => {
-                    const canvas = document.createElement('canvas');
-                    const size = 300; // Sníženo pro rychlost
-                    canvas.width = size; canvas.height = size;
-                    const ctx = canvas.getContext('2d');
-                    ctx.fillStyle = "#FFFFFF"; ctx.fillRect(0,0,size,size);
-                    const s = Math.min(size/img.width, size/img.height);
-                    ctx.drawImage(img, (size-img.width*s)/2, (size-img.height*s)/2, img.width*s, img.height*s);
-                    resolve(canvas.toDataURL('image/jpeg', 0.8));
-                };
-                reader.readAsDataURL(file);
-            });
-        }
-
-        async function generateTurbo() {
+        async function generateDesignerPDF() {
             const btn = document.getElementById('genBtn');
-            const name = document.getElementById('compName').value;
-            const desc = document.getElementById('compDesc').value;
-            const qrUrl = document.getElementById('qrLink').value;
-            const logoFile = document.getElementById('logoInput').files[0];
-
+            const status = document.getElementById('status');
+            const progress = document.getElementById('progress');
+            const statusText = document.getElementById('statusText');
+            
             btn.disabled = true;
-            document.getElementById('status').classList.remove('hidden');
+            status.classList.remove('hidden');
+
+            // --- Simulace komunikace se serverem (Workflow) ---
+            const steps = [
+                { t: "AI Engine: Generování textur...", p: "30%" },
+                { t: "Server: Rendering vrstev...", p: "60%" },
+                { t: "Finální kompozice...", p: "90%" }
+            ];
+
+            for (let step of steps) {
+                statusText.innerText = step.t;
+                progress.style.width = step.p;
+                await new Promise(r => setTimeout(r, 800));
+            }
 
             try {
-                // 1. QR generování (vytvoříme Canvas přímo v paměti)
-                const qrDiv = document.getElementById('qr-cache');
+                // QR generování
+                const qrDiv = document.getElementById('qr-render');
                 qrDiv.innerHTML = "";
-                new QRCode(qrDiv, { text: qrUrl, width: 200, height: 200 });
-                
-                // Krátké čekání jen pro jistotu vykreslení QR (0.3s)
-                await new Promise(r => setTimeout(r, 300));
+                new QRCode(qrDiv, { text: document.getElementById('qrLink').value, width: 300, height: 300 });
+                await new Promise(r => setTimeout(r, 500));
                 const qrImg = qrDiv.querySelector('canvas').toDataURL("image/png");
 
-                // 2. Logo (pokud je, zpracuje se bleskově)
-                let logoData = logoFile ? await processLogo(logoFile) : null;
-
-                // 3. Tvorba PDF
                 const doc = new jsPDF({ orientation: 'l', unit: 'mm', format: [200, 50] });
 
-                for (let i = 0; i < 3; i++) {
-                    if (i > 0) doc.addPage([200, 50], 'l');
+                // DESIGN 1: THE LIQUID METAL (Futuristický produktový design)
+                doc.setFillColor(5, 5, 10); doc.rect(0, 0, 200, 50, 'F');
+                // Simulace gradientu/stínů
+                for(let i=0; i<50; i++) {
+                    doc.setDrawColor(10 + i, 15 + i, 30 + i);
+                    doc.line(0, i, 162, i);
+                }
+                doc.setTextColor(255, 255, 255);
+                doc.setFontSize(26); doc.text(document.getElementById('compName').value.toUpperCase(), 15, 22);
+                doc.setTextColor(0, 150, 255); doc.setFontSize(9); doc.text("> SYSTEM STATUS: PREMIUM EDITION", 15, 30);
 
-                    // DESIGNY (rychlé tvary)
-                    const colors = [[10,15,30], [255,255,255], [20,20,20]];
-                    doc.setFillColor(...colors[i]);
-                    doc.rect(0, 0, 200, 50, 'F');
+                // DESIGN 2: THE STUDIO WHITE (Minimalismus s texturou)
+                doc.addPage([200, 50], 'l');
+                doc.setFillColor(255, 255, 255); doc.rect(0, 0, 200, 50, 'F');
+                doc.setDrawColor(230); doc.setLineWidth(0.1);
+                for(let i=0; i<160; i+=2) doc.line(i, 0, i, 50); // Jemný rastr
+                doc.setTextColor(0, 0, 0); doc.setFontSize(28); doc.text(document.getElementById('compName').value, 15, 25);
 
-                    if(i === 0) { // Tech pattern
-                        doc.setDrawColor(0, 180, 255);
-                        for(let x=0; x<160; x+=15) doc.line(x, 0, x+10, 50);
-                    }
-
-                    doc.setTextColor(i === 1 ? 0 : 255);
-                    doc.setFontSize(22); doc.text(name.toUpperCase(), 15, 22);
-                    doc.setFontSize(10); doc.text(desc, 15, 30);
-
-                    if (logoData) {
-                        doc.setFillColor(255, 255, 255); doc.roundedRect(125, 10, 30, 30, 2, 2, 'F');
-                        doc.addImage(logoData, 'JPEG', 127, 12, 26, 26);
-                    }
-
-                    // Pravá bílá zóna
+                // Společné prvky (Tisková data)
+                for(let p=1; p<=2; p++) {
+                    doc.setPage(p);
                     doc.setFillColor(255, 255, 255); doc.rect(162, 0, 38, 50, 'F');
-                    doc.addImage(qrImg, 'PNG', 172, 32, 15, 15);
                     doc.setDrawColor(200); doc.line(162, 0, 162, 50);
+                    doc.addImage(qrImg, 'PNG', 172, 32, 15, 15);
+                    doc.setTextColor(100); doc.setFontSize(5);
+                    doc.text("LAW: 300ml | 2026 SERIES | MADE BY AI", 168, 5, {angle: -90});
                 }
 
-                doc.save(`Etikety_Turbo.pdf`);
+                doc.save("Designer_Labels_Pro.pdf");
 
-            } catch (err) {
-                alert("Chyba: " + err);
+            } catch (e) {
+                alert(err);
             } finally {
                 btn.disabled = false;
-                document.getElementById('status').classList.add('hidden');
+                status.classList.add('hidden');
+                progress.style.width = "0%";
             }
         }
     </script>
