@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>AI Studio: Unified Design Engine</title>
+    <title>AI Studio: Randomization Engine</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
@@ -19,19 +19,24 @@
 
     <div class="max-w-md w-full space-y-4 pt-4">
         <header class="text-center">
-            <h1 class="text-3xl font-black tracking-tighter italic">UNIFIED <span class="text-blue-500">ENGINE</span></h1>
-            <p class="text-[9px] uppercase tracking-[0.3em] text-gray-500 font-bold italic">Seamless Integration Mode</p>
+            <h1 class="text-3xl font-black tracking-tighter italic">TRUE <span class="text-blue-500">RANDOM</span></h1>
+            <p class="text-[9px] uppercase tracking-[0.3em] text-gray-500 font-bold italic">Generative Chaos Engine</p>
         </header>
 
         <div class="glass p-5 space-y-4 shadow-2xl">
             <div>
-                <label class="text-[9px] uppercase font-black text-gray-500 mb-1 block">Cílové URL pro analýzu</label>
-                <input type="text" id="compWeb" value="https://www.setos.cz" class="input-ai border-b border-blue-900/50 pb-2">
+                <label class="text-[9px] uppercase font-black text-gray-500 mb-1 block">Značka (Text na etiketě)</label>
+                <input type="text" id="compName" value="SETOS PREMIUM" class="input-ai border-b border-blue-900/50 pb-2">
             </div>
 
             <div>
-                <label class="text-[9px] uppercase font-black text-gray-500 mb-1 block mt-2">Sémantický popis firmy</label>
-                <textarea id="compDesc" rows="2" class="input-ai border-b border-blue-900/50 pb-2">Distribuce prémiové elektroniky, mobilních technologií a lifestyle doplňků.</textarea>
+                <label class="text-[9px] uppercase font-black text-gray-500 mb-1 block mt-2">Sémantický popis produktu</label>
+                <textarea id="compDesc" rows="2" class="input-ai border-b border-blue-900/50 pb-2">Distribuce prémiové elektroniky a lifestyle technologií.</textarea>
+            </div>
+
+            <div class="border-l-2 border-blue-500 pl-3">
+                <label class="text-[9px] uppercase font-black text-blue-500 mb-1 block mt-2">Odkaz pro QR kód (URL)</label>
+                <input type="text" id="qrLink" value="https://www.setos.cz/produkty" class="input-ai border-b border-blue-900/50 pb-2 text-blue-400">
             </div>
 
             <div id="logoDrop" class="relative border-2 border-dashed border-gray-800 rounded-xl p-4 text-center transition-all hover:bg-white/5 cursor-pointer mt-4">
@@ -44,12 +49,12 @@
             </div>
 
             <button onclick="runGenerativeEngine()" id="genBtn" class="w-full bg-blue-600 hover:bg-blue-500 py-4 rounded-xl font-black text-lg shadow-[0_0_30px_rgba(37,99,235,0.3)] active:scale-95 transition-all uppercase mt-4">
-                Generovat Jednotný Design
+                Vygenerovat Unikátní Design
             </button>
         </div>
 
         <div id="aiStatus" class="hidden space-y-2 px-2 pb-8">
-            <div class="flex justify-between text-[9px] font-bold uppercase text-blue-400"><span id="aiStep">Analyzuji data...</span><span id="aiPerc">0%</span></div>
+            <div class="flex justify-between text-[9px] font-bold uppercase text-blue-400"><span id="aiStep">Počítám matematické modely...</span><span id="aiPerc">0%</span></div>
             <div class="w-full bg-gray-900 h-1 rounded-full overflow-hidden"><div id="aiBar" class="bg-blue-500 h-full w-0 transition-all duration-300"></div></div>
         </div>
     </div>
@@ -59,7 +64,7 @@
     <script>
         const { jsPDF } = window.jspdf;
 
-        // 1. OPRAVENÝ LOGO ENGINE PRO PRŮHLEDNOST
+        // Vložení a příprava loga s průhledností
         document.getElementById('logoInput').addEventListener('change', function(e) {
             const file = e.target.files[0];
             if (!file) return;
@@ -70,14 +75,9 @@
                     const canvas = document.createElement('canvas');
                     canvas.width = 400; canvas.height = 400;
                     const ctx = canvas.getContext('2d');
-                    
-                    // ZMĚNA: Žádné bílé pozadí! Udržujeme canvas čistý (průhledný).
                     ctx.clearRect(0, 0, 400, 400); 
-                    
                     const s = Math.min(380/img.width, 380/img.height);
                     ctx.drawImage(img, (400-img.width*s)/2, (400-img.height*s)/2, img.width*s, img.height*s);
-                    
-                    // ZMĚNA: Exportujeme jako PNG, aby se zachovala průhlednost (Alpha channel)
                     const data = canvas.toDataURL('image/png');
                     
                     document.getElementById('logoStore').setAttribute('data-blob', data);
@@ -91,38 +91,45 @@
             reader.readAsDataURL(file);
         });
 
-        // 2. MATEMATICKÉ VZORY
+        // NÁHODNÝ GENERÁTOR VZORŮ (Chaos Engine)
         const PatternEngine = {
-            drawNetwork(doc, r, g, b) {
+            drawNetwork(doc, r, g, b, density) {
                 doc.setDrawColor(r, g, b);
-                doc.setLineWidth(0.1);
+                doc.setLineWidth(Math.random() * 0.2 + 0.1);
                 let points = [];
-                for(let i=0; i<45; i++) points.push({x: Math.random()*162, y: Math.random()*50});
+                let pointCount = Math.floor(Math.random() * 30) + density; // Náhodná hustota
+                for(let i=0; i<pointCount; i++) points.push({x: Math.random()*162, y: Math.random()*50});
+                
                 for(let i=0; i<points.length; i++) {
                     doc.circle(points[i].x, points[i].y, 0.4, 'F');
                     for(let j=i+1; j<points.length; j++) {
-                        if(Math.hypot(points[i].x - points[j].x, points[i].y - points[j].y) < 22) {
+                        if(Math.hypot(points[i].x - points[j].x, points[i].y - points[j].y) < (Math.random() * 15 + 15)) {
                             doc.line(points[i].x, points[i].y, points[j].x, points[j].y);
                         }
                     }
                 }
             },
-            drawWaves(doc, r, g, b) {
+            drawWaves(doc, r, g, b, frequency) {
                 doc.setDrawColor(r, g, b);
-                for(let w=0; w<7; w++) {
-                    doc.setLineWidth(Math.random() * 0.5 + 0.1);
+                let waveCount = Math.floor(Math.random() * 5) + 3; // Náhodný počet vln
+                for(let w=0; w<waveCount; w++) {
+                    doc.setLineWidth(Math.random() * 0.8 + 0.1);
                     let yOffset = Math.random() * 50;
+                    let speed = Math.random() * 0.2 + 0.05;
                     for(let x=0; x<162; x+=2) {
-                        doc.circle(x, yOffset + Math.sin(x * 0.1 + w) * 12, 0.2, 'F');
+                        doc.circle(x, yOffset + Math.sin(x * speed + w) * frequency, 0.2, 'F');
                     }
                 }
             },
-            drawFragments(doc, r, g, b) {
+            drawFragments(doc, r, g, b, count) {
                 doc.setDrawColor(r, g, b);
-                for(let i=0; i<35; i++) {
-                    doc.setLineWidth(Math.random() * 2);
-                    let x = Math.random()*162; let y = Math.random()*50; let len = Math.random()*35 + 5;
-                    doc.line(x, y, x + len, y - len/3);
+                let fragCount = Math.floor(Math.random() * 20) + count; // Náhodný počet úlomků
+                for(let i=0; i<fragCount; i++) {
+                    doc.setLineWidth(Math.random() * 2.5);
+                    let x = Math.random()*162; let y = Math.random()*50; 
+                    let len = Math.random()*40 + 5;
+                    let angle = Math.random() > 0.5 ? len/2 : -len/2; // Náhodný úhel (nahoru nebo dolů)
+                    doc.line(x, y, x + len, y + angle);
                 }
             }
         };
@@ -133,75 +140,106 @@
             const bar = document.getElementById('aiBar');
             const step = document.getElementById('aiStep');
             
-            const web = document.getElementById('compWeb').value;
+            const brandName = document.getElementById('compName').value;
             const desc = document.getElementById('compDesc').value;
+            const link = document.getElementById('qrLink').value; // SPRÁVNÝ ODKAZ PRO QR
             const logoData = document.getElementById('logoStore').getAttribute('data-blob');
 
             btn.disabled = true; status.classList.remove('hidden');
 
-            const phases = [{ s: "Analyzuji značku...", p: "30%" }, { s: "Renderuji průhlednosti...", p: "70%" }, { s: "Komponuji PDF...", p: "100%" }];
+            const phases = [{ s: "Mixování náhodných palet...", p: "33%" }, { s: "Kreslení chaotické geometrie...", p: "66%" }, { s: "Finalizace PDF kompozice...", p: "100%" }];
             for(let phase of phases) {
                 step.innerText = phase.s; bar.style.width = phase.p;
                 await new Promise(r => setTimeout(r, 600));
             }
 
             try {
-                let theme = "MODERN";
-                if ((web+desc).toLowerCase().match(/elektro|tech|it/)) theme = "TECH";
-                
+                // QR generujeme přímo z pole `qrLink`
                 const qrDiv = document.getElementById('qr-hidden'); qrDiv.innerHTML = "";
-                new QRCode(qrDiv, { text: web, width: 300, height: 300 });
+                new QRCode(qrDiv, { text: link, width: 300, height: 300 });
                 await new Promise(r => setTimeout(r, 600));
                 const qrImg = qrDiv.querySelector('canvas').toDataURL("image/png");
 
                 const doc = new jsPDF({ orientation: 'l', unit: 'mm', format: [200, 50] });
-                let brandName = web.replace(/(^\w+:|^)\/\//, '').split('.')[0];
-                brandName = (brandName === 'www' ? web.split('.')[1] : brandName).toUpperCase();
+
+                // FUNKCE PRO NÁHODNOU BARVU
+                const getRandomColor = (min, max) => [
+                    Math.floor(Math.random() * (max - min) + min),
+                    Math.floor(Math.random() * (max - min) + min),
+                    Math.floor(Math.random() * (max - min) + min)
+                ];
 
                 for (let i = 0; i < 3; i++) {
                     if (i > 0) doc.addPage([200, 50], 'l');
 
-                    // 1. VYKRESLENÍ POZADÍ A VZORŮ (Spodní vrstva)
-                    if (i === 0) { 
-                        doc.setFillColor(6, 8, 12); doc.rect(0, 0, 200, 50, 'F');
-                        PatternEngine.drawNetwork(doc, 0, 120, 255); 
-                        doc.setTextColor(255);
-                    } else if (i === 1) { 
-                        doc.setFillColor(248, 248, 250); doc.rect(0, 0, 200, 50, 'F');
-                        PatternEngine.drawFragments(doc, 180, 190, 210); 
-                        doc.setTextColor(10, 15, 30);
-                    } else { 
-                        doc.setFillColor(15, 12, 18); doc.rect(0, 0, 200, 50, 'F');
-                        PatternEngine.drawWaves(doc, 255, 40, 80); 
-                        doc.setTextColor(255);
-                    }
-
-                    // 2. NOVÁ KOMPOZICE (Logo vlevo, texty uprostřed - Sjednocený vzhled)
                     let textStartX = 15;
+                    let fontColor = 255;
+                    let descColor = [150, 150, 150];
 
-                    if (logoData && logoData.length > 100) {
-                        // Vložíme PNG logo BEZ bílého pozadí. Vzor pod ním bude prosvítat!
-                        doc.addImage(logoData, 'PNG', 10, 10, 30, 30);
-                        textStartX = 45; // Posuneme texty doprava vedle loga
+                    // --- TRUE RANDOM KONTROLER ---
+                    // 1. Náhodný výběr vzoru pro aktuální stranu (0 = Síť, 1 = Fragmenty, 2 = Vlny)
+                    const patternType = Math.floor(Math.random() * 3);
+                    
+                    // 2. Náhodný režim (Tmavý nebo Světlý)
+                    const isDarkMode = Math.random() > 0.3; // 70% šance na tmavý design (vypadá prémiověji)
+
+                    if (isDarkMode) {
+                        // Tmavé pozadí s jasnými prvky
+                        doc.setFillColor(...getRandomColor(5, 20)); doc.rect(0, 0, 200, 50, 'F');
+                        let accentColor = getRandomColor(100, 255); // Světlý akcent pro kreslení
+                        
+                        if (patternType === 0) PatternEngine.drawNetwork(doc, ...accentColor, 30);
+                        if (patternType === 1) PatternEngine.drawFragments(doc, ...accentColor, 20);
+                        if (patternType === 2) PatternEngine.drawWaves(doc, ...accentColor, 15);
+                        
+                        fontColor = 255;
+                        descColor = accentColor;
+                    } else {
+                        // Světlé pozadí s tmavými prvky
+                        doc.setFillColor(...getRandomColor(240, 255)); doc.rect(0, 0, 200, 50, 'F');
+                        let accentColor = getRandomColor(10, 100); // Tmavý akcent pro kreslení
+                        
+                        if (patternType === 0) PatternEngine.drawNetwork(doc, ...accentColor, 40);
+                        if (patternType === 1) PatternEngine.drawFragments(doc, ...accentColor, 30);
+                        if (patternType === 2) PatternEngine.drawWaves(doc, ...accentColor, 8);
+                        
+                        fontColor = 0;
+                        descColor = accentColor;
                     }
 
-                    // 3. TYPOGRAFIE (Přizpůsobí se přítomnosti loga)
-                    doc.setFontSize(28); 
-                    doc.text(brandName, textStartX, 24);
-                    doc.setFontSize(9); 
-                    doc.setTextColor(i === 1 ? 100 : 150);
-                    doc.text(`SERIES: ${theme} | ALGORITHM: V3-OMNI`, textStartX, 32);
+                    // --- VLOŽENÍ LOGA A ROZLOŽENÍ ---
+                    if (logoData && logoData.length > 100) {
+                        doc.addImage(logoData, 'PNG', 10, 10, 30, 30);
+                        textStartX = 45; 
+                    }
 
-                    // 4. INFORMAČNÍ BLOK (Čistá funkční zóna vpravo)
+                    // --- TYPOGRAFIE ---
+                    doc.setTextColor(fontColor);
+                    doc.setFontSize(26); 
+                    doc.text(brandName.toUpperCase(), textStartX, 24);
+                    
+                    doc.setFontSize(9); 
+                    doc.setTextColor(...descColor);
+                    // Vygenerujeme i unikátní ID pro každý design, aby to vypadalo technicky
+                    const hash = Math.random().toString(36).substr(2, 6).toUpperCase();
+                    doc.text(`${desc} | ID: ${hash}`, textStartX, 32);
+
+                    // --- ZÁKONNÁ INFO ZÓNA ---
                     doc.setFillColor(255); doc.rect(162, 0, 38, 50, 'F');
-                    doc.setDrawColor(220); doc.setLineWidth(0.5); doc.line(162, 0, 162, 50);
+                    doc.setDrawColor(200); doc.setLineWidth(0.5); doc.line(162, 0, 162, 50);
+                    
+                    // QR kód z pole qrLink
                     doc.addImage(qrImg, 'PNG', 172, 31, 16, 16);
+                    
                     doc.setTextColor(80); doc.setFontSize(5);
-                    doc.text("LAW INFO: 300ml | BATCH 2026", 168, 5, {angle: -90});
-                    doc.text(web.replace(/(^\w+:|^)\/\//, '').substring(0, 25), 180, 28, {align: 'center'});
+                    doc.text("PRODUCT BATCH 2026 | " + brandName.toUpperCase(), 168, 5, {angle: -90});
+                    
+                    // Vypsání čistého odkazu (bez https://)
+                    let cleanLink = link.replace(/(^\w+:|^)\/\//, '').substring(0, 25);
+                    doc.text(cleanLink, 180, 28, {align: 'center'});
                 }
 
-                doc.save(`Unified_Design_${brandName}.pdf`);
+                doc.save(`Unikatni_Kolekce_${Date.now()}.pdf`);
             } catch (err) { alert(err); } finally {
                 btn.disabled = false; status.classList.add('hidden'); bar.style.width = "0%";
             }
