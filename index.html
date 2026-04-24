@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>AI Agent: Triple Design Studio</title>
+    <title>AI Agent: Pro Edition</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
@@ -17,11 +17,9 @@
 <body class="min-h-screen p-4 flex items-start justify-center">
 
     <div class="max-w-md w-full bg-[#111] p-8 rounded-[2rem] border border-white/5 shadow-2xl mt-4 relative overflow-hidden">
-        <div class="absolute top-0 left-0 -mt-10 -ml-10 w-40 h-40 bg-blue-600/10 blur-[80px]"></div>
-        
         <header class="text-center mb-8 relative z-10">
             <h1 class="text-3xl font-black bg-gradient-to-r from-blue-400 to-indigo-500 bg-clip-text text-transparent uppercase italic tracking-tighter text-center">AI AGENT PRO</h1>
-            <p class="text-slate-500 text-[9px] tracking-[0.4em] uppercase mt-1 font-bold">Triple Design Label Engine</p>
+            <p class="text-slate-500 text-[9px] tracking-[0.4em] uppercase mt-1 font-bold">Triple Design Studio</p>
         </header>
 
         <div class="space-y-4 relative z-10">
@@ -31,8 +29,8 @@
             </div>
 
             <div>
-                <label class="text-[9px] uppercase font-bold text-slate-500 ml-2">Abstraktní vize (např. Tekutý kov, neonový kouř)</label>
-                <textarea id="compDesc" rows="2" class="input-style text-sm py-3" placeholder="Popiš náladu, barvy a styl..."></textarea>
+                <label class="text-[9px] uppercase font-bold text-slate-500 ml-2">Abstraktní vize</label>
+                <textarea id="compDesc" rows="2" class="input-style text-sm py-3" placeholder="Např: Zlaté vlny a černý tekutý kov..."></textarea>
             </div>
 
             <div>
@@ -49,7 +47,7 @@
                 <div id="logoStore" data-blob="" class="hidden"></div>
             </div>
 
-            <button onclick="runTripleAgent()" id="genBtn" class="w-full bg-blue-600 py-5 rounded-[2rem] font-black text-xl shadow-2xl active:scale-95 transition-all uppercase italic mt-2">
+            <button onclick="runTripleAgent()" id="genBtn" class="w-full bg-blue-600 py-5 rounded-[2rem] font-black text-xl shadow-2xl active:scale-95 transition-all uppercase italic mt-2 hover:bg-blue-500">
                 Generovat 3 návrhy
             </button>
             
@@ -57,7 +55,7 @@
                 <div class="w-full bg-gray-900 h-2 rounded-full overflow-hidden mb-3">
                     <div id="progressBar" class="bg-blue-500 h-full w-0 transition-all duration-300"></div>
                 </div>
-                <p id="statusMsg" class="text-blue-400 animate-pulse text-[10px] font-bold uppercase tracking-widest">Agent připravuje varianty...</p>
+                <p id="statusMsg" class="text-blue-400 animate-pulse text-[10px] font-bold uppercase tracking-widest">Agent tvoří varianty...</p>
             </div>
         </div>
     </div>
@@ -67,7 +65,7 @@
     <script>
         const { jsPDF } = window.jspdf;
 
-        // LOGO HANDLER
+        // ULOŽENÍ LOGA
         document.getElementById('logoInput').addEventListener('change', function(e) {
             const file = e.target.files[0];
             if (!file) return;
@@ -106,7 +104,7 @@
             loader.classList.remove('hidden');
 
             try {
-                // 1. QR KÓD
+                // QR KÓD
                 const qrDiv = document.getElementById('qr-hidden');
                 qrDiv.innerHTML = "";
                 new QRCode(qrDiv, { text: qrUrl, width: 300, height: 300 });
@@ -119,64 +117,60 @@
                 for (let i = 0; i < 3; i++) {
                     if (i > 0) doc.addPage([200, 50], 'l');
                     
-                    statusMsg.innerText = `Generuji unikátní návrh ${i + 1} ze 3...`;
+                    statusMsg.innerText = `Generuji unikátní abstrakt ${i + 1} ze 3...`;
                     bar.style.width = `${(i + 1) * 33}%`;
 
-                    // Volání backendu pro každou stránku zvlášť
                     const res = await fetch('/api/generate', {
                         method: 'POST',
                         headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify({ description: desc })
+                        body: JSON.stringify({ description: desc, companyName: name })
                     });
                     
-                    if (!res.ok) throw new Error("Chyba při komunikaci s AI agentem.");
+                    if (!res.ok) {
+                        const err = await res.json().catch(()=>({}));
+                        throw new Error(err.error || "Chyba komunikace s Vercel");
+                    }
+                    
                     const data = await res.json();
-                    const aiImg = await getBase64(data.imageUrl);
+                    
+                    // ZMĚNA: data.imageUrl je nyní rovnou Base64 obrázek! Žádné blokace prohlížeče.
+                    const aiImgBase64 = data.imageUrl;
 
-                    // A) AI POZADÍ
-                    doc.addImage(aiImg, 'JPEG', 0, 0, 160, 50);
+                    // KRESLENÍ DO PDF
+                    doc.addImage(aiImgBase64, 'JPEG', 0, 0, 160, 50);
 
-                    // B) BÍLÁ ZÓNA
+                    // Bílá zóna vpravo
                     doc.setFillColor(255); doc.rect(160, 0, 40, 50, 'F');
                     doc.setDrawColor(230); doc.line(160, 0, 160, 50);
 
-                    // C) LOGO A TEXTY
+                    // Logo a Texty
                     let startX = 10;
-                    if (logoData) {
+                    if (logoData && logoData.length > 100) {
                         doc.addImage(logoData, 'PNG', 10, 12, 25, 25);
                         startX = 40;
                     }
 
+                    // Černý název firmy do pravé zóny
                     doc.setTextColor(20); doc.setFontSize(26); 
                     doc.text(name.toUpperCase(), startX, 24);
 
-                    // D) QR A INFO
+                    // QR a Zákonné info
                     doc.addImage(qrImg, 'PNG', 171, 31, 17, 17);
                     doc.setTextColor(150); doc.setFontSize(5);
-                    doc.text(`DESIGN VAR ${i+1} | BATCH 2026`, 166, 5, {angle: -90});
+                    doc.text(`AI ABSTRACT VOL ${i+1} | BATCH 2026`, 166, 5, {angle: -90});
                     doc.text(qrUrl.replace(/(^\w+:|^)\/\//, '').substring(0, 24), 180, 28, {align: 'center'});
                 }
 
                 bar.style.width = "100%";
-                doc.save(`AI_Label_Collection_${name}.pdf`);
+                doc.save(`Abstract_Labels_${name}.pdf`);
 
             } catch (err) {
-                alert("Chyba: " + err.message);
+                alert("Kritická chyba: " + err.message);
             } finally {
                 btn.disabled = false;
                 loader.classList.add('hidden');
                 bar.style.width = "0%";
             }
-        }
-
-        async function getBase64(url) {
-            const res = await fetch(url);
-            const blob = await res.blob();
-            return new Promise((r) => {
-                const reader = new FileReader();
-                reader.onloadend = () => r(reader.result);
-                reader.readAsDataURL(blob);
-            });
         }
     </script>
 </body>
