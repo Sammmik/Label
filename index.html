@@ -3,46 +3,100 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>AI Designer: Abstract & Type</title>
+    <title>AI Agent: Ultra Minimalist</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
     <style>
-        @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@200;400;800&family=JetBrains+Mono:wght@400;800&display=swap');
-        body { font-family: 'Plus Jakarta Sans', sans-serif; background: #000; color: #fff; }
-        .glass { background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.1); border-radius: 2rem; }
-        .input-box { background: rgba(0,0,0,0.4); border: 1px solid rgba(255,255,255,0.1); border-radius: 1rem; padding: 1rem; width: 100%; outline: none; color: #fff; }
-        .btn-ai { background: linear-gradient(135deg, #6366f1 0%, #a855f7 100%); transition: 0.3s; }
+        @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@200;300;400&family=Inter:wght@100;200;400&display=swap');
+        
+        body { 
+            font-family: 'Inter', sans-serif; 
+            background: #000; 
+            color: #fff; 
+            -webkit-font-smoothing: antialiased;
+        }
+
+        .minimal-card { 
+            background: rgba(255,255,255,0.02); 
+            border: 1px solid rgba(255,255,255,0.08); 
+            backdrop-filter: blur(20px);
+            border-radius: 2.5rem; 
+        }
+
+        .input-minimal { 
+            background: transparent; 
+            border-bottom: 1px solid rgba(255,255,255,0.2); 
+            padding: 0.75rem 0; 
+            width: 100%; 
+            outline: none; 
+            transition: 0.4s; 
+            color: #fff;
+            font-weight: 200;
+        }
+
+        .input-minimal:focus { 
+            border-bottom-color: #fff; 
+        }
+
+        .btn-generate {
+            background: #fff;
+            color: #000;
+            padding: 1.25rem;
+            border-radius: 2rem;
+            font-weight: 400;
+            letter-spacing: 0.2em;
+            text-transform: uppercase;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        .btn-generate:active { transform: scale(0.96); opacity: 0.9; }
+        .btn-generate:disabled { background: #333; color: #666; cursor: not-allowed; }
+
+        #progressBar { transition: width 0.5s ease; }
     </style>
 </head>
-<body class="min-h-screen p-4 flex items-start justify-center">
+<body class="min-h-screen p-6 flex items-center justify-center">
 
-    <div class="max-w-md w-full glass p-8 shadow-2xl mt-4 relative">
-        <header class="text-center mb-8">
-            <h1 class="text-2xl font-extrabold tracking-tighter uppercase italic">Designer <span class="text-purple-500">Agent</span></h1>
-            <p class="text-[9px] text-gray-500 tracking-[0.5em] font-bold uppercase">Abstract & Typography Engine</p>
+    <div class="max-w-md w-full minimal-card p-10 shadow-2xl relative overflow-hidden">
+        <div class="absolute top-0 left-0 w-full h-full bg-gradient-to-br from-blue-500/5 to-purple-500/5 pointer-events-none"></div>
+
+        <header class="text-center mb-12 relative z-10">
+            <h1 class="text-xl font-extralight tracking-[0.6em] uppercase">Minimal <span class="font-normal text-slate-400 italic">Agent</span></h1>
+            <div class="h-[1px] w-12 bg-white/20 mx-auto mt-4"></div>
         </header>
 
-        <div class="space-y-4">
-            <input type="text" id="compName" value="SETOS" class="input-box font-bold uppercase tracking-widest">
-            <textarea id="compDesc" rows="2" class="input-box text-sm" placeholder="Vize (např. Temná hlubina, zlatý prach, ledový klid)"></textarea>
-            <input type="text" id="qrLink" value="https://www.setos.cz" class="input-box text-xs text-purple-400 font-mono">
+        <div class="space-y-8 relative z-10">
+            <div class="group">
+                <p class="text-[9px] uppercase tracking-[0.3em] text-slate-500 mb-1 group-focus-within:text-white transition">Značka</p>
+                <input type="text" id="compName" value="SETOS" class="input-minimal uppercase tracking-[0.2em]">
+            </div>
+
+            <div class="group">
+                <p class="text-[9px] uppercase tracking-[0.3em] text-slate-500 mb-1 group-focus-within:text-white transition">Vize (Abstraktní)</p>
+                <textarea id="compDesc" rows="1" class="input-minimal text-sm" placeholder="Např. Ledová mlha, jemné linie..."></textarea>
+            </div>
+
+            <div class="group">
+                <p class="text-[9px] uppercase tracking-[0.3em] text-slate-500 mb-1 group-focus-within:text-white transition">QR Destinace</p>
+                <input type="text" id="qrLink" value="https://www.setos.cz" class="input-minimal text-xs font-light">
+            </div>
             
-            <div class="relative bg-white/5 p-4 rounded-xl border border-dashed border-white/20 text-center cursor-pointer hover:bg-white/10 transition">
+            <div class="relative py-4 border-b border-white/10 text-center cursor-pointer hover:bg-white/5 transition rounded-lg">
                 <input type="file" id="logoInput" accept="image/png" class="absolute inset-0 opacity-0 cursor-pointer">
-                <p id="uploadText" class="text-[10px] uppercase font-bold text-gray-400 italic">Logo (PNG)</p>
+                <p id="uploadText" class="text-[10px] uppercase tracking-[0.2em] font-light text-slate-400 italic">Přidat Logo (PNG)</p>
                 <div id="logoStore" data-blob="" class="hidden"></div>
             </div>
 
-            <button onclick="runDesigner()" id="genBtn" class="btn-ai w-full py-5 rounded-2xl font-black text-lg uppercase italic shadow-xl active:scale-95">
-                Vytvořit 3 koncepty
+            <button onclick="runDesigner()" id="genBtn" class="btn-generate w-full text-[10px] mt-4">
+                Vytvořit Kolekci
             </button>
             
-            <div id="loader" class="hidden mt-6 text-center">
-                <div class="w-full bg-white/5 h-1 rounded-full overflow-hidden mb-2">
-                    <div id="bar" class="bg-purple-500 h-full w-0 transition-all duration-300"></div>
+            <div id="loader" class="hidden mt-8 text-center">
+                <div class="w-full bg-white/5 h-[1px] mb-4">
+                    <div id="bar" class="bg-white h-[1px] w-0"></div>
                 </div>
-                <p id="status" class="text-[9px] font-bold text-purple-400 uppercase animate-pulse tracking-widest">Generuji umělecké podklady...</p>
+                <p id="status" class="text-[8px] font-light text-slate-400 uppercase tracking-[0.4em] animate-pulse italic">Navrhuji minimalistické struktury...</p>
             </div>
         </div>
     </div>
@@ -52,7 +106,7 @@
     <script>
         const { jsPDF } = window.jspdf;
 
-        // Logo Handler
+        // Logo Processing
         document.getElementById('logoInput').addEventListener('change', function(e) {
             const file = e.target.files[0];
             if (!file) return;
@@ -67,7 +121,8 @@
                     const s = Math.min(380/img.width, 380/img.height);
                     ctx.drawImage(img, (400-img.width*s)/2, (400-img.height*s)/2, img.width*s, img.height*s);
                     document.getElementById('logoStore').setAttribute('data-blob', canvas.toDataURL('image/png'));
-                    document.getElementById('uploadText').innerText = "LOGO PŘIPRAVENO";
+                    document.getElementById('uploadText').innerText = "Logo Připraveno";
+                    document.getElementById('uploadText').classList.replace('text-slate-400', 'text-white');
                 };
                 img.src = event.target.result;
             };
@@ -96,16 +151,11 @@
             bar.style.width = "10%";
 
             try {
-                // Paralelní generování 3 abstraktů
-                const results = await Promise.all([
-                    fetchDesign(desc, name),
-                    fetchDesign(desc, name),
-                    fetchDesign(desc, name)
-                ]);
-
+                // Paralelní generování 3 návrhů
+                const results = await Promise.all([fetchDesign(desc, name), fetchDesign(desc, name), fetchDesign(desc, name)]);
                 bar.style.width = "70%";
 
-                // QR kód
+                // Příprava QR
                 const qrDiv = document.getElementById('qr-hidden');
                 qrDiv.innerHTML = "";
                 new QRCode(qrDiv, { text: qrUrl, width: 300, height: 300 });
@@ -116,46 +166,64 @@
 
                 results.forEach((res, i) => {
                     if (i > 0) doc.addPage([200, 50], 'l');
-                    doc.addImage(res.imageUrl, 'JPEG', 0, 0, 162, 50);
+                    
+                    // 1. AI ABSTRACT BACKGROUND
+                    doc.addImage(res.imageUrl, 'JPEG', 0, 0, 165, 50);
 
-                    // Bílá info zóna
-                    doc.setFillColor(255); doc.rect(162, 0, 38, 50, 'F');
-                    doc.setDrawColor(230); doc.line(162, 0, 162, 50);
+                    // 2. ULTRA-MINIMAL INFO ZONE
+                    doc.setFillColor(255);
+                    doc.rect(165, 0, 35, 50, 'F');
+                    
+                    // Oddělovací linka - velmi jemná
+                    doc.setDrawColor(245);
+                    doc.setLineWidth(0.1);
+                    doc.line(165, 0, 165, 50);
 
-                    // HRÁTKY S FONTEM (Dynamická typografie)
-                    const fontStyles = [
-                        { font: "helvetica", weight: "bold", size: 28, charSpace: 1 },
-                        { font: "courier", weight: "bold", size: 24, charSpace: 0 },
-                        { font: "times", weight: "italic", size: 30, charSpace: 2 }
-                    ];
-                    const style = fontStyles[i];
-
-                    doc.setFont(style.font, style.weight);
-                    doc.setFontSize(style.size);
-                    doc.setTextColor(20);
-                    doc.text(name, 15, 25, { charSpace: style.charSpace });
-
-                    // Doplňkový text pod názvem
+                    // --- LUXURY TYPOGRAPHY ---
+                    
+                    // Dynamický font size a tracking
+                    let fSize = 20;
+                    if (name.length > 10) fSize = 14;
+                    
+                    // Jméno v grafice (Bílé, tenké, velké rozestupy)
+                    doc.setTextColor(255);
                     doc.setFont("helvetica", "normal");
-                    doc.setFontSize(8);
-                    doc.setTextColor(100);
-                    doc.text(`CONCEPT / ${res.styleName.toUpperCase()}`, 15, 33);
+                    doc.setFontSize(fSize);
+                    // CharSpace 4-5 vytváří luxusní "Apple-style" vzhled
+                    doc.text(name.toUpperCase(), 25, 25, { charSpace: 5 });
 
-                    // Logo
-                    if (logoData) doc.addImage(logoData, 'PNG', 130, 10, 25, 25);
+                    // Malý popisek série
+                    doc.setFontSize(5);
+                    doc.setTextColor(220);
+                    doc.text(`SERIES EXCLUSIVE / ${res.styleName.toUpperCase()}`, 25, 31, { charSpace: 1.5 });
 
-                    // QR v tiskové zóně
-                    doc.addImage(qrImg, 'PNG', 173, 31, 16, 16);
-                    doc.setTextColor(150); doc.setFontSize(5);
-                    doc.text("RELEASE 2026 | ABSTR-ID: " + Math.random().toString(36).substr(2,4).toUpperCase(), 168, 5, {angle: -90});
-                    doc.text(qrUrl.replace('https://',''), 181, 28, {align: 'center'});
+                    // Decentní Logo
+                    if (logoData) {
+                        doc.saveGraphicsState();
+                        doc.setGState(new doc.GState({ opacity: 0.9 }));
+                        doc.addImage(logoData, 'PNG', 140, 15, 15, 15);
+                        doc.restoreGraphicsState();
+                    }
+
+                    // --- INFO ZÓNA (Pravá strana) ---
+                    // Minimalistický QR
+                    doc.addImage(qrImg, 'PNG', 175, 33, 15, 15);
+                    
+                    doc.setTextColor(180);
+                    doc.setFontSize(4);
+                    doc.text("PURE MINIMALIST SYSTEM", 170, 8, {angle: -90});
+                    
+                    doc.setTextColor(140);
+                    doc.text(qrUrl.replace('https://','').toLowerCase(), 182.5, 31, {align: 'center'});
                 });
 
                 bar.style.width = "100%";
-                doc.save(`Designer_Collection_${name}.pdf`);
+                doc.save(`Minimal_Label_Collection_${name}.pdf`);
 
-            } catch (err) { alert("Chyba: " + err.message); }
-            finally {
+            } catch (err) { 
+                console.error(err);
+                alert("AI Agent je momentálně vytížen. Zkuste to za chvíli."); 
+            } finally {
                 btn.disabled = false;
                 document.getElementById('loader').classList.add('hidden');
                 bar.style.width = "0%";
