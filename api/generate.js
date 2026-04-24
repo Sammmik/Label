@@ -1,49 +1,51 @@
 export default async function handler(req, res) {
-    // 1. Kontrola metody
     if (req.method !== 'POST') {
         return res.status(405).json({ error: 'Povoleny jsou pouze POST požadavky.' });
     }
 
     const { description, companyName } = req.body;
 
-    // 2. Kontrola, jestli Vercel vůbec vidí tvůj API klíč!
-    if (!process.env.FAL_KEY) {
-        return res.status(500).json({ error: 'Kritická chyba: Na Vercelu chybí proměnná FAL_KEY!' });
+    // Kontrola, zda je klíč nastavený
+    if (!process.env.HF_TOKEN) {
+        return res.status(500).json({ error: 'Kritická chyba: Na Vercelu chybí proměnná HF_TOKEN!' });
     }
 
-    const prompt = `Extreme high-end product label design for ${companyName}. Central object: ${description}. Style: Professional 3D isometric illustration, minimal vector aesthetic, clean white background, premium lighting, 8k, sharp details, commercial design.`;
+    // Prompt přizpůsobený pro model Stable Diffusion XL
+    const prompt = `Premium product label design for ${companyName}, featuring ${description}. Professional 3D isometric illustration, minimal vector aesthetic, clean white background, studio lighting, 8k resolution, highly detailed.`;
 
     try {
-        // 3. Volání Fal.ai
-        const response = await fetch("https://fal.run/fal-ai/flux/schnell", {
+        // Voláme Hugging Face API (model Stable Diffusion XL)
+        const response = await fetch("https://api-inference.huggingface.co/models/stabilityai/stable-diffusion-xl-base-1.0", {
             method: "POST",
             headers: {
-                "Authorization": `Key ${process.env.FAL_KEY}`,
+                "Authorization": `Bearer ${process.env.HF_TOKEN}`,
                 "Content-Type": "application/json",
             },
-            body: JSON.stringify({
-                prompt: prompt,
-                image_size: "landscape_4_3",
-                num_inference_steps: 4
-            }),
+            body: JSON.stringify({ inputs: prompt }),
         });
 
-        const data = await response.json();
-
-        // 4. Pokud Fal.ai vrátí chybu (např. špatný klíč), pošleme ji na mobil
         if (!response.ok) {
-            return res.status(500).json({ error: `Chyba z Fal.ai: ${JSON.stringify(data)}` });
+            const errText = await response.text();
+            
+            // SPECIÁLNÍ HF CHYBA: "Model is loading"
+            // Hugging Face občas model "uspí", aby šetřil výkon. Pokud se zrovna probouzí, hodí chybu 503.
+            if (response.status === 503) {
+                return res.status(503).json({ error: 'AI model se právě probouzí (Studený start). Zkus kliknout na generovat znovu za 20 sekund.' });
+            }
+            
+            return res.status(response.status).json({ error: `Chyba z Hugging Face: ${errText}` });
         }
 
-        // 5. Pokud není obrázek, upozorníme
-        if (!data.images || !data.images[0]) {
-            return res.status(500).json({ error: 'Fal.ai nevygeneroval žádný obrázek.' });
-        }
+        // Hugging Face vrací přímo binární data (ne URL). Musíme je zpracovat na Vercelu.
+        const arrayBuffer = await response.arrayBuffer();
+        const buffer = Buffer.from(arrayBuffer);
+        const base64Image = buffer.toString('base64');
+        const dataUrl = `data:image/jpeg;base64,${base64Image}`;
 
-        // Vše OK, posíláme URL
-        res.status(200).json({ imageUrl: data.images[0].url });
+        // Odesíláme hotový obrázek (zabalený v Base64 kódu) zpět do mobilu
+        res.status(200).json({ imageUrl: dataUrl });
 
     } catch (error) {
-        res.status(500).json({ error: `Chyba serveru (Vercel): ${error.message}` });
+        res.status(500).json({ error: `Chyba Vercel serveru: ${error.message}` });
     }
 }
