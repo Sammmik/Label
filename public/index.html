@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>AI Agent: Minimalist Studio</title>
+    <title>AI Label Studio</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
@@ -21,7 +21,7 @@
             background: rgba(255,255,255,0.02);
             border: 1px solid rgba(255,255,255,0.08);
             backdrop-filter: blur(20px);
-            border-radius: 2.5rem;
+            border-radius: 2rem;
         }
 
         .input-minimal {
@@ -51,48 +51,48 @@
         .btn-generate:active { transform: scale(0.96); opacity: 0.9; }
         .btn-generate:disabled { background: #333; color: #666; cursor: not-allowed; }
 
-        #progressBar { transition: width 0.4s ease; }
+        #bar { transition: width 0.4s ease; }
     </style>
 </head>
 <body class="min-h-screen p-6 flex items-center justify-center">
 
     <div class="max-w-md w-full minimal-card p-10 shadow-2xl relative overflow-hidden">
-        <header class="text-center mb-12 relative z-10">
-            <h1 class="text-xl font-extralight tracking-[0.6em] uppercase">Design <span class="font-normal text-slate-400 italic">Agent</span></h1>
+        <header class="text-center mb-10">
+            <h1 class="text-xl font-extralight tracking-[0.5em] uppercase">Design <span class="font-normal text-slate-400 italic">Agent</span></h1>
             <div class="h-[1px] w-12 bg-white/20 mx-auto mt-4"></div>
         </header>
 
-        <div class="space-y-8 relative z-10">
+        <div class="space-y-8">
             <div class="group">
-                <p class="text-[9px] uppercase tracking-[0.3em] text-slate-500 mb-1">Značka</p>
+                <p class="text-[9px] uppercase tracking-[0.3em] text-slate-500 mb-1">Značka (Název)</p>
                 <input type="text" id="compName" value="SETOS" class="input-minimal uppercase tracking-[0.2em]">
             </div>
 
             <div class="group">
-                <p class="text-[9px] uppercase tracking-[0.3em] text-slate-500 mb-1">Téma (Klíčové slovo)</p>
-                <textarea id="compDesc" rows="1" class="input-minimal text-sm" placeholder="Např. Budoucnost, technologie, kyber..."></textarea>
+                <p class="text-[9px] uppercase tracking-[0.3em] text-slate-500 mb-1">Činnost firmy (Vize pro AI)</p>
+                <textarea id="compDesc" rows="2" class="input-minimal text-sm" placeholder="Např. Pokročilé technologie, čistá energie, kybernetika..."></textarea>
             </div>
 
             <div class="group">
-                <p class="text-[9px] uppercase tracking-[0.3em] text-slate-500 mb-1">Odkaz pro QR</p>
+                <p class="text-[9px] uppercase tracking-[0.3em] text-slate-500 mb-1">Cílový odkaz (QR)</p>
                 <input type="text" id="qrLink" value="https://www.setos.cz" class="input-minimal text-xs font-light">
             </div>
 
-            <div class="relative py-4 border-b border-white/10 text-center cursor-pointer hover:bg-white/5 transition rounded-lg">
+            <div class="relative py-4 border border-dashed border-white/20 text-center cursor-pointer hover:bg-white/5 transition rounded-xl">
                 <input type="file" id="logoInput" accept="image/png" class="absolute inset-0 opacity-0 cursor-pointer">
-                <p id="uploadText" class="text-[10px] uppercase tracking-[0.2em] font-light text-slate-400 italic">Přidat Logo (PNG)</p>
+                <p id="uploadText" class="text-[10px] uppercase tracking-[0.2em] font-light text-slate-400">Připojit Logo (PNG)</p>
                 <div id="logoStore" data-blob="" class="hidden"></div>
             </div>
 
-            <button onclick="runDesigner()" id="genBtn" class="btn-generate w-full text-[10px] mt-4">
-                Vygenerovat 3 návrhy
+            <button onclick="runDesigner()" id="genBtn" class="btn-generate w-full text-[10px] mt-2">
+                Generovat Kolekci (3x)
             </button>
 
-            <div id="loader" class="hidden mt-8 text-center">
-                <div class="w-full bg-white/5 h-[1px] mb-4">
-                    <div id="bar" class="bg-white h-[1px] w-0"></div>
+            <div id="loader" class="hidden mt-6 text-center">
+                <div class="w-full bg-white/10 h-[2px] mb-3 rounded-full overflow-hidden">
+                    <div id="bar" class="bg-white h-[2px] w-0"></div>
                 </div>
-                <p id="status" class="text-[8px] font-light text-slate-400 uppercase tracking-[0.4em] animate-pulse italic">Iniciuji spojení...</p>
+                <p id="status" class="text-[9px] font-light text-slate-400 uppercase tracking-[0.3em] animate-pulse">Navazuji spojení...</p>
             </div>
         </div>
     </div>
@@ -102,7 +102,7 @@
     <script>
         const { jsPDF } = window.jspdf;
 
-        // Uložení loga do paměti
+        // --- 1. Zpracování nahrávaného loga ---
         document.getElementById('logoInput').addEventListener('change', function(e) {
             const file = e.target.files[0];
             if (!file) return;
@@ -114,10 +114,11 @@
                     canvas.width = 400; canvas.height = 400;
                     const ctx = canvas.getContext('2d');
                     ctx.clearRect(0,0,400,400);
+                    // Vycentrování loga s udržením poměru stran
                     const s = Math.min(380/img.width, 380/img.height);
                     ctx.drawImage(img, (400-img.width*s)/2, (400-img.height*s)/2, img.width*s, img.height*s);
                     document.getElementById('logoStore').setAttribute('data-blob', canvas.toDataURL('image/png'));
-                    document.getElementById('uploadText').innerText = "Logo Uloženo";
+                    document.getElementById('uploadText').innerText = "Logo Připraveno ✓";
                     document.getElementById('uploadText').classList.replace('text-slate-400', 'text-white');
                 };
                 img.src = event.target.result;
@@ -125,27 +126,26 @@
             reader.readAsDataURL(file);
         });
 
-        // Samostatná funkce pro volání API s ošetřením chyb
+        // --- 2. Zabezpečené volání backendu ---
         async function fetchDesign(desc, name) {
             const res = await fetch('/api/generate', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ description: desc, companyName: name })
             });
-
             const data = await res.json();
-            if (!res.ok) {
-                throw new Error(data.error || "Chyba AI serveru.");
-            }
+            if (!res.ok) throw new Error(data.error || "Chyba na serveru.");
             return data;
         }
 
+        // --- 3. Hlavní logika generování ---
         async function runDesigner() {
             const btn = document.getElementById('genBtn');
             const bar = document.getElementById('bar');
-            const name = document.getElementById('compName').value;
-            const desc = document.getElementById('compDesc').value;
-            const qrUrl = document.getElementById('qrLink').value;
+            const statusLabel = document.getElementById('status');
+            const name = document.getElementById('compName').value || "BRAND";
+            const desc = document.getElementById('compDesc').value || "Abstract design";
+            const qrUrl = document.getElementById('qrLink').value || "https://example.com";
             const logoData = document.getElementById('logoStore').getAttribute('data-blob');
 
             btn.disabled = true;
@@ -153,80 +153,80 @@
             bar.style.width = "5%";
 
             try {
-                // SEKVENČNÍ ZPRACOVÁNÍ (Bezpečné řešení limitů serveru)
+                // SEKVENČNÍ ZPRACOVÁNÍ (Fronta pro stabilitu API)
                 const results = [];
                 for (let i = 0; i < 3; i++) {
-                    document.getElementById('status').innerText = `Generuji návrh ${i + 1} ze 3...`;
-
-                    // Čekáme, dokud se nedokončí aktuální návrh
+                    statusLabel.innerText = `Generování návrhu ${i + 1} ze 3 (fal.ai)...`;
                     const res = await fetchDesign(desc, name);
                     results.push(res);
-
                     bar.style.width = `${(i + 1) * 30}%`;
                 }
 
-                document.getElementById('status').innerText = "Sestavuji PDF dokument...";
+                statusLabel.innerText = "Sestavuji produkční PDF...";
 
-                // Generování QR
+                // Generování QR kódu
                 const qrDiv = document.getElementById('qr-hidden');
                 qrDiv.innerHTML = "";
-                new QRCode(qrDiv, { text: qrUrl, width: 300, height: 300 });
-                await new Promise(r => setTimeout(r, 400));
+                new QRCode(qrDiv, { text: qrUrl, width: 300, height: 300, colorDark: "#000000", colorLight: "#ffffff" });
+                await new Promise(r => setTimeout(r, 500));
                 const qrImg = qrDiv.querySelector('canvas').toDataURL("image/png");
 
-                // Příprava PDF (Šířka 200mm, Výška 50mm)
-                const doc = new jsPDF({ orientation: 'l', unit: 'mm', format: [200, 50] });
+                // Vytvoření PDF (200x50 mm)
+                const doc = new jsPDF({ orientation: 'landscape', unit: 'mm', format: [200, 50] });
 
                 results.forEach((res, i) => {
                     if (i > 0) doc.addPage([200, 50], 'l');
 
-                    // 1. AI Grafika (Zabírá většinu plochy)
+                    // A) AI Grafické pozadí (165mm šířka)
                     doc.addImage(res.imageUrl, 'JPEG', 0, 0, 165, 50);
 
-                    // 2. Bílá zóna pro čitelnost
-                    doc.setFillColor(255);
+                    // B) Bílá informační zóna (35mm šířka, vpravo)
+                    doc.setFillColor(255, 255, 255);
                     doc.rect(165, 0, 35, 50, 'F');
-                    doc.setDrawColor(245);
-                    doc.setLineWidth(0.1);
+                    doc.setDrawColor(240, 240, 240);
+                    doc.setLineWidth(0.2);
                     doc.line(165, 0, 165, 50);
 
-                    // 3. Typografie (Minimalistická, tenká s velkými mezerami)
-                    let fSize = 20;
-                    if (name.length > 10) fSize = 14; // Dynamické zmenšení pro dlouhá jména
+                    // C) Minimalistická typografie názvu v grafice
+                    let fSize = 22;
+                    if (name.length > 10) fSize = 16;
 
-                    doc.setTextColor(255);
+                    doc.setTextColor(255, 255, 255);
                     doc.setFont("helvetica", "normal");
                     doc.setFontSize(fSize);
-                    doc.text(name.toUpperCase(), 25, 25, { charSpace: 5 });
+                    doc.text(name.toUpperCase(), 20, 25, { charSpace: 6 });
 
-                    // Popisek odvozený z varianty na backendu
                     doc.setFontSize(5);
-                    doc.setTextColor(220);
-                    doc.text(`SERIES / ${res.styleName}`, 25, 31, { charSpace: 1.5 });
+                    doc.setTextColor(200, 200, 200);
+                    doc.text(`DESIGN SYSTEM / ${res.styleName}`, 20, 32, { charSpace: 1.5 });
 
-                    // 4. Logo
+                    // D) Zpracování Loga (Grafická úprava)
                     if (logoData) {
                         doc.saveGraphicsState();
-                        doc.setGState(new doc.GState({ opacity: 0.9 }));
-                        doc.addImage(logoData, 'PNG', 140, 15, 15, 15);
+                        // Grafická úprava: Logo lehce zprůhledníme, aby luxusně splynulo s pozadím
+                        doc.setGState(new doc.GState({ opacity: 0.85 }));
+                        doc.addImage(logoData, 'PNG', 135, 15, 18, 18);
                         doc.restoreGraphicsState();
                     }
 
-                    // 5. Pravá čistá zóna (QR + Zákonná data)
-                    doc.addImage(qrImg, 'PNG', 175, 33, 15, 15);
-                    doc.setTextColor(180);
+                    // E) Formátování pravé info zóny
+                    doc.addImage(qrImg, 'PNG', 174, 32, 16, 16);
+
+                    doc.setTextColor(170, 170, 170);
+                    doc.setFontSize(4.5);
+                    doc.text("AUTHENTIC QUALITY", 170, 8, { angle: -90 });
+
+                    doc.setTextColor(120, 120, 120);
                     doc.setFontSize(4);
-                    doc.text("PURE MINIMALIST SYSTEM", 170, 8, {angle: -90});
-                    doc.setTextColor(140);
-                    doc.text(qrUrl.replace('https://','').toLowerCase(), 182.5, 31, {align: 'center'});
+                    doc.text(qrUrl.replace(/^https?:\/\//,'').toLowerCase(), 182, 30, { align: 'center' });
                 });
 
                 bar.style.width = "100%";
-                doc.save(`Minimal_Label_Collection_${name}.pdf`);
+                doc.save(`${name.toUpperCase()}_Label_Collection.pdf`);
 
             } catch (err) {
                 console.error(err);
-                alert(`Generování se nezdařilo:\n${err.message}`);
+                alert(`Proces přerušen:\n${err.message}`);
             } finally {
                 btn.disabled = false;
                 document.getElementById('loader').classList.add('hidden');
