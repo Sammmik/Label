@@ -9,15 +9,10 @@ const __dirname = path.dirname(__filename);
 const app = express();
 const PORT = process.env.PORT || 3000;
 
-// Povolíme větší datové toky pro případné přenosy loga
 app.use(cors());
 app.use(express.json({ limit: '10mb' }));
 app.use(express.static(path.join(__dirname, 'public')));
 
-/**
- * Inteligentní funkce pro volání API s automatickým opakováním (Auto-Retry)
- * Chrání aplikaci před občasnými výpadky sítě.
- */
 async function fetchWithRetry(url, options, maxRetries = 2, timeoutMs = 45000) {
     for (let i = 0; i <= maxRetries; i++) {
         const controller = new AbortController();
@@ -53,10 +48,8 @@ app.post('/api/generate', async (req, res) => {
         return res.status(500).json({ error: "Kritická chyba serveru: Chybí FAL_KEY." });
     }
 
-    // Zde je definována tvá "Designová DNA", kterou jsi požadoval na základě dřívějších vzorů
     const patternDNA = "Minimalist layout, thin geometric lines, precise grid alignment, vast negative space, subtle professional aesthetic, high-end corporate identity.";
 
-    // Tři stylové variace pro rozmanitost etiket
     const variations = [
         { name: "LINEAR STRUCTURAL", prompt: `Linear and structural styling. ${patternDNA}` },
         { name: "ABSTRACT FLUID", prompt: `Soft abstract and fluid styling. ${patternDNA}` },
@@ -65,7 +58,6 @@ app.post('/api/generate', async (req, res) => {
 
     const selectedVariation = variations[Math.floor(Math.random() * variations.length)];
 
-    // Finální instrukce pro model FLUX.1. Striktně zakazujeme text, aby nekolidoval s naší typografií v PDF.
     const prompt = `Premium abstract graphic background for product label. Company focuses on: ${description}. Visuals: ${selectedVariation.prompt}. STRICTLY NO TEXT, NO FONTS, NO LETTERS. NO specific products. Ultra-minimalist 8k digital art.`;
 
     try {
@@ -80,19 +72,17 @@ app.post('/api/generate', async (req, res) => {
             body: JSON.stringify({
                 prompt: prompt,
                 image_size: "landscape_4_3",
-                num_inference_steps: 4, // Optimalizace pro model FLUX.1 Schnell
+                num_inference_steps: 4,
                 guidance_scale: 3.5
             })
         };
 
-        // 1. Odeslání požadavku na fal.ai
         const falResponse = await fetchWithRetry("https://fal.run/fal-ai/flux/schnell", falOptions, 2, 45000);
         const falData = await falResponse.json();
         const imageUrl = falData.images[0].url;
 
         console.log("✅ Grafika vygenerována. Stahuji obrázek na server...");
 
-        // 2. Stažení obrázku na náš server a převod do Base64 pro stabilní přenos do PDF
         const imageResponse = await fetch(imageUrl);
         const arrayBuffer = await imageResponse.arrayBuffer();
         const buffer = Buffer.from(arrayBuffer);

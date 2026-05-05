@@ -114,7 +114,6 @@
                     canvas.width = 400; canvas.height = 400;
                     const ctx = canvas.getContext('2d');
                     ctx.clearRect(0,0,400,400);
-                    // Vycentrování loga s udržením poměru stran
                     const s = Math.min(380/img.width, 380/img.height);
                     ctx.drawImage(img, (400-img.width*s)/2, (400-img.height*s)/2, img.width*s, img.height*s);
                     document.getElementById('logoStore').setAttribute('data-blob', canvas.toDataURL('image/png'));
@@ -153,7 +152,7 @@
             bar.style.width = "5%";
 
             try {
-                // SEKVENČNÍ ZPRACOVÁNÍ (Fronta pro stabilitu API)
+                // SEKVENČNÍ ZPRACOVÁNÍ
                 const results = [];
                 for (let i = 0; i < 3; i++) {
                     statusLabel.innerText = `Generování návrhu ${i + 1} ze 3 (fal.ai)...`;
@@ -164,20 +163,20 @@
 
                 statusLabel.innerText = "Sestavuji produkční PDF...";
 
-                // Generování QR kódu
+                // Generování čistého QR kódu
                 const qrDiv = document.getElementById('qr-hidden');
                 qrDiv.innerHTML = "";
                 new QRCode(qrDiv, { text: qrUrl, width: 300, height: 300, colorDark: "#000000", colorLight: "#ffffff" });
                 await new Promise(r => setTimeout(r, 500));
                 const qrImg = qrDiv.querySelector('canvas').toDataURL("image/png");
 
-                // Vytvoření PDF (200x50 mm)
+                // Vytvoření PDF
                 const doc = new jsPDF({ orientation: 'landscape', unit: 'mm', format: [200, 50] });
 
                 results.forEach((res, i) => {
                     if (i > 0) doc.addPage([200, 50], 'l');
 
-                    // A) AI Grafické pozadí (165mm šířka)
+                    // A) AI Grafické pozadí
                     doc.addImage(res.imageUrl, 'JPEG', 0, 0, 165, 50);
 
                     // B) Bílá informační zóna (35mm šířka, vpravo)
@@ -187,38 +186,29 @@
                     doc.setLineWidth(0.2);
                     doc.line(165, 0, 165, 50);
 
-                    // C) Minimalistická typografie názvu v grafice
+                    // C) Extrémně minimalistická typografie názvu
                     let fSize = 22;
                     if (name.length > 10) fSize = 16;
-
                     doc.setTextColor(255, 255, 255);
                     doc.setFont("helvetica", "normal");
                     doc.setFontSize(fSize);
-                    doc.text(name.toUpperCase(), 20, 25, { charSpace: 6 });
+                    doc.text(name.toUpperCase(), 20, 28, { charSpace: 6 }); // Vycentrováno na osu Y
 
-                    doc.setFontSize(5);
-                    doc.setTextColor(200, 200, 200);
-                    doc.text(`DESIGN SYSTEM / ${res.styleName}`, 20, 32, { charSpace: 1.5 });
+                    // Podtitulek (DESIGN SYSTEM...) je záměrně smazán pro ultra čistý vzhled
 
-                    // D) Zpracování Loga (Grafická úprava)
+                    // D) Zpracování Loga
                     if (logoData) {
                         doc.saveGraphicsState();
-                        // Grafická úprava: Logo lehce zprůhledníme, aby luxusně splynulo s pozadím
                         doc.setGState(new doc.GState({ opacity: 0.85 }));
                         doc.addImage(logoData, 'PNG', 135, 15, 18, 18);
                         doc.restoreGraphicsState();
                     }
 
-                    // E) Formátování pravé info zóny
-                    doc.addImage(qrImg, 'PNG', 174, 32, 16, 16);
+                    // E) Formátování pravé info zóny - POUZE QR KÓD
+                    // Zvětšen na 18x18 mm a dokonale vycentrován v pravé bílé zóně
+                    doc.addImage(qrImg, 'PNG', 173.5, 26, 18, 18);
 
-                    doc.setTextColor(170, 170, 170);
-                    doc.setFontSize(4.5);
-                    doc.text("AUTHENTIC QUALITY", 170, 8, { angle: -90 });
-
-                    doc.setTextColor(120, 120, 120);
-                    doc.setFontSize(4);
-                    doc.text(qrUrl.replace(/^https?:\/\//,'').toLowerCase(), 182, 30, { align: 'center' });
+                    // Všechny rušivé texty (odkaz, AUTHENTIC QUALITY) jsou smazány
                 });
 
                 bar.style.width = "100%";
