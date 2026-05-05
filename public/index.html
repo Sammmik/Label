@@ -4,7 +4,9 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>AI Label Studio</title>
+    <!-- Tailwind pro moderní a responzivní UI -->
     <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Knihovny pro tvorbu PDF a QR kódů -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
     <style>
@@ -69,8 +71,8 @@
             </div>
 
             <div class="group">
-                <p class="text-[9px] uppercase tracking-[0.3em] text-slate-500 mb-1">Činnost firmy (Vize pro AI)</p>
-                <textarea id="compDesc" rows="2" class="input-minimal text-sm" placeholder="Např. Pokročilé technologie, čistá energie, kybernetika..."></textarea>
+                <p class="text-[9px] uppercase tracking-[0.3em] text-slate-500 mb-1">Činnost firmy (Vize pro AI - Zadejte v Angličtině)</p>
+                <textarea id="compDesc" rows="2" class="input-minimal text-sm" placeholder="e.g. Technical outdoor gear, subtle topographical map lines..."></textarea>
             </div>
 
             <div class="group">
@@ -97,12 +99,13 @@
         </div>
     </div>
 
+    <!-- Skrytý div pro vygenerování obrazce QR kódu -->
     <div id="qr-hidden" class="hidden"></div>
 
     <script>
         const { jsPDF } = window.jspdf;
 
-        // --- 1. Zpracování nahrávaného loga ---
+        // --- 1. Uložení loga do mezipaměti prohlížeče (Base64) ---
         document.getElementById('logoInput').addEventListener('change', function(e) {
             const file = e.target.files[0];
             if (!file) return;
@@ -125,7 +128,7 @@
             reader.readAsDataURL(file);
         });
 
-        // --- 2. Zabezpečené volání backendu ---
+        // --- 2. Komunikace s vlastním backendem ---
         async function fetchDesign(desc, name) {
             const res = await fetch('/api/generate', {
                 method: 'POST',
@@ -137,7 +140,38 @@
             return data;
         }
 
-        // --- 3. Hlavní logika generování ---
+        // --- 3. Analýza jasu (Luminance) pro dynamickou změnu barvy textu ---
+        function getAverageBrightness(base64Src) {
+            return new Promise((resolve) => {
+                const img = new Image();
+                img.onload = () => {
+                    const canvas = document.createElement('canvas');
+                    canvas.width = img.width;
+                    canvas.height = img.height;
+                    const ctx = canvas.getContext('2d');
+                    ctx.drawImage(img, 0, 0);
+
+                    const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+                    const data = imageData.data;
+                    let colorSum = 0;
+
+                    for(let x = 0, len = data.length; x < len; x+=4) {
+                        const r = data[x];
+                        const g = data[x+1];
+                        const b = data[x+2];
+                        const avg = Math.floor((r * 299 + g * 587 + b * 114) / 1000);
+                        colorSum += avg;
+                    }
+
+                    const brightness = Math.floor(colorSum / (img.width * img.height));
+                    // 127 je přesná polovina z 255. Zjistíme, kam se průměr kloní.
+                    resolve(brightness > 127 ? 'light' : 'dark');
+                };
+                img.src = base64Src;
+            });
+        }
+
+        // --- 4. Hlavní mozek operace - Sestavení PDF ---
         async function runDesigner() {
             const btn = document.getElementById('genBtn');
             const bar = document.getElementById('bar');
@@ -152,63 +186,68 @@
             bar.style.width = "5%";
 
             try {
-                // SEKVENČNÍ ZPRACOVÁNÍ
+                // Stažení 3 variant za sebou
                 const results = [];
                 for (let i = 0; i < 3; i++) {
                     statusLabel.innerText = `Generování návrhu ${i + 1} ze 3 (fal.ai)...`;
                     const res = await fetchDesign(desc, name);
+
+                    statusLabel.innerText = `Analyzuji kontrast návrhu ${i + 1}...`;
+                    res.themeTone = await getAverageBrightness(res.imageUrl);
+
                     results.push(res);
                     bar.style.width = `${(i + 1) * 30}%`;
                 }
 
-                statusLabel.innerText = "Sestavuji produkční PDF...";
+                statusLabel.innerText = "Sestavuji čisté produkční PDF...";
 
-                // Generování čistého QR kódu
+                // Tvorba QR kódu v paměti
                 const qrDiv = document.getElementById('qr-hidden');
                 qrDiv.innerHTML = "";
                 new QRCode(qrDiv, { text: qrUrl, width: 300, height: 300, colorDark: "#000000", colorLight: "#ffffff" });
                 await new Promise(r => setTimeout(r, 500));
                 const qrImg = qrDiv.querySelector('canvas').toDataURL("image/png");
 
-                // Vytvoření PDF
+                // Iniciace PDF dokumentu (rozměr 200x50 mm)
                 const doc = new jsPDF({ orientation: 'landscape', unit: 'mm', format: [200, 50] });
 
                 results.forEach((res, i) => {
                     if (i > 0) doc.addPage([200, 50], 'l');
 
-                    // A) AI Grafické pozadí
+                    // Pozadí od AI
                     doc.addImage(res.imageUrl, 'JPEG', 0, 0, 165, 50);
 
-                    // B) Bílá informační zóna (35mm šířka, vpravo)
+                    // Pravá informační zóna (bílá čistá plocha)
                     doc.setFillColor(255, 255, 255);
                     doc.rect(165, 0, 35, 50, 'F');
                     doc.setDrawColor(240, 240, 240);
                     doc.setLineWidth(0.2);
                     doc.line(165, 0, 165, 50);
 
-                    // C) Extrémně minimalistická typografie názvu
+                    // Dynamický název společnosti (Změna barvy dle pozadí)
                     let fSize = 22;
                     if (name.length > 10) fSize = 16;
-                    doc.setTextColor(255, 255, 255);
+
+                    if (res.themeTone === 'light') {
+                        doc.setTextColor(30, 30, 30); // Grafitová pro světlá pozadí
+                    } else {
+                        doc.setTextColor(255, 255, 255); // Bílá pro tmavá pozadí
+                    }
+
                     doc.setFont("helvetica", "normal");
                     doc.setFontSize(fSize);
-                    doc.text(name.toUpperCase(), 20, 28, { charSpace: 6 }); // Vycentrováno na osu Y
+                    doc.text(name.toUpperCase(), 20, 28, { charSpace: 6 });
 
-                    // Podtitulek (DESIGN SYSTEM...) je záměrně smazán pro ultra čistý vzhled
-
-                    // D) Zpracování Loga
+                    // Zpracování loga (transparentní přesah)
                     if (logoData) {
                         doc.saveGraphicsState();
-                        doc.setGState(new doc.GState({ opacity: 0.85 }));
+                        doc.setGState(new doc.GState({ opacity: 0.90 }));
                         doc.addImage(logoData, 'PNG', 135, 15, 18, 18);
                         doc.restoreGraphicsState();
                     }
 
-                    // E) Formátování pravé info zóny - POUZE QR KÓD
-                    // Zvětšen na 18x18 mm a dokonale vycentrován v pravé bílé zóně
+                    // Čistý, přesně vycentrovaný QR kód
                     doc.addImage(qrImg, 'PNG', 173.5, 26, 18, 18);
-
-                    // Všechny rušivé texty (odkaz, AUTHENTIC QUALITY) jsou smazány
                 });
 
                 bar.style.width = "100%";
