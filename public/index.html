@@ -2,43 +2,35 @@
 <html lang="cs">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>AI Label Studio - ELYSSIA Fix</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI Label Studio - Clean Fix</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
     <style>
-        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@100;200;400&display=swap');
-        body { font-family: 'Inter', sans-serif; background: #050505; color: #fff; -webkit-font-smoothing: antialiased; }
-        .minimal-card { background: rgba(255,255,255,0.02); border: 1px solid rgba(255,255,255,0.08); backdrop-filter: blur(20px); border-radius: 2rem; }
-        .input-minimal { background: transparent; border-bottom: 1px solid rgba(255,255,255,0.2); padding: 0.75rem 0; width: 100%; outline: none; transition: 0.4s; color: #fff; font-weight: 200; }
-        .input-minimal:focus { border-bottom-color: #fff; }
-        #bar { transition: width 0.4s ease; }
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@200;400;700&display=swap');
+        body { font-family: 'Inter', sans-serif; background: #050505; color: #fff; }
+        .minimal-card { background: rgba(255,255,255,0.02); border: 1px solid rgba(255,255,255,0.08); border-radius: 2rem; }
+        .input-minimal { background: transparent; border-bottom: 1px solid rgba(255,255,255,0.2); width: 100%; outline: none; color: #fff; }
     </style>
 </head>
 <body class="min-h-screen p-6 flex items-center justify-center">
 
-    <div class="max-w-md w-full minimal-card p-10 shadow-2xl relative overflow-hidden">
-        <header class="text-center mb-10">
-            <h1 class="text-xl font-extralight tracking-[0.5em] uppercase">Design <span class="font-normal text-slate-400 italic">Agent</span></h1>
-        </header>
-
+    <div class="max-w-md w-full minimal-card p-10 shadow-2xl">
+        <header class="text-center mb-10"><h1 class="text-xl font-extralight uppercase tracking-widest">Design Agent</h1></header>
         <div class="space-y-8">
-            <div class="group"><p class="text-[9px] uppercase tracking-[0.3em] text-slate-500 mb-1">Značka</p><input type="text" id="compName" value="ELYSSIA" class="input-minimal uppercase tracking-[0.2em]"></div>
-            <div class="group"><p class="text-[9px] uppercase tracking-[0.3em] text-slate-500 mb-1">Popis pro AI</p><textarea id="compDesc" rows="2" class="input-minimal text-sm" placeholder="e.g. Pure water ripples..."></textarea></div>
-            <div class="group"><p class="text-[9px] uppercase tracking-[0.3em] text-slate-500 mb-1">QR Odkaz</p><input type="text" id="qrLink" value="https://www.elyssia.cz" class="input-minimal text-xs font-light"></div>
-
-            <div class="relative py-4 border border-dashed border-white/20 text-center cursor-pointer rounded-xl">
-                <input type="file" id="logoInput" accept="image/png" class="absolute inset-0 opacity-0 cursor-pointer">
-                <p id="uploadText" class="text-[10px] uppercase tracking-[0.2em] font-light text-slate-400">Logo (PNG)</p>
+            <input type="text" id="compName" value="ELYSSIA" class="input-minimal uppercase">
+            <textarea id="compDesc" rows="2" class="input-minimal text-sm" placeholder="Popis pro AI..."></textarea>
+            <input type="text" id="qrLink" value="https://www.elyssia.cz" class="input-minimal text-xs">
+            <div class="relative py-4 border border-dashed border-white/20 text-center rounded-xl">
+                <input type="file" id="logoInput" accept="image/png" class="absolute inset-0 opacity-0">
+                <p id="uploadText" class="text-[10px] text-slate-400">LOGO (PNG)</p>
                 <div id="logoStore" data-blob="" class="hidden"></div>
             </div>
-
-            <button onclick="runDesigner()" id="genBtn" class="bg-white text-black w-full py-4 rounded-full uppercase tracking-widest text-[10px]">Generovat Kolekci</button>
-            <div id="loader" class="hidden mt-6 text-center"><div class="w-full bg-white/10 h-[2px] mb-3 rounded-full overflow-hidden"><div id="bar" class="bg-white h-[2px] w-0"></div></div><p id="status" class="text-[9px] uppercase tracking-[0.3em] animate-pulse">Navazuji spojení...</p></div>
+            <button onclick="runDesigner()" id="genBtn" class="bg-white text-black w-full py-4 rounded-full uppercase text-[10px]">Generovat</button>
+            <div id="loader" class="hidden mt-6 text-center"><p id="status" class="text-[9px] animate-pulse">Zpracovávám...</p></div>
         </div>
     </div>
-
     <div id="qr-hidden" class="hidden"></div>
 
     <script>
@@ -62,43 +54,18 @@
             reader.readAsDataURL(file);
         });
 
-        async function fetchDesign(desc) {
-            const res = await fetch('/api/generate', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ description: desc }) });
-            return await res.json();
-        }
-
-        function getAverageBrightness(base64Src) {
-            return new Promise((resolve) => {
-                const img = new Image(); img.onload = () => {
-                    const canvas = document.createElement('canvas'); canvas.width = img.width; canvas.height = img.height;
-                    const ctx = canvas.getContext('2d'); ctx.drawImage(img, 0, 0);
-                    const data = ctx.getImageData(0, 0, canvas.width, canvas.height).data;
-                    let sum = 0; for(let x = 0; x < data.length; x+=4) sum += Math.floor((data[x] * 299 + data[x+1] * 587 + data[x+2] * 114) / 1000);
-                    resolve((sum / (img.width * img.height)) > 127 ? 'light' : 'dark');
-                }; img.src = base64Src;
-            });
-        }
-
         async function runDesigner() {
             const name = document.getElementById('compName').value;
             const desc = document.getElementById('compDesc').value;
             const qrUrl = document.getElementById('qrLink').value;
             const logoData = document.getElementById('logoStore').getAttribute('data-blob');
-            const statusLabel = document.getElementById('status');
-            const bar = document.getElementById('bar');
 
             document.getElementById('genBtn').disabled = true;
             document.getElementById('loader').classList.remove('hidden');
 
             try {
-                const results = [];
-                for (let i = 0; i < 3; i++) {
-                    statusLabel.innerText = `Generování ${i+1}/3...`;
-                    const res = await fetchDesign(desc);
-                    res.tone = await getAverageBrightness(res.imageUrl);
-                    results.push(res);
-                    bar.style.width = `${(i+1)*33}%`;
-                }
+                const resFetch = await fetch('/api/generate', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ description: desc }) });
+                const resData = await resFetch.json();
 
                 const qrDiv = document.getElementById('qr-hidden'); qrDiv.innerHTML = "";
                 new QRCode(qrDiv, { text: qrUrl, width: 300, height: 300 });
@@ -107,94 +74,58 @@
 
                 const doc = new jsPDF({ orientation: 'landscape', unit: 'mm', format: [200, 50] });
 
-                results.forEach((res, i) => {
-                    if (i > 0) doc.addPage([200, 50], 'l');
-                    doc.addImage(res.imageUrl, 'JPEG', 0, 0, 140, 50);
-                    doc.setFillColor(255, 255, 255); doc.rect(140, 0, 60, 50, 'F');
-                    doc.setDrawColor(240, 240, 240); doc.line(140, 0, 140, 50);
+                doc.addImage(resData.imageUrl, 'JPEG', 0, 0, 140, 50);
+                doc.setFillColor(255, 255, 255); doc.rect(140, 0, 60, 50, 'F');
+                doc.setDrawColor(240, 240, 240); doc.line(140, 0, 140, 50);
 
-                    // Název značky
-                    doc.setTextColor(res.tone === 'light' ? 30 : 255);
-                    doc.setFontSize(name.length > 10 ? 16 : 22);
-                    doc.text(name.toUpperCase(), 15, 25, { charSpace: 6 });
+                // Design prvky
+                doc.setTextColor(255); doc.setFontSize(22); doc.text(name.toUpperCase(), 15, 25, { charSpace: 6 });
+                doc.setFillColor(255, 255, 255); doc.roundedRect(117, 27, 18, 18, 2, 2, 'F');
+                doc.addImage(qrImg, 'PNG', 118, 28, 16, 16);
+                if (logoData) { doc.roundedRect(117, 5, 18, 18, 2, 2, 'F'); doc.addImage(logoData, 'PNG', 118, 6, 16, 16); }
 
-                    // QR a Logo v grafice
-                    doc.setFillColor(255, 255, 255); doc.roundedRect(117, 27, 18, 18, 2, 2, 'F');
-                    doc.addImage(qrImg, 'PNG', 118, 28, 16, 16);
-                    if (logoData) { doc.roundedRect(117, 5, 18, 18, 2, 2, 'F'); doc.addImage(logoData, 'PNG', 118, 6, 16, 16); }
+                // PRÁVNÍ SEKCE - ČISTÁ VERZE BEZ "CITE"
+                doc.setTextColor(0); doc.setFontSize(4.2); doc.setFont("helvetica", "bold");
+                doc.text("Neperlivá pramenitá voda", 143, 6);
+                doc.text("Chemické složení (mg/l):", 174, 6);
 
-                    // --- PRÁVNÍ TEXTY (OPRAVENO: STRIKTNÍ ŠÍŘKA SLOUPCE) ---
-                    doc.setTextColor(0); doc.setFont("helvetica", "bold"); doc.setFontSize(4.2);
-                    doc.text("Neperlivá pramenitá voda", 143, 6);
+                let y = 9;
+                const colW = 26; // STRIKTNÍ ŠÍŘKA PROTI PŘESAHU
+                doc.setFont("helvetica", "normal"); doc.setFontSize(3.8);
 
-                    let currentY = 8.5;
-                    const colW = 28; // 💡 Omezení šířky, aby text nenarážel do tabulky
+                const p1 = "Přírodní pramenitá voda ze srdce Štýrska (Steiermark). Nedotčená příroda, filtrace přes vápencové horniny Alp a trvalé kontroly zaručují špičkovou kvalitu.";
+                const splitP1 = doc.splitTextToSize(p1, colW);
+                doc.text(splitP1, 143, y);
+                y += (splitP1.length * 1.8) + 1.5;
 
-                    const p1 = "Přírodní pramenitá voda ze srdce Štýrska (Steiermark). Nedotčená příroda, filtrace přes vápencové horniny Alp a trvalé přísné kontroly zaručují neustále špičkovou kvalitu. [cite: 3, 27]";
-                    const p3 = "Minimální trvanlivost: Viz potisk na lahvi. [cite: 8, 33]\nSkladování: Chraňte před teplem a přímým slunečním zářením. [cite: 9, 36]\nNázev a místo pramene: Seisensteinquelle, Wildalpen, Rakousko [cite: 10, 37]";
+                doc.setFont("helvetica", "bold"); doc.text("Složení: Neperlivá pramenitá voda", 143, y);
+                y += 2.5;
 
-                    doc.setFont("helvetica", "normal"); doc.setFontSize(3.8); // 💡 Mírně zmenšené písmo pro lepší čitelnost
-                    const l1 = doc.splitTextToSize(p1, colW);
-                    doc.text(l1, 143, currentY);
-                    currentY += (l1.length * 1.8) + 1.2;
+                doc.setFont("helvetica", "normal");
+                const p3 = "Minimální trvanlivost: Viz potisk na lahvi.\nSkladování: Chraňte před teplem a sluncem.\nNázev pramene: Seisensteinquelle, Rakousko";
+                const splitP3 = doc.splitTextToSize(p3, colW);
+                doc.text(splitP3, 143, y);
+                y += (splitP3.length * 1.8) + 2.5;
 
-                    doc.setFont("helvetica", "bold");
-                    doc.text("Složení: Neperlivá pramenitá voda [cite: 6, 31]", 143, currentY);
-                    currentY += 2.2;
+                doc.setFont("helvetica", "bold"); doc.text("Distributor:", 143, y);
+                y += 1.8;
+                doc.setFont("helvetica", "normal"); doc.text("ELYSSIA s.r.o., Zenklova 24/54\n180 00 Praha 8, ČR\nwww.elyssia.cz", 143, y);
 
-                    doc.setFont("helvetica", "normal");
-                    const l3 = doc.splitTextToSize(p3, colW);
-                    doc.text(l3, 143, currentY);
-                    currentY += (l3.length * 1.8) + 2.5;
+                doc.setFontSize(10); doc.setFont("helvetica", "bold"); doc.text("0,33 l", 143, 46);
+                doc.setDrawColor(0); doc.line(158, 45, 161, 40); doc.line(161, 40, 164, 45); doc.line(164, 45, 158, 45);
+                doc.setFontSize(3.5); doc.text("01", 159.8, 44); doc.text("PET", 159.2, 47.5);
 
-                    doc.setFont("helvetica", "bold");
-                    doc.text("Vyrobeno a plněno / země původu: [cite: 11, 42]", 143, currentY);
-                    currentY += 1.8;
-                    doc.setFont("helvetica", "normal");
-                    doc.text("Wildalpen Wasserverwertungs GmbH\nSäusenbach 166, A-8924 Wildalpen, Rakousko [cite: 12, 13, 45, 48]", 143, currentY);
-                    currentY += 4.5;
+                // TABULKA SLOŽENÍ
+                const tY = 8;
+                const tD = [["pH hodnota", "7,99"], ["Kyslík (O2)", "9,2"], ["Sodík (Na+)", "2,0"], ["Vápník (Ca2+)", "45"], ["Hořčík (Mg2+)", "13"], ["Hydrogenuhličitany", "170"], ["Draslík (K+)", "0,4"], ["Chloridy (Cl-)", "2,6"], ["Dusitany (NO2-)", "0,01"], ["Sírany (SO4 2-)", "11"], ["Fluoridy (F-)", "0,1"]];
+                for(let j=0; j<tD.length; j++) {
+                    let ty = tY + j*3.2;
+                    doc.text(tD[j][0], 175, ty + 2.2); doc.text(tD[j][1], 191, ty + 2.2);
+                    doc.line(174, ty, 198, ty);
+                }
+                doc.line(174, tY+tD.length*3.2, 198, tY+tD.length*3.2); doc.line(174, tY, 174, tY+tD.length*3.2); doc.line(190, tY, 190, tY+tD.length*3.2); doc.line(198, tY, 198, tY+tD.length*3.2);
 
-                    doc.setFont("helvetica", "bold");
-                    doc.text("Distributor: [cite: 14, 51]", 143, currentY);
-                    currentY += 1.8;
-                    doc.setFont("helvetica", "normal");
-                    doc.text("ELYSSIA s.r.o.\nZenklova 24/54, 180 00 Praha 8, ČR [cite: 15, 16, 52, 55]\nwww.elyssia.cz [cite: 17, 55]", 143, currentY);
-
-                    // Objem a PET symbol
-                    doc.setFontSize(10); doc.setFont("helvetica", "bold");
-                    doc.text("0,33 l [cite: 21]", 143, 46);
-                    doc.setDrawColor(0); doc.line(160, 45, 163, 40); doc.line(163, 40, 166, 45); doc.line(166, 45, 160, 45);
-                    doc.setFontSize(3.5); doc.text("01", 161.8, 44); doc.text("PET [cite: 18, 56]", 161.2, 47.5);
-
-                    // --- TABULKA CHEMICKÉHO SLOŽENÍ ---
-                    const tY = 8;
-                    const tD = [
-                        ["pH hodnota", "7,99 [cite: 4, 21, 27]"],
-                        ["Kyslík (O2)", "9,2 [cite: 4, 21, 28]"],
-                        ["Sodík (Na+)", "2,0 [cite: 4, 21, 30]"],
-                        ["Vápník (Ca2+)", "45 [cite: 4, 21, 35]"],
-                        ["Hořčík (Mg2+)", "13 [cite: 4, 21, 36]"],
-                        ["Hydrogenuhličitany", "170 [cite: 4, 21]"],
-                        ["Draslík (K+)", "0,4 [cite: 4, 21, 41]"],
-                        ["Chloridy (Cl-)", "2,6 [cite: 4, 21, 44]"],
-                        ["Dusitany (NO2-)", "0,01 [cite: 4, 21, 47]"],
-                        ["Sírany (SO4 2-)", "11 [cite: 4, 21, 50]"],
-                        ["Fluoridy (F-)", "0,1 [cite: 4, 21, 54]"]
-                    ];
-                    doc.setFontSize(4); doc.text("Chemické složení (mg/l): [cite: 2, 20, 25]", 175, 6);
-                    for(let j=0; j<tD.length; j++) {
-                        let y = tY + j*3.2;
-                        doc.text(tD[j][0], 176, y + 2.2);
-                        doc.text(tD[j][1], 191, y + 2.2);
-                        doc.line(175, y, 198, y);
-                    }
-                    doc.line(175, tY+tD.length*3.2, 198, tY+tD.length*3.2);
-                    doc.line(175, tY, 175, tY+tD.length*3.2);
-                    doc.line(190, tY, 190, tY+tD.length*3.2);
-                    doc.line(198, tY, 198, tY+tD.length*3.2);
-                });
-
-                doc.save(`${name.toUpperCase()}_Labels.pdf`);
+                doc.save(`${name.toUpperCase()}_Label.pdf`);
             } catch (err) { alert(err.message); } finally { document.getElementById('genBtn').disabled = false; document.getElementById('loader').classList.add('hidden'); }
         }
     </script>
