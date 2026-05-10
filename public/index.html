@@ -3,56 +3,19 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>AI Label Studio</title>
-    <!-- Tailwind pro moderní a responzivní UI -->
+    <title>AI Label Studio - ELYSSIA Edition</title>
     <script src="https://cdn.tailwindcss.com"></script>
-    <!-- Knihovny pro tvorbu PDF a QR kódů -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Inter:wght@100;200;400&display=swap');
-
-        body {
-            font-family: 'Inter', sans-serif;
-            background: #050505;
-            color: #fff;
-            -webkit-font-smoothing: antialiased;
-        }
-
-        .minimal-card {
-            background: rgba(255,255,255,0.02);
-            border: 1px solid rgba(255,255,255,0.08);
-            backdrop-filter: blur(20px);
-            border-radius: 2rem;
-        }
-
-        .input-minimal {
-            background: transparent;
-            border-bottom: 1px solid rgba(255,255,255,0.2);
-            padding: 0.75rem 0;
-            width: 100%;
-            outline: none;
-            transition: 0.4s;
-            color: #fff;
-            font-weight: 200;
-        }
-
+        body { font-family: 'Inter', sans-serif; background: #050505; color: #fff; -webkit-font-smoothing: antialiased; }
+        .minimal-card { background: rgba(255,255,255,0.02); border: 1px solid rgba(255,255,255,0.08); backdrop-filter: blur(20px); border-radius: 2rem; }
+        .input-minimal { background: transparent; border-bottom: 1px solid rgba(255,255,255,0.2); padding: 0.75rem 0; width: 100%; outline: none; transition: 0.4s; color: #fff; font-weight: 200; }
         .input-minimal:focus { border-bottom-color: #fff; }
-
-        .btn-generate {
-            background: #fff;
-            color: #000;
-            padding: 1.25rem;
-            border-radius: 2rem;
-            font-weight: 400;
-            letter-spacing: 0.2em;
-            text-transform: uppercase;
-            transition: all 0.3s ease;
-        }
-
+        .btn-generate { background: #fff; color: #000; padding: 1.25rem; border-radius: 2rem; font-weight: 400; letter-spacing: 0.2em; text-transform: uppercase; transition: all 0.3s ease; }
         .btn-generate:active { transform: scale(0.96); opacity: 0.9; }
         .btn-generate:disabled { background: #333; color: #666; cursor: not-allowed; }
-
         #bar { transition: width 0.4s ease; }
     </style>
 </head>
@@ -67,17 +30,17 @@
         <div class="space-y-8">
             <div class="group">
                 <p class="text-[9px] uppercase tracking-[0.3em] text-slate-500 mb-1">Značka (Název)</p>
-                <input type="text" id="compName" value="SETOS" class="input-minimal uppercase tracking-[0.2em]">
+                <input type="text" id="compName" value="ELYSSIA" class="input-minimal uppercase tracking-[0.2em]">
             </div>
 
             <div class="group">
-                <p class="text-[9px] uppercase tracking-[0.3em] text-slate-500 mb-1">Činnost firmy (Vize pro AI - Zadejte v Angličtině)</p>
-                <textarea id="compDesc" rows="2" class="input-minimal text-sm" placeholder="e.g. Technical outdoor gear, subtle topographical map lines..."></textarea>
+                <p class="text-[9px] uppercase tracking-[0.3em] text-slate-500 mb-1">Činnost firmy (Vize pro AI)</p>
+                <textarea id="compDesc" rows="2" class="input-minimal text-sm" placeholder="e.g. Premium pure water, smooth fluid ripples, clean mountain aesthetics..."></textarea>
             </div>
 
             <div class="group">
                 <p class="text-[9px] uppercase tracking-[0.3em] text-slate-500 mb-1">Cílový odkaz (QR)</p>
-                <input type="text" id="qrLink" value="https://www.setos.cz" class="input-minimal text-xs font-light">
+                <input type="text" id="qrLink" value="https://www.elyssia.cz" class="input-minimal text-xs font-light">
             </div>
 
             <div class="relative py-4 border border-dashed border-white/20 text-center cursor-pointer hover:bg-white/5 transition rounded-xl">
@@ -99,13 +62,12 @@
         </div>
     </div>
 
-    <!-- Skrytý div pro vygenerování obrazce QR kódu -->
     <div id="qr-hidden" class="hidden"></div>
 
     <script>
         const { jsPDF } = window.jspdf;
 
-        // --- 1. Uložení loga do mezipaměti prohlížeče (Base64) ---
+        // 1. Zpracování nahrávaného loga
         document.getElementById('logoInput').addEventListener('change', function(e) {
             const file = e.target.files[0];
             if (!file) return;
@@ -128,7 +90,7 @@
             reader.readAsDataURL(file);
         });
 
-        // --- 2. Komunikace s vlastním backendem ---
+        // 2. Bezpečné volání backendu API
         async function fetchDesign(desc, name) {
             const res = await fetch('/api/generate', {
                 method: 'POST',
@@ -140,7 +102,7 @@
             return data;
         }
 
-        // --- 3. Analýza jasu (Luminance) pro dynamickou změnu barvy textu ---
+        // 3. Výpočet jasu obrázku (kontrast)
         function getAverageBrightness(base64Src) {
             return new Promise((resolve) => {
                 const img = new Image();
@@ -156,22 +118,19 @@
                     let colorSum = 0;
 
                     for(let x = 0, len = data.length; x < len; x+=4) {
-                        const r = data[x];
-                        const g = data[x+1];
-                        const b = data[x+2];
+                        const r = data[x]; const g = data[x+1]; const b = data[x+2];
                         const avg = Math.floor((r * 299 + g * 587 + b * 114) / 1000);
                         colorSum += avg;
                     }
 
                     const brightness = Math.floor(colorSum / (img.width * img.height));
-                    // 127 je přesná polovina z 255. Zjistíme, kam se průměr kloní.
                     resolve(brightness > 127 ? 'light' : 'dark');
                 };
                 img.src = base64Src;
             });
         }
 
-        // --- 4. Hlavní mozek operace - Sestavení PDF ---
+        // 4. Hlavní logika generování
         async function runDesigner() {
             const btn = document.getElementById('genBtn');
             const bar = document.getElementById('bar');
@@ -186,68 +145,147 @@
             bar.style.width = "5%";
 
             try {
-                // Stažení 3 variant za sebou
                 const results = [];
                 for (let i = 0; i < 3; i++) {
                     statusLabel.innerText = `Generování návrhu ${i + 1} ze 3 (fal.ai)...`;
                     const res = await fetchDesign(desc, name);
-
                     statusLabel.innerText = `Analyzuji kontrast návrhu ${i + 1}...`;
                     res.themeTone = await getAverageBrightness(res.imageUrl);
-
                     results.push(res);
                     bar.style.width = `${(i + 1) * 30}%`;
                 }
 
-                statusLabel.innerText = "Sestavuji čisté produkční PDF...";
+                statusLabel.innerText = "Aplikuji právní texty a sestavuji PDF...";
 
-                // Tvorba QR kódu v paměti
                 const qrDiv = document.getElementById('qr-hidden');
                 qrDiv.innerHTML = "";
                 new QRCode(qrDiv, { text: qrUrl, width: 300, height: 300, colorDark: "#000000", colorLight: "#ffffff" });
                 await new Promise(r => setTimeout(r, 500));
                 const qrImg = qrDiv.querySelector('canvas').toDataURL("image/png");
 
-                // Iniciace PDF dokumentu (rozměr 200x50 mm)
                 const doc = new jsPDF({ orientation: 'landscape', unit: 'mm', format: [200, 50] });
+
+                // DEFINICE PRÁVNÍCH TEXTŮ
+                const textP1 = "Přírodní pramenitá voda ze srdce Štýrska (Steiermark). Nedotčená příroda, filtrace přes vápencové horniny Alp a trvalé přísné kontroly zaručují neustále špičkovou kvalitu.";
+                const textP3 = "Minimální trvanlivost: Viz potisk na lahvi.\nSkladování: Chraňte před teplem a přímým slunečním zářením.\nNázev a místo pramene: Seisensteinquelle, Wildalpen, Rakousko";
 
                 results.forEach((res, i) => {
                     if (i > 0) doc.addPage([200, 50], 'l');
 
-                    // Pozadí od AI
-                    doc.addImage(res.imageUrl, 'JPEG', 0, 0, 165, 50);
+                    // A) AI Grafické pozadí zúženo na 140mm
+                    doc.addImage(res.imageUrl, 'JPEG', 0, 0, 140, 50);
 
-                    // Pravá informační zóna (bílá čistá plocha)
+                    // B) Bílá informační zóna získá luxusních 60mm prostoru (140 až 200)
                     doc.setFillColor(255, 255, 255);
-                    doc.rect(165, 0, 35, 50, 'F');
+                    doc.rect(140, 0, 60, 50, 'F');
                     doc.setDrawColor(240, 240, 240);
                     doc.setLineWidth(0.2);
-                    doc.line(165, 0, 165, 50);
+                    doc.line(140, 0, 140, 50);
 
-                    // Dynamický název společnosti (Změna barvy dle pozadí)
+                    // C) DYNAMICKÁ TYPOGRAFIE NÁZVU
                     let fSize = 22;
                     if (name.length > 10) fSize = 16;
-
-                    if (res.themeTone === 'light') {
-                        doc.setTextColor(30, 30, 30); // Grafitová pro světlá pozadí
-                    } else {
-                        doc.setTextColor(255, 255, 255); // Bílá pro tmavá pozadí
-                    }
+                    if (res.themeTone === 'light') { doc.setTextColor(30, 30, 30); }
+                    else { doc.setTextColor(255, 255, 255); }
 
                     doc.setFont("helvetica", "normal");
                     doc.setFontSize(fSize);
                     doc.text(name.toUpperCase(), 20, 28, { charSpace: 6 });
 
-                    // Zpracování loga (transparentní přesah)
+                    // D) ZPRACOVÁNÍ LOGA (Nyní přesunuto do AI Designu nad QR kód)
                     if (logoData) {
                         doc.saveGraphicsState();
                         doc.setGState(new doc.GState({ opacity: 0.90 }));
-                        doc.addImage(logoData, 'PNG', 135, 15, 18, 18);
+                        doc.setFillColor(255, 255, 255);
+                        doc.roundedRect(117, 5, 18, 18, 2, 2, 'F');
+                        doc.setGState(new doc.GState({ opacity: 1.0 }));
+                        doc.addImage(logoData, 'PNG', 118, 6, 16, 16);
                         doc.restoreGraphicsState();
                     }
 
-                    // Čistý, přesně vycentrovaný QR kód
-                    doc.addImage(qrImg, 'PNG', 173.5, 26, 18, 18);
+                    // E) QR KÓD (Nyní integrován v AI Designu v pravém dolním rohu grafiky)
+                    doc.saveGraphicsState();
+                    doc.setGState(new doc.GState({ opacity: 0.95 })); // Téměř neprůhledné pozadí pro čitelnost
+                    doc.setFillColor(255, 255, 255);
+                    doc.roundedRect(117, 27, 18, 18, 2, 2, 'F');
+                    doc.setGState(new doc.GState({ opacity: 1.0 })); // Obnovení opacity pro samotný kód
+                    doc.addImage(qrImg, 'PNG', 118, 28, 16, 16);
+                    doc.restoreGraphicsState();
+
+                    // F) PRÁVNÍ TEXTY V BÍLÉ ZÓNĚ (Levý sloupeček)
+                    doc.setTextColor(0, 0, 0); // Vždy černé písmo
+
+                    doc.setFontSize(4.5);
+                    doc.setFont("helvetica", "bold");
+                    doc.text("Neperlivá pramenitá voda", 143, 6);
+
+                    doc.setFontSize(4);
+                    doc.setFont("helvetica", "normal");
+                    doc.text(textP1, 143, 8.5, { maxWidth: 30 }); // MaxWidth zajistí zalomení řádků
+
+                    doc.setFont("helvetica", "bold");
+                    doc.text("Složení: Neperlivá pramenitá voda", 143, 14, { maxWidth: 30 });
+
+                    doc.setFont("helvetica", "normal");
+                    doc.text(textP3, 143, 16.5, { maxWidth: 30 });
+
+                    doc.setFont("helvetica", "bold");
+                    doc.text("Vyrobeno a plněno / země původu:", 143, 23.5);
+                    doc.setFont("helvetica", "normal");
+                    doc.text("Wildalpen Wasserverwertungs GmbH\nSäusenbach 166, A-8924 Wildalpen, Rakousko", 143, 25);
+
+                    doc.setFont("helvetica", "bold");
+                    doc.text("Distributor:", 143, 29);
+                    doc.setFont("helvetica", "normal");
+                    doc.text("ELYSSIA s.r.o.\nZenklova 24/54, 180 00 Praha 8\nČeská republika\nwww.elyssia.cz", 143, 30.5);
+
+                    // Objem a Logo PET (Levý dolní roh informační zóny)
+                    doc.setFontSize(10);
+                    doc.setFont("helvetica", "bold");
+                    doc.text("0,33 l", 143, 46);
+
+                    // Kresba trojúhelníku PET
+                    doc.setDrawColor(0);
+                    doc.setLineWidth(0.3);
+                    doc.line(160, 45, 163, 40);
+                    doc.line(163, 40, 166, 45);
+                    doc.line(166, 45, 160, 45);
+                    doc.setFontSize(3.5);
+                    doc.text("01", 161.8, 44);
+                    doc.text("PET", 161.2, 47.5);
+
+                    // G) TABULKA SLOŽENÍ V BÍLÉ ZÓNĚ (Pravý sloupeček)
+                    doc.setFontSize(4);
+                    doc.text("Chemické složení (mg/l):", 175, 6);
+                    doc.setFont("helvetica", "normal");
+
+                    const tableY = 8;
+                    const tableData = [
+                        ["pH hodnota", "7,99"],
+                        ["Kyslík (O2)", "9,2"],
+                        ["Sodík (Na+)", "2,0"],
+                        ["Vápník (Ca2+)", "45"],
+                        ["Hořčík (Mg2+)", "13"],
+                        ["Hydrogenuhličitany", "170"],
+                        ["Draslík (K+)", "0,4"],
+                        ["Chloridy (Cl-)", "2,6"],
+                        ["Dusitany (NO2-)", "0,01"],
+                        ["Sírany (SO4 2-)", "11"],
+                        ["Fluoridy (F-)", "0,1"]
+                    ];
+
+                    doc.setLineWidth(0.1);
+                    for(let j=0; j<tableData.length; j++) {
+                        let y = tableY + j*3.2;
+                        doc.text(tableData[j][0], 176, y + 2.2);
+                        doc.text(tableData[j][1], 191, y + 2.2);
+                        doc.line(175, y, 198, y); // Vodorovné linky
+                    }
+                    doc.line(175, tableY + tableData.length*3.2, 198, tableY + tableData.length*3.2); // Spodní linka
+                    // Svislé linky
+                    doc.line(175, tableY, 175, tableY + tableData.length*3.2);
+                    doc.line(190, tableY, 190, tableY + tableData.length*3.2);
+                    doc.line(198, tableY, 198, tableY + tableData.length*3.2);
                 });
 
                 bar.style.width = "100%";

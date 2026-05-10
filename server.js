@@ -9,15 +9,10 @@ const __dirname = path.dirname(__filename);
 const app = express();
 const PORT = process.env.PORT || 3000;
 
-// Povolení CORS a zvýšení datového limitu pro přenosy loga/obrázků v Base64
 app.use(cors());
 app.use(express.json({ limit: '10mb' }));
 app.use(express.static(path.join(__dirname, 'public')));
 
-/**
- * Zabezpečená funkce pro volání API s automatickým opakováním (Auto-Retry).
- * Parametr maxRetries určuje počet pokusů, timeoutMs maximální čas čekání.
- */
 async function fetchWithRetry(url, options, maxRetries = 2, timeoutMs = 45000) {
     for (let i = 0; i <= maxRetries; i++) {
         const controller = new AbortController();
@@ -45,19 +40,14 @@ async function fetchWithRetry(url, options, maxRetries = 2, timeoutMs = 45000) {
     }
 }
 
-// Hlavní routa pro generování designu
 app.post('/api/generate', async (req, res) => {
     console.log("➡️ Přijat požadavek na generování grafiky...");
-
-    // Přijímáme pouze 'description'. 'companyName' schválně ignorujeme, aby AI negenerovala text.
     const { description } = req.body;
 
-    // Kritická bezpečnostní kontrola API klíče
     if (!process.env.FAL_KEY) {
         return res.status(500).json({ error: "Kritická chyba serveru: Chybí FAL_KEY." });
     }
 
-    // Abstraktní, vzdušný a čistý designový jazyk
     const patternDNA = "Ultra-minimalist clean aesthetic. Subtle premium textures, vast negative space, elegant lighting. NO physical objects, NO labels, NO clothing tags.";
 
     const variations = [
@@ -82,19 +72,17 @@ app.post('/api/generate', async (req, res) => {
             body: JSON.stringify({
                 prompt: prompt,
                 image_size: "landscape_4_3",
-                num_inference_steps: 4, // Optimalizováno pro FLUX.1 Schnell
+                num_inference_steps: 4,
                 guidance_scale: 3.5
             })
         };
 
-        // Komunikace s Fal.ai
         const falResponse = await fetchWithRetry("https://fal.run/fal-ai/flux/schnell", falOptions, 2, 45000);
         const falData = await falResponse.json();
         const imageUrl = falData.images[0].url;
 
         console.log("✅ Grafika vygenerována. Stahuji obrázek na server...");
 
-        // Stažení z Fal.ai k nám na server a překódování do Base64
         const imageResponse = await fetch(imageUrl);
         const arrayBuffer = await imageResponse.arrayBuffer();
         const buffer = Buffer.from(arrayBuffer);
