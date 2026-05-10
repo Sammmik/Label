@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>AI Label Studio - Produkční verze</title>
+    <title>AI Label Studio - ELYSSIA Fix</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
@@ -30,7 +30,7 @@
 
             <div class="relative py-4 border border-dashed border-white/20 text-center cursor-pointer rounded-xl">
                 <input type="file" id="logoInput" accept="image/png" class="absolute inset-0 opacity-0 cursor-pointer">
-                <p id="uploadText" class="text-[10px] uppercase tracking-[0.2em] font-light text-slate-400">Připojit Logo (PNG)</p>
+                <p id="uploadText" class="text-[10px] uppercase tracking-[0.2em] font-light text-slate-400">Logo (PNG)</p>
                 <div id="logoStore" data-blob="" class="hidden"></div>
             </div>
 
@@ -123,48 +123,75 @@
                     doc.addImage(qrImg, 'PNG', 118, 28, 16, 16);
                     if (logoData) { doc.roundedRect(117, 5, 18, 18, 2, 2, 'F'); doc.addImage(logoData, 'PNG', 118, 6, 16, 16); }
 
-                    // --- PRÁVNÍ TEXTY (DYNAMICKÉ ŘÁDKOVÁNÍ) ---
-                    doc.setTextColor(0); doc.setFont("helvetica", "bold"); doc.setFontSize(4.5);
+                    // --- PRÁVNÍ TEXTY (OPRAVENO: STRIKTNÍ ŠÍŘKA SLOUPCE) ---
+                    doc.setTextColor(0); doc.setFont("helvetica", "bold"); doc.setFontSize(4.2);
                     doc.text("Neperlivá pramenitá voda", 143, 6);
 
                     let currentY = 8.5;
-                    const colW = 31;
-                    const p1 = "Přírodní pramenitá voda ze srdce Štýrska (Steiermark). Nedotčená příroda, filtrace přes vápencové horniny Alp a trvalé přísné kontroly zaručují neustále špičkovou kvalitu.";
-                    const p3 = "Minimální trvanlivost: Viz potisk na lahvi.\nSkladování: Chraňte před teplem a přímým slunečním zářením.\nNázev a místo pramene: Seisensteinquelle, Wildalpen, Rakousko";
+                    const colW = 28; // 💡 Omezení šířky, aby text nenarážel do tabulky
 
-                    doc.setFont("helvetica", "normal"); doc.setFontSize(4);
-                    const l1 = doc.splitTextToSize(p1, colW); doc.text(l1, 143, currentY);
-                    currentY += (l1.length * 2) + 1.5;
+                    const p1 = "Přírodní pramenitá voda ze srdce Štýrska (Steiermark). Nedotčená příroda, filtrace přes vápencové horniny Alp a trvalé přísné kontroly zaručují neustále špičkovou kvalitu. [cite: 3, 27]";
+                    const p3 = "Minimální trvanlivost: Viz potisk na lahvi. [cite: 8, 33]\nSkladování: Chraňte před teplem a přímým slunečním zářením. [cite: 9, 36]\nNázev a místo pramene: Seisensteinquelle, Wildalpen, Rakousko [cite: 10, 37]";
 
-                    doc.setFont("helvetica", "bold"); doc.text("Složení: Neperlivá pramenitá voda", 143, currentY);
-                    currentY += 2.5;
+                    doc.setFont("helvetica", "normal"); doc.setFontSize(3.8); // 💡 Mírně zmenšené písmo pro lepší čitelnost
+                    const l1 = doc.splitTextToSize(p1, colW);
+                    doc.text(l1, 143, currentY);
+                    currentY += (l1.length * 1.8) + 1.2;
+
+                    doc.setFont("helvetica", "bold");
+                    doc.text("Složení: Neperlivá pramenitá voda [cite: 6, 31]", 143, currentY);
+                    currentY += 2.2;
 
                     doc.setFont("helvetica", "normal");
-                    const l3 = doc.splitTextToSize(p3, colW); doc.text(l3, 143, currentY);
-                    currentY += (l3.length * 2) + 2.5;
+                    const l3 = doc.splitTextToSize(p3, colW);
+                    doc.text(l3, 143, currentY);
+                    currentY += (l3.length * 1.8) + 2.5;
 
-                    doc.setFont("helvetica", "bold"); doc.text("Vyrobeno a plněno / země původu:", 143, currentY);
-                    currentY += 2;
-                    doc.setFont("helvetica", "normal"); doc.text("Wildalpen Wasserverwertungs GmbH\nSäusenbach 166, A-8924 Wildalpen, Rakousko", 143, currentY);
-                    currentY += 5;
+                    doc.setFont("helvetica", "bold");
+                    doc.text("Vyrobeno a plněno / země původu: [cite: 11, 42]", 143, currentY);
+                    currentY += 1.8;
+                    doc.setFont("helvetica", "normal");
+                    doc.text("Wildalpen Wasserverwertungs GmbH\nSäusenbach 166, A-8924 Wildalpen, Rakousko [cite: 12, 13, 45, 48]", 143, currentY);
+                    currentY += 4.5;
 
-                    doc.setFont("helvetica", "bold"); doc.text("Distributor:", 143, currentY);
-                    currentY += 2;
-                    doc.setFont("helvetica", "normal"); doc.text("ELYSSIA s.r.o.\nZenklova 24/54, 180 00 Praha 8, ČR\nwww.elyssia.cz", 143, currentY);
+                    doc.setFont("helvetica", "bold");
+                    doc.text("Distributor: [cite: 14, 51]", 143, currentY);
+                    currentY += 1.8;
+                    doc.setFont("helvetica", "normal");
+                    doc.text("ELYSSIA s.r.o.\nZenklova 24/54, 180 00 Praha 8, ČR [cite: 15, 16, 52, 55]\nwww.elyssia.cz [cite: 17, 55]", 143, currentY);
 
-                    // Objem a PET
-                    doc.setFontSize(10); doc.setFont("helvetica", "bold"); doc.text("0,33 l", 143, 46);
+                    // Objem a PET symbol
+                    doc.setFontSize(10); doc.setFont("helvetica", "bold");
+                    doc.text("0,33 l [cite: 21]", 143, 46);
                     doc.setDrawColor(0); doc.line(160, 45, 163, 40); doc.line(163, 40, 166, 45); doc.line(166, 45, 160, 45);
-                    doc.setFontSize(3.5); doc.text("01", 161.8, 44); doc.text("PET", 161.2, 47.5);
+                    doc.setFontSize(3.5); doc.text("01", 161.8, 44); doc.text("PET [cite: 18, 56]", 161.2, 47.5);
 
-                    // TABULKA
-                    const tY = 8; const tD = [["pH hodnota", "7,99"], ["Kyslík (O2)", "9,2"], ["Sodík (Na+)", "2,0"], ["Vápník (Ca2+)", "45"], ["Hořčík (Mg2+)", "13"], ["Hydrogenuhličitany", "170"], ["Draslík (K+)", "0,4"], ["Chloridy (Cl-)", "2,6"], ["Dusitany (NO2-)", "0,01"], ["Sírany (SO4 2-)", "11"], ["Fluoridy (F-)", "0,1"]];
-                    doc.setFontSize(4); doc.text("Chemické složení (mg/l):", 175, 6);
+                    // --- TABULKA CHEMICKÉHO SLOŽENÍ ---
+                    const tY = 8;
+                    const tD = [
+                        ["pH hodnota", "7,99 [cite: 4, 21, 27]"],
+                        ["Kyslík (O2)", "9,2 [cite: 4, 21, 28]"],
+                        ["Sodík (Na+)", "2,0 [cite: 4, 21, 30]"],
+                        ["Vápník (Ca2+)", "45 [cite: 4, 21, 35]"],
+                        ["Hořčík (Mg2+)", "13 [cite: 4, 21, 36]"],
+                        ["Hydrogenuhličitany", "170 [cite: 4, 21]"],
+                        ["Draslík (K+)", "0,4 [cite: 4, 21, 41]"],
+                        ["Chloridy (Cl-)", "2,6 [cite: 4, 21, 44]"],
+                        ["Dusitany (NO2-)", "0,01 [cite: 4, 21, 47]"],
+                        ["Sírany (SO4 2-)", "11 [cite: 4, 21, 50]"],
+                        ["Fluoridy (F-)", "0,1 [cite: 4, 21, 54]"]
+                    ];
+                    doc.setFontSize(4); doc.text("Chemické složení (mg/l): [cite: 2, 20, 25]", 175, 6);
                     for(let j=0; j<tD.length; j++) {
-                        let y = tY + j*3.2; doc.text(tD[j][0], 176, y + 2.2); doc.text(tD[j][1], 191, y + 2.2);
+                        let y = tY + j*3.2;
+                        doc.text(tD[j][0], 176, y + 2.2);
+                        doc.text(tD[j][1], 191, y + 2.2);
                         doc.line(175, y, 198, y);
                     }
-                    doc.line(175, tY+tD.length*3.2, 198, tY+tD.length*3.2); doc.line(175, tY, 175, tY+tD.length*3.2); doc.line(190, tY, 190, tY+tD.length*3.2); doc.line(198, tY, 198, tY+tD.length*3.2);
+                    doc.line(175, tY+tD.length*3.2, 198, tY+tD.length*3.2);
+                    doc.line(175, tY, 175, tY+tD.length*3.2);
+                    doc.line(190, tY, 190, tY+tD.length*3.2);
+                    doc.line(198, tY, 198, tY+tD.length*3.2);
                 });
 
                 doc.save(`${name.toUpperCase()}_Labels.pdf`);
