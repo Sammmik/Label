@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>AI Label Studio - Clean Fix</title>
+    <title>AI Label Studio - Final Resolution</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
@@ -11,7 +11,7 @@
         @import url('https://fonts.googleapis.com/css2?family=Inter:wght@200;400;700&display=swap');
         body { font-family: 'Inter', sans-serif; background: #050505; color: #fff; }
         .minimal-card { background: rgba(255,255,255,0.02); border: 1px solid rgba(255,255,255,0.08); border-radius: 2rem; }
-        .input-minimal { background: transparent; border-bottom: 1px solid rgba(255,255,255,0.2); width: 100%; outline: none; color: #fff; }
+        .input-minimal { background: transparent; border-bottom: 1px solid rgba(255,255,255,0.2); width: 100%; outline: none; color: #fff; padding: 0.5rem 0; }
     </style>
 </head>
 <body class="min-h-screen p-6 flex items-center justify-center">
@@ -19,16 +19,16 @@
     <div class="max-w-md w-full minimal-card p-10 shadow-2xl">
         <header class="text-center mb-10"><h1 class="text-xl font-extralight uppercase tracking-widest">Design Agent</h1></header>
         <div class="space-y-8">
-            <input type="text" id="compName" value="ELYSSIA" class="input-minimal uppercase">
-            <textarea id="compDesc" rows="2" class="input-minimal text-sm" placeholder="Popis pro AI..."></textarea>
-            <input type="text" id="qrLink" value="https://www.elyssia.cz" class="input-minimal text-xs">
+            <div class="group"><p class="text-[9px] uppercase tracking-[0.3em] text-slate-500 mb-1">Značka</p><input type="text" id="compName" value="ELYSSIA" class="input-minimal uppercase"></div>
+            <div class="group"><p class="text-[9px] uppercase tracking-[0.3em] text-slate-500 mb-1">Popis pro AI</p><textarea id="compDesc" rows="2" class="input-minimal text-sm" placeholder="e.g. Pure water ripples..."></textarea></div>
+            <div class="group"><p class="text-[9px] uppercase tracking-[0.3em] text-slate-500 mb-1">QR Odkaz</p><input type="text" id="qrLink" value="https://www.elyssia.cz" class="input-minimal text-xs"></div>
             <div class="relative py-4 border border-dashed border-white/20 text-center rounded-xl">
                 <input type="file" id="logoInput" accept="image/png" class="absolute inset-0 opacity-0">
                 <p id="uploadText" class="text-[10px] text-slate-400">LOGO (PNG)</p>
                 <div id="logoStore" data-blob="" class="hidden"></div>
             </div>
-            <button onclick="runDesigner()" id="genBtn" class="bg-white text-black w-full py-4 rounded-full uppercase text-[10px]">Generovat</button>
-            <div id="loader" class="hidden mt-6 text-center"><p id="status" class="text-[9px] animate-pulse">Zpracovávám...</p></div>
+            <button onclick="runDesigner()" id="genBtn" class="bg-white text-black w-full py-4 rounded-full uppercase text-[10px] tracking-widest">Generovat</button>
+            <div id="loader" class="hidden mt-6 text-center"><p id="status" class="text-[9px] animate-pulse uppercase tracking-wider">Zpracovávám...</p></div>
         </div>
     </div>
     <div id="qr-hidden" class="hidden"></div>
@@ -78,52 +78,75 @@
                 doc.setFillColor(255, 255, 255); doc.rect(140, 0, 60, 50, 'F');
                 doc.setDrawColor(240, 240, 240); doc.line(140, 0, 140, 50);
 
-                // Design prvky
+                // Značka a QR/Logo v grafice
                 doc.setTextColor(255); doc.setFontSize(22); doc.text(name.toUpperCase(), 15, 25, { charSpace: 6 });
                 doc.setFillColor(255, 255, 255); doc.roundedRect(117, 27, 18, 18, 2, 2, 'F');
                 doc.addImage(qrImg, 'PNG', 118, 28, 16, 16);
                 if (logoData) { doc.roundedRect(117, 5, 18, 18, 2, 2, 'F'); doc.addImage(logoData, 'PNG', 118, 6, 16, 16); }
 
-                // PRÁVNÍ SEKCE - ČISTÁ VERZE BEZ "CITE"
-                doc.setTextColor(0); doc.setFontSize(4.2); doc.setFont("helvetica", "bold");
+                // --- PRÁVNÍ SEKCE (DYNAMICKÉ ŘÁDKOVÁNÍ A STRUKTURA) ---
+                doc.setTextColor(0); doc.setFontSize(4.5); doc.setFont("helvetica", "bold");
                 doc.text("Neperlivá pramenitá voda", 143, 6);
-                doc.text("Chemické složení (mg/l):", 174, 6);
+                doc.text("Chemické složení (mg/l):", 176, 6);
 
-                let y = 9;
-                const colW = 26; // STRIKTNÍ ŠÍŘKA PROTI PŘESAHU
-                doc.setFont("helvetica", "normal"); doc.setFontSize(3.8);
+                let currentY = 8.5;
+                const colW = 26; // MAXIMÁLNÍ DOVOLENÁ ŠÍŘKA TEXTU V MM
+
+                // Pomocná funkce pro bezpečné vykreslení a spočítání výšky
+                function drawWrappedText(text, isBold = false) {
+                    doc.setFont("helvetica", isBold ? "bold" : "normal");
+                    doc.setFontSize(isBold ? 3.8 : 3.6);
+
+                    // Vykreslení s natvrdo nastaveným maxWidth parametrem
+                    doc.text(text, 143, currentY, { maxWidth: colW });
+
+                    // Spočítání reálné výšky, kterou text zabral v PDF
+                    const dim = doc.getTextDimensions(text, { maxWidth: colW });
+                    currentY += dim.h + 1.2; // Přičteme výšku odstavce + malou mezeru
+                }
 
                 const p1 = "Přírodní pramenitá voda ze srdce Štýrska (Steiermark). Nedotčená příroda, filtrace přes vápencové horniny Alp a trvalé kontroly zaručují špičkovou kvalitu.";
-                const splitP1 = doc.splitTextToSize(p1, colW);
-                doc.text(splitP1, 143, y);
-                y += (splitP1.length * 1.8) + 1.5;
+                drawWrappedText(p1, false);
 
-                doc.setFont("helvetica", "bold"); doc.text("Složení: Neperlivá pramenitá voda", 143, y);
-                y += 2.5;
+                drawWrappedText("Složení: Neperlivá pramenitá voda", true);
 
-                doc.setFont("helvetica", "normal");
                 const p3 = "Minimální trvanlivost: Viz potisk na lahvi.\nSkladování: Chraňte před teplem a sluncem.\nNázev pramene: Seisensteinquelle, Rakousko";
-                const splitP3 = doc.splitTextToSize(p3, colW);
-                doc.text(splitP3, 143, y);
-                y += (splitP3.length * 1.8) + 2.5;
+                drawWrappedText(p3, false);
 
-                doc.setFont("helvetica", "bold"); doc.text("Distributor:", 143, y);
-                y += 1.8;
-                doc.setFont("helvetica", "normal"); doc.text("ELYSSIA s.r.o., Zenklova 24/54\n180 00 Praha 8, ČR\nwww.elyssia.cz", 143, y);
+                drawWrappedText("Vyrobeno a plněno / země původu:", true);
+                currentY -= 0.5; // Jemná korekce rozestupu
+                drawWrappedText("Wildalpen Wasserverwertungs GmbH\nSäusenbach 166, A-8924 Wildalpen, Rakousko", false);
 
+                drawWrappedText("Distributor:", true);
+                currentY -= 0.5;
+                drawWrappedText("ELYSSIA s.r.o., Zenklova 24/54\n180 00 Praha 8, ČR\nwww.elyssia.cz", false);
+
+                // Objem a PET symbol (Fixní pozice zcela dole)
                 doc.setFontSize(10); doc.setFont("helvetica", "bold"); doc.text("0,33 l", 143, 46);
-                doc.setDrawColor(0); doc.line(158, 45, 161, 40); doc.line(161, 40, 164, 45); doc.line(164, 45, 158, 45);
-                doc.setFontSize(3.5); doc.text("01", 159.8, 44); doc.text("PET", 159.2, 47.5);
+                doc.setDrawColor(0); doc.line(157, 45, 160, 40); doc.line(160, 40, 163, 45); doc.line(163, 45, 157, 45);
+                doc.setFontSize(3.5); doc.text("01", 158.8, 44); doc.text("PET", 158.2, 47.5);
 
-                // TABULKA SLOŽENÍ
+                // --- TABULKA SLOŽENÍ (POSUNUTÁ DOPRAVA PRO VĚTŠÍ BEZPEČÍ) ---
                 const tY = 8;
-                const tD = [["pH hodnota", "7,99"], ["Kyslík (O2)", "9,2"], ["Sodík (Na+)", "2,0"], ["Vápník (Ca2+)", "45"], ["Hořčík (Mg2+)", "13"], ["Hydrogenuhličitany", "170"], ["Draslík (K+)", "0,4"], ["Chloridy (Cl-)", "2,6"], ["Dusitany (NO2-)", "0,01"], ["Sírany (SO4 2-)", "11"], ["Fluoridy (F-)", "0,1"]];
+                const tD = [
+                    ["pH hodnota", "7,99"], ["Kyslík (O2)", "9,2"], ["Sodík (Na+)", "2,0"],
+                    ["Vápník (Ca2+)", "45"], ["Hořčík (Mg2+)", "13"], ["Hydrogenuhličitany", "170"],
+                    ["Draslík (K+)", "0,4"], ["Chloridy (Cl-)", "2,6"], ["Dusitany (NO2-)", "0,01"],
+                    ["Sírany (SO4 2-)", "11"], ["Fluoridy (F-)", "0,1"]
+                ];
+
+                doc.setFontSize(3.8);
                 for(let j=0; j<tD.length; j++) {
                     let ty = tY + j*3.2;
-                    doc.text(tD[j][0], 175, ty + 2.2); doc.text(tD[j][1], 191, ty + 2.2);
-                    doc.line(174, ty, 198, ty);
+                    doc.text(tD[j][0], 177, ty + 2.2);
+                    doc.text(tD[j][1], 192, ty + 2.2);
+                    doc.line(176, ty, 198, ty); // Vodorovné linky
                 }
-                doc.line(174, tY+tD.length*3.2, 198, tY+tD.length*3.2); doc.line(174, tY, 174, tY+tD.length*3.2); doc.line(190, tY, 190, tY+tD.length*3.2); doc.line(198, tY, 198, tY+tD.length*3.2);
+                // Obrysové svislé linky tabulky
+                doc.line(176, tY+tD.length*3.2, 198, tY+tD.length*3.2);
+                doc.line(176, tY, 176, tY+tD.length*3.2);
+                doc.line(191, tY, 191, tY+tD.length*3.2);
+                doc.line(198, tY, 198, tY+tD.length*3.2);
 
                 doc.save(`${name.toUpperCase()}_Label.pdf`);
             } catch (err) { alert(err.message); } finally { document.getElementById('genBtn').disabled = false; document.getElementById('loader').classList.add('hidden'); }
