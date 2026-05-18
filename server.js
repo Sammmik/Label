@@ -37,20 +37,29 @@ app.post('/api/generate', async (req, res) => {
     const { description } = req.body;
     if (!process.env.FAL_KEY) return res.status(500).json({ error: "Chybí FAL_KEY." });
 
-    const patternDNA = "Ultra-minimalist clean aesthetic. Subtle premium textures, vast negative space, elegant lighting. NO physical objects, NO labels, NO clothing tags.";
-    const prompt = `Premium abstract digital background. Theme: ${description}. Style: ${patternDNA}. STRICTLY NO TEXT.`;
+    // 💡 ZÁSADNÍ ZMĚNA: Přikázali jsme striktně 2D Vektorový, plochý design bez fotorealismu.
+    const patternDNA = "Flat 2D vector graphic, clean corporate aesthetic, minimalist silhouette, monochrome or duotone overlay. STRICTLY NO photorealism, NO 3D rendering, NO physical textures.";
+
+    const variations = [
+        { name: "VECTOR SILHOUETTE", prompt: `Minimalist wireframe vector line art silhouette on a solid background. ${patternDNA}` },
+        { name: "FLAT ICONOGRAPHY", prompt: `Oversized flat 2D silhouette graphic, watermark corporate style. ${patternDNA}` },
+        { name: "ABSTRACT GEOMETRIC", prompt: `Clean 2D geometric shapes, flat colors, swiss poster design. ${patternDNA}` }
+    ];
+
+    const selectedVariation = variations[Math.floor(Math.random() * variations.length)];
+    const prompt = `Minimalist flat vector graphic background. Theme: ${description}. Style: ${selectedVariation.prompt}. NO TEXT. 2D digital art only.`;
 
     try {
         const falOptions = {
             method: "POST",
             headers: { "Authorization": `Key ${process.env.FAL_KEY}`, "Content-Type": "application/json" },
-            body: JSON.stringify({ prompt, image_size: "landscape_4_3", num_inference_steps: 4 })
+            body: JSON.stringify({ prompt, image_size: "landscape_4_3", num_inference_steps: 4, guidance_scale: 3.5 })
         };
         const falResponse = await fetchWithRetry("https://fal.run/fal-ai/flux/schnell", falOptions, 2, 45000);
         const falData = await falResponse.json();
         const imageRes = await fetch(falData.images[0].url);
         const buffer = Buffer.from(await imageRes.arrayBuffer());
-        res.status(200).json({ imageUrl: `data:image/jpeg;base64,${buffer.toString('base64')}` });
+        res.status(200).json({ imageUrl: `data:image/jpeg;base64,${buffer.toString('base64')}`, styleName: selectedVariation.name });
     } catch (error) {
         res.status(500).json({ error: error.message });
     }
