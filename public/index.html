@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>AI Label Studio - Master Edition</title>
+    <title>AI Label Studio - Professional Typography</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
@@ -35,7 +35,7 @@
     <script>
         const { jsPDF } = window.jspdf;
 
-        // Načtení uživatelského loga
+        // 1. Zpracování nahraného loga
         document.getElementById('logoInput').addEventListener('change', function(e) {
             const file = e.target.files[0];
             const reader = new FileReader();
@@ -54,7 +54,7 @@
             reader.readAsDataURL(file);
         });
 
-        // Výpočet jasu pro kontrastní text a QR kódy
+        // 2. Analýza jasu
         function getAverageBrightness(base64Src) {
             return new Promise((resolve) => {
                 const img = new Image(); img.onload = () => {
@@ -67,6 +67,18 @@
             });
         }
 
+        // 3. Pomocná funkce pro stažení a konverzi TTF fontu
+        async function loadFont(url) {
+            const res = await fetch(url);
+            const blob = await res.blob();
+            return new Promise((resolve) => {
+                const reader = new FileReader();
+                reader.onloadend = () => resolve(reader.result.split(',')[1]); // Získá pouze Base64 data
+                reader.readAsDataURL(blob);
+            });
+        }
+
+        // 4. Hlavní proces
         async function runDesigner() {
             const name = document.getElementById('compName').value;
             const desc = document.getElementById('compDesc').value;
@@ -78,6 +90,7 @@
             document.getElementById('loader').classList.remove('hidden');
 
             try {
+                // A) Generování AI grafiky
                 const results = [];
                 for (let i = 0; i < 3; i++) {
                     statusLabel.innerText = `Generování ${i+1}/3...`;
@@ -89,60 +102,67 @@
                     results.push(resData);
                 }
 
-                statusLabel.innerText = "Kreslím PDF...";
-
-                // --- DYNAMICKÉ QR KÓDY (Průhledné pozadí) ---
-                // Černý QR pro světlá pozadí
+                // B) Generování QR kódů
                 const qrDivBlack = document.createElement('div');
                 new QRCode(qrDivBlack, { text: qrUrl, width: 300, height: 300, colorDark: "#000000", colorLight: "transparent" });
-                // Bílý QR pro tmavá pozadí
                 const qrDivWhite = document.createElement('div');
                 new QRCode(qrDivWhite, { text: qrUrl, width: 300, height: 300, colorDark: "#ffffff", colorLight: "transparent" });
-
                 await new Promise(r => setTimeout(r, 500));
                 const qrImgBlack = qrDivBlack.querySelector('canvas').toDataURL("image/png");
                 const qrImgWhite = qrDivWhite.querySelector('canvas').toDataURL("image/png");
 
+                // C) Stažení českých fontů (Roboto) do paměti prohlížeče
+                statusLabel.innerText = "Sestavuji typografii...";
+                const fontRegular = await loadFont('https://cdn.jsdelivr.net/npm/@canvas-fonts/roboto@1.0.4/Roboto-Regular.ttf');
+                const fontBold = await loadFont('https://cdn.jsdelivr.net/npm/@canvas-fonts/roboto@1.0.4/Roboto-Bold.ttf');
+
+                // D) Vytvoření PDF a injekce fontů
                 const doc = new jsPDF({ orientation: 'landscape', unit: 'mm', format: [200, 50] });
+
+                doc.addFileToVFS("Roboto-Regular.ttf", fontRegular);
+                doc.addFont("Roboto-Regular.ttf", "Roboto", "normal");
+                doc.addFileToVFS("Roboto-Bold.ttf", fontBold);
+                doc.addFont("Roboto-Bold.ttf", "Roboto", "bold");
 
                 results.forEach((res, i) => {
                     if (i > 0) doc.addPage([200, 50], 'l');
 
-                    // A) AI Plátno a Informační zóna
+                    // Grafika a pozadí
                     doc.addImage(res.imageUrl, 'JPEG', 0, 0, 140, 50);
                     doc.setFillColor(255, 255, 255); doc.rect(140, 0, 60, 50, 'F');
                     doc.setDrawColor(240, 240, 240); doc.line(140, 0, 140, 50);
 
-                    // B) Hlavní název značky s automatickým kontrastem
+                    // Název značky (Zde ponecháme původní helvetiku, protože neobsahuje diakritiku a vypadá dobře)
                     doc.setTextColor(res.tone === 'light' ? 30 : 255);
                     doc.setFontSize(name.length > 10 ? 16 : 22);
+                    doc.setFont("helvetica", "normal");
                     doc.text(name.toUpperCase(), 15, 25, { charSpace: 6 });
 
-                    // C) Logo bez bílého pozadí (čistě přes grafiku)
-                    if (logoData) {
-                        doc.addImage(logoData, 'PNG', 118, 6, 16, 16);
-                    }
-
-                    // D) QR Kód bez bílého pozadí (Automaticky černý/bílý)
+                    // QR Kód a Logo
+                    if (logoData) doc.addImage(logoData, 'PNG', 118, 6, 16, 16);
                     const qrToUse = res.tone === 'light' ? qrImgBlack : qrImgWhite;
                     doc.addImage(qrToUse, 'PNG', 118, 28, 16, 16);
 
-                    // --- E) PRÁVNÍ TEXTY (NEPRŮSTŘELNÉ ZALAMOVÁNÍ) ---
+                    // --- PRÁVNÍ TEXTY S NOVÝM FONTEM ROBOTO ---
                     doc.setTextColor(0);
-                    doc.setFontSize(4.2); doc.setFont("helvetica", "bold");
+                    doc.setFontSize(4.2); doc.setFont("Roboto", "bold");
                     doc.text("Neperlivá pramenitá voda", 142, 6);
 
                     let currentY = 8.5;
-                    const colW = 28; // Maximální šířka textu
-                    const leftX = 142; // Začátek textu
+                    const colW = 28; // Maximální šířka textu před odřádkováním
+                    const leftX = 142; // Souřadnice X
 
-                    // Inteligentní funkce pro výpis textu pod sebe
+                    // Inteligentní a 100% bezpečná textová funkce
                     function printText(text, isBold = false) {
-                        doc.setFont("helvetica", isBold ? "bold" : "normal");
+                        doc.setFont("Roboto", isBold ? "bold" : "normal");
                         doc.setFontSize(isBold ? 3.8 : 3.5);
-                        const lines = doc.splitTextToSize(text, colW); // Rozdělení přesně na danou šířku
-                        doc.text(lines, leftX, currentY);
-                        currentY += (lines.length * 1.4) + (isBold ? 0.5 : 1.5); // Přesný posun dolů
+
+                        // Funkce doc.text nyní díky Robotu perfektně zpracuje UTF-8 a zalomí jej dle colW
+                        doc.text(text, leftX, currentY, { maxWidth: colW });
+
+                        // Vypočteme výšku odstavce pro další blok
+                        const dim = doc.getTextDimensions(text, { maxWidth: colW });
+                        currentY += dim.h + (isBold ? 0.8 : 1.5);
                     }
 
                     printText("Přírodní pramenitá voda ze srdce Štýrska (Steiermark). Nedotčená příroda, filtrace přes vápencové horniny Alp a trvalé kontroly zaručují špičkovou kvalitu.", false);
@@ -153,13 +173,14 @@
                     printText("Distributor:", true);
                     printText("ELYSSIA s.r.o., Zenklova 24/54\n180 00 Praha 8, ČR\nwww.elyssia.cz", false);
 
-                    // F) Objem a PET (Fixní pozice dole)
-                    doc.setFontSize(10); doc.setFont("helvetica", "bold"); doc.text("0,33 l", leftX, 47);
+                    // Objem a PET symbol
+                    doc.setFont("Roboto", "bold");
+                    doc.setFontSize(10); doc.text("0,33 l", leftX, 47);
                     doc.setDrawColor(0); doc.line(158, 46, 161, 41); doc.line(161, 41, 164, 46); doc.line(164, 46, 158, 46);
                     doc.setFontSize(3.5); doc.text("01", 159.8, 45); doc.text("PET", 159.2, 48.5);
 
-                    // --- G) TABULKA (POSUNUTO BEZPEČNĚ DOPRAVA NA 172 mm) ---
-                    const tX = 172; // Start tabulky
+                    // --- TABULKA ---
+                    const tX = 172;
                     const tY = 8;
                     const tD = [
                         ["pH hodnota", "7,99"], ["Kyslík (O2)", "9,2"], ["Sodík (Na+)", "2,0"],
@@ -168,25 +189,12 @@
                         ["Sírany (SO4 2-)", "11"], ["Fluoridy (F-)", "0,1"]
                     ];
 
+                    doc.setFont("Roboto", "bold");
                     doc.setFontSize(4); doc.text("Chemické složení (mg/l):", tX, 6);
+                    doc.setFont("Roboto", "normal");
                     doc.setFontSize(3.8);
 
                     for(let j=0; j<tD.length; j++) {
                         let ty = tY + j*3.2;
                         doc.text(tD[j][0], tX + 1, ty + 2.2);
-                        doc.text(tD[j][1], tX + 17, ty + 2.2); // Čísla v tabulce
-                        doc.line(tX, ty, 198, ty); // Vodorovné linky
-                    }
-                    // Obrysové svislé linky tabulky
-                    doc.line(tX, tY+tD.length*3.2, 198, tY+tD.length*3.2);
-                    doc.line(tX, tY, tX, tY+tD.length*3.2);
-                    doc.line(tX + 16, tY, tX + 16, tY+tD.length*3.2);
-                    doc.line(198, tY, 198, tY+tD.length*3.2);
-                });
-
-                doc.save(`${name.toUpperCase()}_Labels.pdf`);
-            } catch (err) { alert(err.message); } finally { document.getElementById('genBtn').disabled = false; document.getElementById('loader').classList.add('hidden'); }
-        }
-    </script>
-</body>
-</html>
+                        doc.text(tD[j][1], tX + 17, ty + 2.2);
