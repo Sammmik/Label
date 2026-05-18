@@ -3,200 +3,949 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>AI Label Studio - Flat Vector Edition</title>
-    <script src="https://cdn.tailwindcss.com"></script>
+    <title>Label Studio AI</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@700;800;900&family=DM+Mono:wght@400;500&family=Barlow:wght@400;500;600&display=swap" rel="stylesheet">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
     <style>
-        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@200;400;700&display=swap');
-        body { font-family: 'Inter', sans-serif; background: #050505; color: #fff; }
-        .minimal-card { background: rgba(255,255,255,0.02); border: 1px solid rgba(255,255,255,0.08); border-radius: 2rem; }
-        .input-minimal { background: transparent; border-bottom: 1px solid rgba(255,255,255,0.2); width: 100%; outline: none; color: #fff; padding: 0.5rem 0; }
+        :root {
+            --bg: #060810;
+            --surface: rgba(255,255,255,0.03);
+            --border: rgba(255,255,255,0.08);
+            --blue: #2563eb;
+            --blue-dim: rgba(37,99,235,0.15);
+            --blue-border: rgba(37,99,235,0.35);
+            --text: #f0f0f0;
+            --muted: #6b7280;
+            --green: #22c55e;
+            --red: #ef4444;
+            --mono: 'DM Mono', monospace;
+        }
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body {
+            background: var(--bg);
+            color: var(--text);
+            font-family: 'Barlow', sans-serif;
+            min-height: 100vh;
+            padding: 32px 20px 80px;
+        }
+
+        /* ── LAYOUT ── */
+        .page { max-width: 760px; margin: 0 auto; }
+        .header { text-align: center; margin-bottom: 48px; }
+        .badge {
+            display: inline-flex; align-items: center; gap: 8px;
+            background: var(--blue-dim); border: 1px solid var(--blue-border);
+            border-radius: 100px; padding: 5px 16px;
+            font-family: var(--mono); font-size: 10px; letter-spacing: .1em;
+            color: #93c5fd; margin-bottom: 18px;
+        }
+        h1 {
+            font-family: 'Barlow Condensed', sans-serif;
+            font-size: clamp(38px, 7vw, 64px);
+            font-weight: 900; letter-spacing: -.02em; line-height: 1;
+        }
+        h1 em { font-style: normal; color: var(--blue); }
+        .subtitle { margin-top: 10px; color: var(--muted); font-size: 14px; font-family: var(--mono); }
+
+        /* ── CARD ── */
+        .card {
+            background: var(--surface); border: 1px solid var(--border);
+            border-radius: 20px; padding: 32px;
+            margin-bottom: 20px;
+        }
+        .card-head { display: flex; align-items: center; gap: 12px; margin-bottom: 24px; }
+        .step-pill {
+            background: var(--blue-dim); border: 1px solid var(--blue-border);
+            border-radius: 100px; width: 28px; height: 28px;
+            display: flex; align-items: center; justify-content: center;
+            font-size: 11px; font-weight: 700; color: #93c5fd; flex-shrink: 0;
+        }
+        .card-title { font-size: 16px; font-weight: 600; }
+
+        /* ── FORM ── */
+        .field { margin-bottom: 20px; }
+        .field label {
+            display: block; font-family: var(--mono); font-size: 10px;
+            letter-spacing: .12em; text-transform: uppercase; color: var(--muted);
+            margin-bottom: 8px;
+        }
+        .field input {
+            width: 100%; background: rgba(255,255,255,0.04);
+            border: 1px solid var(--border); border-radius: 10px;
+            padding: 12px 14px; color: var(--text); font-size: 15px;
+            font-family: 'Barlow', sans-serif; outline: none;
+            transition: border-color .2s, background .2s;
+        }
+        .field input:focus { border-color: var(--blue-border); background: rgba(37,99,235,0.05); }
+        .field input::placeholder { color: rgba(255,255,255,0.2); }
+
+        .row2 { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+        @media(max-width: 500px) { .row2 { grid-template-columns: 1fr; } }
+
+        /* color picker */
+        .color-row { display: flex; align-items: center; gap: 12px; }
+        .color-swatch {
+            width: 44px; height: 44px; border-radius: 10px;
+            border: 2px solid var(--border); overflow: hidden; flex-shrink: 0; cursor: pointer;
+        }
+        .color-swatch input { width: 200%; height: 200%; margin: -50%; border: none; cursor: pointer; }
+        .color-info { font-family: var(--mono); font-size: 12px; color: var(--muted); line-height: 1.6; }
+
+        /* logo zone */
+        .logo-drop {
+            position: relative; border: 1.5px dashed rgba(255,255,255,0.12);
+            border-radius: 12px; padding: 22px; text-align: center; cursor: pointer;
+            transition: all .2s;
+        }
+        .logo-drop:hover { border-color: rgba(255,255,255,0.25); background: rgba(255,255,255,0.02); }
+        .logo-drop input { position: absolute; inset: 0; opacity: 0; cursor: pointer; width: 100%; height: 100%; }
+        .logo-drop.ready { border-color: rgba(34,197,94,0.4); background: rgba(34,197,94,0.04); }
+        .logo-preview { max-height: 56px; max-width: 160px; object-fit: contain; margin: 0 auto 6px; display: none; border-radius: 6px; }
+        .logo-drop.ready .logo-preview { display: block; }
+        .logo-hint { font-family: var(--mono); font-size: 11px; color: var(--muted); }
+        .logo-icon { font-size: 26px; margin-bottom: 6px; }
+
+        /* ── BUTTONS ── */
+        .btn-primary {
+            width: 100%; padding: 16px; background: var(--blue);
+            border: none; border-radius: 12px; color: #fff;
+            font-family: 'Barlow Condensed', sans-serif; font-size: 18px; font-weight: 700;
+            letter-spacing: .04em; text-transform: uppercase; cursor: pointer;
+            transition: all .2s; position: relative; overflow: hidden; margin-top: 8px;
+        }
+        .btn-primary:hover { background: #1d4ed8; transform: translateY(-1px); box-shadow: 0 8px 32px rgba(37,99,235,0.4); }
+        .btn-primary:disabled { opacity: 0.5; cursor: not-allowed; transform: none; box-shadow: none; }
+        .btn-secondary {
+            flex: 1; padding: 10px 14px; background: transparent;
+            border: 1px solid var(--border); border-radius: 10px;
+            color: rgba(255,255,255,0.6); font-size: 13px; font-weight: 500;
+            cursor: pointer; transition: all .2s; font-family: 'Barlow', sans-serif;
+        }
+        .btn-secondary:hover { border-color: rgba(255,255,255,0.25); color: #fff; background: rgba(255,255,255,0.04); }
+        .btn-pdf {
+            width: 100%; padding: 16px;
+            background: linear-gradient(135deg, #1e40af, #1d4ed8);
+            border: none; border-radius: 12px; color: #fff;
+            font-family: 'Barlow Condensed', sans-serif; font-size: 18px; font-weight: 700;
+            letter-spacing: .04em; text-transform: uppercase; cursor: pointer;
+            transition: all .2s; box-shadow: 0 4px 24px rgba(37,99,235,0.3);
+        }
+        .btn-pdf:hover { transform: translateY(-1px); box-shadow: 0 8px 40px rgba(37,99,235,0.5); }
+
+        /* ── ERROR ── */
+        .error-box {
+            background: rgba(239,68,68,0.1); border: 1px solid rgba(239,68,68,0.25);
+            border-radius: 10px; padding: 12px 16px; color: #fca5a5;
+            font-size: 13px; margin-top: 12px; display: none;
+        }
+
+        /* ── LOADING SCREEN ── */
+        #loading-view {
+            display: none; min-height: 80vh;
+            align-items: center; justify-content: center;
+            flex-direction: column; gap: 0; text-align: center;
+        }
+        .spinner {
+            width: 56px; height: 56px; border-radius: 50%;
+            border: 2px solid rgba(37,99,235,0.2);
+            border-top-color: var(--blue);
+            animation: spin .85s linear infinite; margin-bottom: 28px;
+        }
+        @keyframes spin { to { transform: rotate(360deg); } }
+        .load-title { font-family: 'Barlow Condensed', sans-serif; font-size: 22px; font-weight: 700; margin-bottom: 6px; }
+        .load-sub { font-family: var(--mono); font-size: 11px; color: var(--muted); margin-bottom: 32px; }
+        .steps { display: flex; flex-direction: column; gap: 10px; align-items: flex-start; }
+        .lstep { display: flex; align-items: center; gap: 10px; font-family: var(--mono); font-size: 11px; color: #374151; transition: color .3s; }
+        .lstep.active { color: #93c5fd; }
+        .lstep.done { color: var(--green); }
+        .lstep-dot { width: 6px; height: 6px; border-radius: 50%; background: currentColor; flex-shrink: 0; }
+
+        /* ── PREVIEW ── */
+        #preview-view { display: none; }
+        .preview-header { margin-bottom: 28px; }
+        .preview-title { font-family: 'Barlow Condensed', sans-serif; font-size: 32px; font-weight: 800; }
+        .preview-meta { font-family: var(--mono); font-size: 11px; color: var(--muted); margin-top: 4px; }
+        .brand-chips { display: flex; gap: 10px; flex-wrap: wrap; margin-top: 12px; }
+        .chip {
+            background: var(--surface); border: 1px solid var(--border);
+            border-radius: 8px; padding: 6px 12px;
+            font-family: var(--mono); font-size: 11px; color: var(--muted);
+        }
+        .chip strong { color: var(--text); }
+
+        .design-block { margin-bottom: 32px; }
+        .design-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 12px; }
+        .design-name { font-weight: 700; font-size: 16px; }
+        .design-desc { font-family: var(--mono); font-size: 11px; color: var(--muted); }
+        .design-tag {
+            font-family: var(--mono); font-size: 10px; font-weight: 600;
+            padding: 4px 10px; border-radius: 100px; letter-spacing: .05em;
+        }
+        .canvas-shell {
+            border-radius: 12px; overflow: hidden;
+            box-shadow: 0 16px 56px rgba(0,0,0,0.6), 0 0 0 1px rgba(255,255,255,0.06);
+        }
+        canvas { display: block; width: 100%; height: auto; }
+        .canvas-actions { display: flex; gap: 10px; margin-top: 10px; align-items: center; }
+        .swatches { display: flex; gap: 5px; flex-shrink: 0; }
+        .swatch { width: 16px; height: 16px; border-radius: 4px; border: 1px solid rgba(255,255,255,0.15); }
+
+        /* generating placeholder */
+        .gen-placeholder {
+            width: 100%; height: 180px; background: rgba(255,255,255,0.02);
+            border: 1px solid var(--border); border-radius: 12px;
+            display: flex; align-items: center; justify-content: center;
+            flex-direction: column; gap: 8px; color: var(--muted);
+            font-family: var(--mono); font-size: 11px;
+        }
+        .mini-spin {
+            width: 24px; height: 24px; border-radius: 50%;
+            border: 2px solid rgba(37,99,235,0.2); border-top-color: var(--blue);
+            animation: spin .7s linear infinite;
+        }
+
+        /* export zone */
+        .export-zone {
+            background: linear-gradient(135deg, rgba(37,99,235,0.08), rgba(37,99,235,0.04));
+            border: 1px solid var(--blue-border); border-radius: 20px;
+            padding: 32px; text-align: center; margin-top: 8px;
+        }
+        .export-title { font-family: 'Barlow Condensed', sans-serif; font-size: 20px; font-weight: 700; margin-bottom: 6px; }
+        .export-desc { font-family: var(--mono); font-size: 11px; color: var(--muted); margin-bottom: 22px; }
+        .divider { height: 1px; background: var(--border); margin: 32px 0; }
+
+        /* back */
+        .back-btn {
+            background: none; border: none; color: var(--muted); cursor: pointer;
+            font-family: var(--mono); font-size: 12px; display: flex; align-items: center;
+            gap: 6px; margin-bottom: 12px; padding: 0; transition: color .2s;
+        }
+        .back-btn:hover { color: var(--text); }
+
+        /* footer */
+        .footer { margin-top: 40px; text-align: center; font-family: var(--mono); font-size: 10px; color: #1f2937; }
     </style>
 </head>
-<body class="min-h-screen p-6 flex items-center justify-center">
+<body>
 
-    <div class="max-w-md w-full minimal-card p-10 shadow-2xl">
-        <header class="text-center mb-10"><h1 class="text-xl font-extralight uppercase tracking-widest">Design Agent</h1></header>
-        <div class="space-y-8">
-            <div class="group"><p class="text-[9px] uppercase tracking-[0.3em] text-slate-500 mb-1">Značka</p><input type="text" id="compName" value="HSH SPORT" class="input-minimal uppercase"></div>
-            <div class="group"><p class="text-[9px] uppercase tracking-[0.3em] text-slate-500 mb-1">Popis pro AI (Vektorový symbol)</p><textarea id="compDesc" rows="2" class="input-minimal text-sm" placeholder="e.g. Smartwatch face silhouette, abstract running shoe vector..."></textarea></div>
-            <div class="group"><p class="text-[9px] uppercase tracking-[0.3em] text-slate-500 mb-1">QR Odkaz</p><input type="text" id="qrLink" value="https://www.hshsport.cz" class="input-minimal text-xs"></div>
+<div class="page">
 
-            <button onclick="runDesigner()" id="genBtn" class="bg-white text-black w-full py-4 rounded-full uppercase text-[10px] tracking-widest transition active:scale-95">Generovat Kolekci</button>
-            <div id="loader" class="hidden mt-6 text-center"><p id="status" class="text-[9px] animate-pulse uppercase tracking-wider">Zpracovávám...</p></div>
+    <!-- ══════════════ INPUT VIEW ══════════════ -->
+    <div id="input-view">
+        <header class="header">
+            <div class="badge">◈ &nbsp;LABEL STUDIO AI</div>
+            <h1>Scan. Design.<br><em>Print-ready.</em></h1>
+            <p class="subtitle">Enter company → AI scans website → 3 label designs → PDF 200×50mm</p>
+        </header>
+
+        <div class="card">
+            <div class="card-head">
+                <div class="step-pill">1</div>
+                <div class="card-title">Brand Information</div>
+            </div>
+
+            <div class="field">
+                <label>Company Name *</label>
+                <input type="text" id="inp-name" placeholder="e.g. YUKI s.r.o." autocomplete="off">
+            </div>
+
+            <div class="row2">
+                <div class="field">
+                    <label>Description / Industry</label>
+                    <input type="text" id="inp-desc" placeholder="e.g. Electric motorcycles">
+                </div>
+                <div class="field">
+                    <label>Website URL (for QR + scan)</label>
+                    <input type="text" id="inp-url" placeholder="https://www.yourco.cz">
+                </div>
+            </div>
+
+            <div class="field">
+                <label>Primary Brand Color — AI detects real colors from your site</label>
+                <div class="color-row">
+                    <div class="color-swatch" id="color-swatch" style="background:#2563eb">
+                        <input type="color" id="inp-color" value="#2563eb">
+                    </div>
+                    <div class="color-info" id="color-info">#2563eb &nbsp;·&nbsp; AI will override this with your real brand color</div>
+                </div>
+            </div>
+
+            <div class="field">
+                <label>Company Logo (optional — appears on all 3 labels)</label>
+                <div class="logo-drop" id="logo-drop">
+                    <input type="file" id="logo-input" accept="image/png,image/jpeg,image/svg+xml,image/webp">
+                    <div class="logo-icon">⊕</div>
+                    <img class="logo-preview" id="logo-preview" src="" alt="logo">
+                    <div class="logo-hint" id="logo-hint">Click to upload PNG / SVG / JPG</div>
+                </div>
+            </div>
+
+            <div id="error-box" class="error-box"></div>
+
+            <button class="btn-primary" id="gen-btn" onclick="startGeneration()">
+                🔍 &nbsp;Scan Website & Generate 3 Designs
+            </button>
+
+            <div style="margin-top:20px;padding-top:18px;border-top:1px solid var(--border);display:flex;gap:24px;justify-content:center;">
+                <div style="text-align:center;font-family:var(--mono);font-size:10px;color:#374151">
+                    <div style="color:var(--blue);font-size:16px;margin-bottom:4px">◈</div>AI scans website
+                </div>
+                <div style="text-align:center;font-family:var(--mono);font-size:10px;color:#374151">
+                    <div style="color:var(--blue);font-size:16px;margin-bottom:4px">◇</div>3 print designs
+                </div>
+                <div style="text-align:center;font-family:var(--mono);font-size:10px;color:#374151">
+                    <div style="color:var(--blue);font-size:16px;margin-bottom:4px">◆</div>PDF 200×50 mm
+                </div>
+            </div>
+        </div>
+
+        <div class="footer">Label Studio AI &nbsp;·&nbsp; Inspired by Wildalp custom bottle labels, Czech Republic</div>
+    </div>
+
+    <!-- ══════════════ LOADING VIEW ══════════════ -->
+    <div id="loading-view">
+        <div class="spinner"></div>
+        <div class="load-title" id="load-title">Analyzing brand...</div>
+        <div class="load-sub" id="load-sub">This takes about 30–60 seconds</div>
+        <div class="steps" id="load-steps">
+            <div class="lstep" id="step-0"><div class="lstep-dot"></div>Scanning website & brand identity</div>
+            <div class="lstep" id="step-1"><div class="lstep-dot"></div>Generating design parameters</div>
+            <div class="lstep" id="step-2"><div class="lstep-dot"></div>Creating illustration for label 1</div>
+            <div class="lstep" id="step-3"><div class="lstep-dot"></div>Creating illustration for label 2</div>
+            <div class="lstep" id="step-4"><div class="lstep-dot"></div>Creating illustration for label 3</div>
+            <div class="lstep" id="step-5"><div class="lstep-dot"></div>Fetching QR code</div>
+            <div class="lstep" id="step-6"><div class="lstep-dot"></div>Rendering final labels</div>
         </div>
     </div>
 
-    <script>
-        const { jsPDF } = window.jspdf;
+    <!-- ══════════════ PREVIEW VIEW ══════════════ -->
+    <div id="preview-view">
+        <button class="back-btn" onclick="resetToInput()">← Start over</button>
 
-        async function loadFont(url) {
-            try {
-                const res = await fetch(url);
-                if (!res.ok) throw new Error("Nelze stáhnout font.");
-                const blob = await res.blob();
-                return new Promise((resolve) => {
-                    const reader = new FileReader();
-                    reader.onloadend = () => resolve(reader.result.split(',')[1]);
-                    reader.readAsDataURL(blob);
-                });
-            } catch (err) {
-                console.warn("Záložní font aktivován.", err);
-                return null;
+        <div class="preview-header">
+            <div class="preview-title">Your Label Designs</div>
+            <div class="preview-meta" id="preview-meta">Loading...</div>
+            <div class="brand-chips" id="brand-chips"></div>
+        </div>
+
+        <!-- 3 label blocks -->
+        <div class="design-block" id="block-0">
+            <div class="design-header">
+                <div><div class="design-name" id="name-0">Signature Dark</div><div class="design-desc" id="desc-0"></div></div>
+                <div class="design-tag" id="tag-0" style="color:#3b82f6;background:rgba(59,130,246,0.15)">DARK</div>
+            </div>
+            <div id="placeholder-0" class="gen-placeholder"><div class="mini-spin"></div><span>Generating illustration...</span></div>
+            <div class="canvas-shell" id="shell-0" style="display:none">
+                <canvas id="canvas-0"></canvas>
+            </div>
+            <div class="canvas-actions" id="actions-0" style="display:none">
+                <button class="btn-secondary" onclick="downloadPNG(0)">↓ Download PNG</button>
+                <div class="swatches" id="swatches-0"></div>
+            </div>
+        </div>
+
+        <div class="design-block" id="block-1">
+            <div class="design-header">
+                <div><div class="design-name" id="name-1">Clean White</div><div class="design-desc" id="desc-1"></div></div>
+                <div class="design-tag" id="tag-1" style="color:#10b981;background:rgba(16,185,129,0.15)">WHITE</div>
+            </div>
+            <div id="placeholder-1" class="gen-placeholder"><div class="mini-spin"></div><span>Generating illustration...</span></div>
+            <div class="canvas-shell" id="shell-1" style="display:none">
+                <canvas id="canvas-1"></canvas>
+            </div>
+            <div class="canvas-actions" id="actions-1" style="display:none">
+                <button class="btn-secondary" onclick="downloadPNG(1)">↓ Download PNG</button>
+                <div class="swatches" id="swatches-1"></div>
+            </div>
+        </div>
+
+        <div class="design-block" id="block-2">
+            <div class="design-header">
+                <div><div class="design-name" id="name-2">Bold Brand</div><div class="design-desc" id="desc-2"></div></div>
+                <div class="design-tag" id="tag-2" style="color:#a855f7;background:rgba(168,85,247,0.15)">BOLD</div>
+            </div>
+            <div id="placeholder-2" class="gen-placeholder"><div class="mini-spin"></div><span>Generating illustration...</span></div>
+            <div class="canvas-shell" id="shell-2" style="display:none">
+                <canvas id="canvas-2"></canvas>
+            </div>
+            <div class="canvas-actions" id="actions-2" style="display:none">
+                <button class="btn-secondary" onclick="downloadPNG(2)">↓ Download PNG</button>
+                <div class="swatches" id="swatches-2"></div>
+            </div>
+        </div>
+
+        <div class="divider"></div>
+        <div class="export-zone">
+            <div class="export-title">Export All 3 Labels</div>
+            <div class="export-desc">Print-ready PDF &nbsp;·&nbsp; Landscape &nbsp;·&nbsp; 200 × 50 mm &nbsp;·&nbsp; 3 pages &nbsp;·&nbsp; With legal text zone</div>
+            <button class="btn-pdf" onclick="exportPDF()">📄 &nbsp;Download PDF — All 3 Labels</button>
+        </div>
+    </div>
+
+</div>
+
+<script>
+// ══════════════════════════════════════════════════════════════
+// STATE
+// ══════════════════════════════════════════════════════════════
+let state = {
+    companyName: '', companyDesc: '', companyUrl: '', companyColor: '#2563eb',
+    logoImg: null, logoData: null,
+    brandData: null,   // from /api/analyze-brand
+    images: [null, null, null], // base64 from /api/generate-image
+    qrImg: null,
+    canvases: [null, null, null]
+};
+
+// Canvas dimensions: 1000×250px = 200mm×50mm @ 5px/mm
+const CW = 1000, CH = 250;
+const MAIN_W = 700;  // left illustrated zone (140mm)
+const INFO_W = 300;  // right legal text zone (60mm)
+
+// ══════════════════════════════════════════════════════════════
+// LOGO UPLOAD
+// ══════════════════════════════════════════════════════════════
+document.getElementById('inp-color').addEventListener('input', function() {
+    document.getElementById('color-swatch').style.background = this.value;
+    document.getElementById('color-info').textContent = this.value + ' · AI will override with real brand color';
+    state.companyColor = this.value;
+});
+
+document.getElementById('logo-input').addEventListener('change', function(e) {
+    const file = e.target.files[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = (ev) => {
+        const img = new Image();
+        img.onload = () => {
+            // Render logo onto canvas for consistent sizing
+            const c = document.createElement('canvas');
+            c.width = 360; c.height = 220;
+            const ctx = c.getContext('2d');
+            const sc = Math.min(340 / img.width, 200 / img.height);
+            ctx.drawImage(img, (360 - img.width*sc)/2, (220 - img.height*sc)/2, img.width*sc, img.height*sc);
+            state.logoData = c.toDataURL('image/png');
+            state.logoImg = new Image();
+            state.logoImg.src = state.logoData;
+            document.getElementById('logo-preview').src = state.logoData;
+            document.getElementById('logo-drop').classList.add('ready');
+            document.getElementById('logo-hint').textContent = '✓ Logo ready — appears on all labels';
+        };
+        img.src = ev.target.result;
+    };
+    reader.readAsDataURL(file);
+});
+
+// ══════════════════════════════════════════════════════════════
+// MAIN GENERATION FLOW
+// ══════════════════════════════════════════════════════════════
+async function startGeneration() {
+    const name = document.getElementById('inp-name').value.trim();
+    if (!name) { showError('Enter company name first.'); return; }
+
+    state.companyName = name;
+    state.companyDesc = document.getElementById('inp-desc').value.trim();
+    state.companyUrl  = document.getElementById('inp-url').value.trim();
+    state.companyColor = document.getElementById('inp-color').value;
+    state.images = [null, null, null];
+    state.qrImg = null;
+
+    hideError();
+    showView('loading');
+    setStep(0, 'active');
+
+    try {
+        // STEP 1: Brand analysis
+        setStep(0, 'active');
+        setTitle('Scanning brand identity...', 'Claude is analyzing your website & designing label concepts');
+        const brandRes = await apiFetch('/api/analyze-brand', {
+            name: state.companyName,
+            description: state.companyDesc,
+            url: state.companyUrl,
+            color: state.companyColor
+        });
+        state.brandData = brandRes;
+        setStep(0, 'done'); setStep(1, 'done');
+
+        // STEP 2–4: Generate 3 illustrations in parallel
+        setTitle('Generating label illustrations...', 'FAL.ai is creating your brand artwork (this takes 20–40s)');
+        const imgPromises = state.brandData.designs.map((d, i) => {
+            setStep(2 + i, 'active');
+            return apiFetch('/api/generate-image', { prompt: d.imagePrompt, designIndex: i })
+                .then(r => { state.images[i] = r.imageUrl; setStep(2 + i, 'done'); })
+                .catch(err => { console.error(`Image ${i} failed:`, err); setStep(2 + i, 'done'); });
+        });
+        await Promise.all(imgPromises);
+
+        // STEP 5: QR code
+        setStep(5, 'active');
+        setTitle('Fetching QR code...', '');
+        if (state.companyUrl) {
+            state.qrImg = await loadImage(`/api/qr?url=${encodeURIComponent(state.companyUrl)}`);
+        }
+        setStep(5, 'done');
+
+        // STEP 6: Render labels
+        setStep(6, 'active');
+        setTitle('Rendering labels...', '');
+        showView('preview');
+        populatePreviewMeta();
+        await document.fonts.ready;
+        await new Promise(r => setTimeout(r, 100));
+        for (let i = 0; i < 3; i++) {
+            renderLabel(i);
+            showLabelResult(i);
+        }
+        setStep(6, 'done');
+
+    } catch (err) {
+        console.error(err);
+        showView('input');
+        showError('Error: ' + err.message);
+    }
+}
+
+// ══════════════════════════════════════════════════════════════
+// LABEL RENDERING
+// ══════════════════════════════════════════════════════════════
+function renderLabel(idx) {
+    const canvas = document.getElementById('canvas-' + idx);
+    const design = state.brandData.designs[idx];
+    canvas.width = CW; canvas.height = CH;
+    const ctx = canvas.getContext('2d');
+    const { bg, primary, text, accent } = design;
+    const dark = isDark(bg);
+    const name = (state.companyName || 'COMPANY').toUpperCase();
+    const tagline = design.tagline || '';
+    const slogan = state.brandData?.slogan || '';
+    const urlClean = (state.companyUrl||'').replace(/^https?:\/\/(www\.)?/,'').replace(/\/$/,'');
+
+    // ── BACKGROUND ──────────────────────────────
+    ctx.fillStyle = bg;
+    ctx.fillRect(0, 0, CW, CH);
+
+    // ── AI ILLUSTRATION ──────────────────────────
+    if (state.images[idx]) {
+        const img = new Image();
+        img.src = state.images[idx];
+        // Draw illustration filling the main zone, with slight right fade
+        ctx.drawImage(img, 0, 0, MAIN_W, CH);
+        // Gradient fade on the right edge of illustration zone
+        const fadeGrd = ctx.createLinearGradient(MAIN_W * 0.55, 0, MAIN_W, 0);
+        fadeGrd.addColorStop(0, 'rgba(0,0,0,0)');
+        fadeGrd.addColorStop(1, dark ? 'rgba(0,0,0,0.75)' : 'rgba(255,255,255,0.85)');
+        ctx.fillStyle = fadeGrd;
+        ctx.fillRect(0, 0, MAIN_W, CH);
+    } else {
+        // Fallback pattern if no image
+        ctx.fillStyle = bg; ctx.fillRect(0, 0, MAIN_W, CH);
+        // Subtle geometric pattern
+        ctx.strokeStyle = alpha(primary, 0.08); ctx.lineWidth = 1;
+        for (let x = -CH; x < MAIN_W + CH; x += 32) {
+            ctx.beginPath(); ctx.moveTo(x, 0); ctx.lineTo(x + CH, CH); ctx.stroke();
+        }
+    }
+
+    // ── COLOR BARS ───────────────────────────────
+    const barGrd = ctx.createLinearGradient(0, 0, MAIN_W, 0);
+    barGrd.addColorStop(0, primary);
+    barGrd.addColorStop(0.6, primary);
+    barGrd.addColorStop(1, alpha(primary, 0.2));
+    ctx.fillStyle = barGrd;
+    ctx.fillRect(0, 0, MAIN_W, 5);
+    ctx.fillRect(0, CH - 5, MAIN_W, 5);
+    ctx.fillStyle = primary; ctx.fillRect(0, 0, 5, CH);
+
+    // ── TEXT AREA (right portion of main zone) ───
+    // Translucent panel for readability if image is present
+    if (state.images[idx]) {
+        const panelGrd = ctx.createLinearGradient(MAIN_W * 0.42, 0, MAIN_W, 0);
+        panelGrd.addColorStop(0, 'rgba(0,0,0,0)');
+        panelGrd.addColorStop(0.3, dark ? 'rgba(8,10,20,0.82)' : 'rgba(252,252,252,0.88)');
+        panelGrd.addColorStop(1, dark ? 'rgba(8,10,20,0.92)' : 'rgba(252,252,252,0.95)');
+        ctx.fillStyle = panelGrd; ctx.fillRect(MAIN_W * 0.42, 0, MAIN_W * 0.58, CH);
+    }
+
+    const TX = state.logoImg ? 470 : 440; // text x position
+    // Shadow for dark on light or light on dark
+    if (dark) { ctx.shadowColor = 'rgba(0,0,0,0.7)'; ctx.shadowBlur = 12; ctx.shadowOffsetY = 2; }
+
+    // Company name
+    const nLen = name.length;
+    const fs = nLen > 22 ? 30 : nLen > 16 ? 36 : nLen > 11 ? 44 : nLen > 7 ? 52 : 60;
+    ctx.font = `900 ${fs}px 'Barlow Condensed', 'Arial Black', Impact, sans-serif`;
+    ctx.fillStyle = text;
+    ctx.fillText(name, TX, 108);
+    ctx.shadowBlur = 0; ctx.shadowOffsetY = 0;
+
+    // Underline accent
+    const nw = ctx.measureText(name).width;
+    ctx.fillStyle = primary;
+    ctx.fillRect(TX, 114, Math.min(nw * 0.5, MAIN_W - TX - 16), 3);
+
+    // Tagline
+    ctx.font = `500 14px 'DM Mono', 'Courier New', monospace`;
+    let tCol = primary;
+    if (isDark(primary) && !dark) tCol = darken(primary, 0.05);
+    ctx.fillStyle = tCol;
+    ctx.fillText(tagline.toUpperCase(), TX, 142);
+
+    // Slogan
+    if (slogan) {
+        ctx.font = `400 12px 'DM Mono', 'Courier New', monospace`;
+        ctx.fillStyle = alpha(text, 0.5);
+        ctx.fillText(slogan, TX, 164);
+    }
+
+    // URL
+    if (urlClean) {
+        ctx.font = `400 11px 'DM Mono', 'Courier New', monospace`;
+        ctx.fillStyle = alpha(text, 0.35);
+        ctx.fillText(urlClean, TX, 200);
+    }
+
+    // Industry badge
+    if (state.brandData?.industry) {
+        const ind = state.brandData.industry.toUpperCase().substring(0, 20);
+        ctx.font = `500 8px 'DM Mono', monospace`;
+        const bw = ctx.measureText(ind).width + 14;
+        rr(ctx, TX, 216, bw, 16, 3);
+        ctx.fillStyle = alpha(primary, dark ? 0.2 : 0.1); ctx.fill();
+        ctx.fillStyle = alpha(primary, 0.9);
+        ctx.fillText(ind, TX + 7, 227);
+    }
+
+    // ── LOGO (left side of main zone) ────────────
+    if (state.logoImg) {
+        const LX = 24, LY = 30, LS = 100;
+        if (dark) {
+            rr(ctx, LX - 6, LY - 6, LS + 12, LS + 12, 12);
+            ctx.fillStyle = 'rgba(255,255,255,0.93)'; ctx.fill();
+        }
+        const sc = Math.min(LS / state.logoImg.width, LS / state.logoImg.height) * 0.82;
+        const lw = state.logoImg.width * sc, lh = state.logoImg.height * sc;
+        ctx.drawImage(state.logoImg, LX + (LS - lw)/2, LY + (LS - lh)/2, lw, lh);
+    }
+
+    // ── QR (bottom-left of main zone) ────────────
+    const QX = 16, QY = CH - 78;
+    if (state.qrImg) {
+        ctx.fillStyle = '#ffffff';
+        rr(ctx, QX - 2, QY - 2, 68, 68, 4); ctx.fill();
+        ctx.strokeStyle = alpha(primary, 0.25); ctx.lineWidth = 1.5;
+        rr(ctx, QX - 2, QY - 2, 68, 68, 4); ctx.stroke();
+        ctx.drawImage(state.qrImg, QX, QY, 64, 64);
+    }
+
+    // URL vertical text (far right of main zone)
+    if (urlClean) {
+        ctx.save();
+        ctx.translate(MAIN_W - 10, CH / 2 + urlClean.length * 3);
+        ctx.rotate(-Math.PI / 2);
+        ctx.fillStyle = alpha(text, 0.22);
+        ctx.font = `400 9px 'DM Mono', monospace`;
+        ctx.textAlign = 'center';
+        ctx.fillText(urlClean.toUpperCase(), 0, 0);
+        ctx.restore();
+    }
+
+    // ═══════════════════════════════════════════════
+    // RIGHT ZONE — White legal text area (300px)
+    // ═══════════════════════════════════════════════
+    ctx.fillStyle = '#ffffff';
+    ctx.fillRect(MAIN_W, 0, INFO_W, CH);
+
+    // Top bar in zone
+    ctx.fillStyle = primary; ctx.fillRect(MAIN_W, 0, INFO_W, 4);
+    ctx.strokeStyle = '#d4d4d4'; ctx.lineWidth = 0.75;
+    ctx.beginPath(); ctx.moveTo(MAIN_W, 0); ctx.lineTo(MAIN_W, CH); ctx.stroke();
+
+    // Section divider at 60% of info zone
+    const COL_DIV = MAIN_W + 175;
+    ctx.strokeStyle = '#e8e8e8'; ctx.lineWidth = 0.5;
+    ctx.beginPath(); ctx.moveTo(COL_DIV, 8); ctx.lineTo(COL_DIV, CH - 8); ctx.stroke();
+
+    // ─ Left column: main info ─
+    let LY2 = 18;
+    const LX2 = MAIN_W + 8;
+    const COL1_W = 163;
+
+    ctx.fillStyle = '#111'; ctx.font = `bold 7px 'DM Mono', monospace`;
+    ctx.fillText('Neperlivá pramenitá voda', LX2, LY2); LY2 += 9;
+
+    const paragraphs = [
+        { bold: false, text: 'Přírodní pramenitá voda ze srdce Štýrska. Filtrace přes vápencové horniny Alp.', w: COL1_W },
+        { bold: true, text: 'Složení: Neperlivá pramenitá voda' },
+        { bold: false, text: 'Min. trvanlivost: viz potisk na lahvi.\nSkladování: Chraňte před teplem.\nPramen: Seisensteinquelle, Rakousko', w: COL1_W },
+        { bold: true, text: 'Plněno:' },
+        { bold: false, text: 'Wildalpen Wasserverwertungs GmbH\nSäusenbach 166, A-8924 Wildalpen', w: COL1_W },
+        { bold: true, text: 'Distributor:' },
+        { bold: false, text: `${state.companyName || 'ELYSSIA s.r.o.'}\n${state.companyUrl || 'www.company.cz'}`, w: COL1_W },
+    ];
+
+    for (const p of paragraphs) {
+        if (LY2 > CH - 24) break;
+        ctx.font = p.bold
+            ? `bold 3.8px 'DM Mono', monospace`
+            : `normal 3.4px 'DM Mono', monospace`;
+        ctx.fillStyle = p.bold ? '#111' : '#444';
+        if (p.w) {
+            const lines = wrapText(ctx, p.text, p.w);
+            for (const ln of lines) {
+                if (LY2 > CH - 24) break;
+                ctx.fillText(ln, LX2, LY2); LY2 += 4.5;
+            }
+        } else {
+            const lines = p.text.split('\n');
+            for (const ln of lines) {
+                if (LY2 > CH - 24) break;
+                ctx.fillText(ln, LX2, LY2); LY2 += 4.5;
             }
         }
+        LY2 += p.bold ? 1 : 2;
+    }
 
-        function getAverageBrightness(base64Src) {
-            return new Promise((resolve) => {
-                if (!base64Src) return resolve('light');
-                const img = new Image();
-                img.onload = () => {
-                    const canvas = document.createElement('canvas'); canvas.width = img.width; canvas.height = img.height;
-                    const ctx = canvas.getContext('2d'); ctx.drawImage(img, 0, 0);
-                    const data = ctx.getImageData(0, 0, canvas.width, canvas.height).data;
-                    let sum = 0; for(let x = 0; x < data.length; x+=4) sum += Math.floor((data[x] * 299 + data[x+1] * 587 + data[x+2] * 114) / 1000);
-                    resolve((sum / (img.width * img.height)) > 127 ? 'light' : 'dark');
-                };
-                img.onerror = () => resolve('light');
-                img.src = base64Src;
-            });
+    // Volume
+    ctx.fillStyle = '#111'; ctx.font = `bold 12px 'DM Mono', monospace`;
+    ctx.fillText('0,33 l', LX2, CH - 6);
+
+    // PET triangle symbol
+    const tX = LX2 + 46, tY = CH - 16;
+    ctx.strokeStyle = '#333'; ctx.lineWidth = 1;
+    ctx.beginPath(); ctx.moveTo(tX, tY); ctx.lineTo(tX + 6, tY - 10); ctx.lineTo(tX + 12, tY); ctx.closePath(); ctx.stroke();
+    ctx.fillStyle = '#444'; ctx.font = '3.5px Arial';
+    ctx.fillText('01', tX + 2.5, tY - 2);
+    ctx.fillText('PET', tX + 1.5, tY + 4);
+
+    // ─ Right column: chemical composition ─
+    const RX = COL_DIV + 6;
+    let RY = 12;
+    const ROW_H = 18.2;
+    const TABLE_W = CW - COL_DIV - 10;
+
+    ctx.fillStyle = '#111'; ctx.font = `bold 4px 'DM Mono', monospace`;
+    ctx.fillText('Chemické složení (mg/l):', RX, RY); RY += 8;
+
+    const composition = [
+        ['pH hodnota', '7,99'], ['Kyslík (O₂)', '9,2'], ['Sodík (Na⁺)', '2,0'],
+        ['Vápník (Ca²⁺)', '45'], ['Hořčík (Mg²⁺)', '13'], ['Hydrogenuhličitany', '170'],
+        ['Draslík (K⁺)', '0,4'], ['Chloridy (Cl⁻)', '2,6'], ['Dusitany (NO₂⁻)', '0,01'],
+        ['Sírany (SO₄²⁻)', '11'], ['Fluoridy (F⁻)', '0,1'],
+    ];
+
+    const startY = RY;
+    for (let j = 0; j < composition.length; j++) {
+        const y = RY + j * ROW_H / 3.55;
+        // Row lines
+        ctx.strokeStyle = '#e0e0e0'; ctx.lineWidth = 0.4;
+        ctx.beginPath(); ctx.moveTo(RX - 2, y - 3.5); ctx.lineTo(CW - 4, y - 3.5); ctx.stroke();
+        // Text
+        ctx.fillStyle = '#444'; ctx.font = `normal 3.4px 'DM Mono', monospace`;
+        ctx.fillText(composition[j][0], RX, y);
+        ctx.fillText(composition[j][1], RX + TABLE_W * 0.62, y);
+    }
+    // Final line + borders
+    const endY = RY + composition.length * ROW_H / 3.55 - 3.2;
+    ctx.strokeStyle = '#e0e0e0'; ctx.lineWidth = 0.4;
+    ctx.beginPath(); ctx.moveTo(RX - 2, endY); ctx.lineTo(CW - 4, endY); ctx.stroke();
+    ctx.beginPath(); ctx.moveTo(RX - 2, startY - 3.5); ctx.lineTo(RX - 2, endY); ctx.stroke();
+    ctx.beginPath(); ctx.moveTo(CW - 4, startY - 3.5); ctx.lineTo(CW - 4, endY); ctx.stroke();
+    const divX = RX + TABLE_W * 0.6;
+    ctx.beginPath(); ctx.moveTo(divX, startY - 3.5); ctx.lineTo(divX, endY); ctx.stroke();
+
+    state.canvases[idx] = canvas;
+}
+
+// ══════════════════════════════════════════════════════════════
+// HELPERS
+// ══════════════════════════════════════════════════════════════
+function wrapText(ctx, text, maxW) {
+    const lines = [];
+    for (const paragraph of text.split('\n')) {
+        const words = paragraph.split(' ');
+        let line = '';
+        for (const w of words) {
+            const test = line ? line + ' ' + w : w;
+            if (ctx.measureText(test).width > maxW && line) {
+                lines.push(line); line = w;
+            } else { line = test; }
         }
+        if (line) lines.push(line);
+    }
+    return lines;
+}
 
-        async function runDesigner() {
-            const name = document.getElementById('compName').value;
-            const desc = document.getElementById('compDesc').value;
-            const qrUrl = document.getElementById('qrLink').value || "https://www.elyssia.cz";
-            const statusLabel = document.getElementById('status');
+function isDark(hex) {
+    try {
+        const { r, g, b } = H2R(hex);
+        return r * 0.299 + g * 0.587 + b * 0.114 < 140;
+    } catch { return true; }
+}
 
-            document.getElementById('genBtn').disabled = true;
-            document.getElementById('loader').classList.remove('hidden');
+function H2R(hex) {
+    const h = hex.replace('#', '');
+    return {
+        r: parseInt(h.substring(0, 2), 16),
+        g: parseInt(h.substring(2, 4), 16),
+        b: parseInt(h.substring(4, 6), 16)
+    };
+}
 
-            try {
-                const results = [];
-                for (let i = 0; i < 3; i++) {
-                    statusLabel.innerText = `Spojení s AI (Vektor) ${i+1}/3...`;
-                    const resFetch = await fetch('/api/generate', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ description: desc }) });
-                    const resData = await resFetch.json();
+function alpha(hex, a) {
+    try {
+        const { r, g, b } = H2R(hex);
+        return `rgba(${r},${g},${b},${a})`;
+    } catch { return `rgba(0,0,0,${a})`; }
+}
 
-                    if (!resFetch.ok) throw new Error(resData.error || "Chyba API");
+function darken(hex, t) {
+    const { r, g, b } = H2R(hex);
+    const f = 1 - t;
+    return `#${[r, g, b].map(v => Math.round(v * f).toString(16).padStart(2, '0')).join('')}`;
+}
 
-                    statusLabel.innerText = `Analyzuji kontrast ${i+1}...`;
-                    resData.tone = await getAverageBrightness(resData.imageUrl);
-                    results.push(resData);
-                }
+function rr(ctx, x, y, w, h, r) {
+    ctx.beginPath();
+    ctx.moveTo(x + r, y); ctx.lineTo(x + w - r, y); ctx.arcTo(x + w, y, x + w, y + r, r);
+    ctx.lineTo(x + w, y + h - r); ctx.arcTo(x + w, y + h, x + w - r, y + h, r);
+    ctx.lineTo(x + r, y + h); ctx.arcTo(x, y + h, x, y + h - r, r);
+    ctx.lineTo(x, y + r); ctx.arcTo(x, y, x + r, y, r);
+    ctx.closePath();
+}
 
-                // 💡 ZCELA PRŮHLEDNÝ QR KÓD
-                statusLabel.innerText = "Sestavuji grafické prvky...";
-                const qrDivBlack = document.createElement('div');
-                new QRCode(qrDivBlack, { text: qrUrl, width: 300, height: 300, colorDark: "#000000", colorLight: "rgba(255,255,255,0)" });
-                const qrDivWhite = document.createElement('div');
-                new QRCode(qrDivWhite, { text: qrUrl, width: 300, height: 300, colorDark: "#ffffff", colorLight: "rgba(255,255,255,0)" });
+function loadImage(src) {
+    return new Promise((resolve) => {
+        const img = new Image();
+        img.crossOrigin = 'anonymous';
+        img.onload = () => resolve(img);
+        img.onerror = () => resolve(null);
+        img.src = src;
+    });
+}
 
-                await new Promise(r => setTimeout(r, 500));
-                const qrImgBlack = qrDivBlack.querySelector('canvas').toDataURL("image/png");
-                const qrImgWhite = qrDivWhite.querySelector('canvas').toDataURL("image/png");
+async function apiFetch(endpoint, body) {
+    const res = await fetch(endpoint, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(body)
+    });
+    const data = await res.json();
+    if (!res.ok) throw new Error(data.error || 'API error ' + res.status);
+    return data;
+}
 
-                statusLabel.innerText = "Stahuji typografii...";
-                const fontRegular = await loadFont('https://cdnjs.cloudflare.com/ajax/libs/pdfmake/0.1.66/fonts/Roboto/Roboto-Regular.ttf');
-                const fontBold = await loadFont('https://cdnjs.cloudflare.com/ajax/libs/pdfmake/0.1.66/fonts/Roboto/Roboto-Medium.ttf');
-
-                statusLabel.innerText = "Kreslím finální PDF...";
-                const doc = new jsPDF({ orientation: 'landscape', unit: 'mm', format: [200, 50] });
-
-                let fontName = "helvetica";
-                if (fontRegular && fontBold) {
-                    doc.addFileToVFS("Roboto-Regular.ttf", fontRegular);
-                    doc.addFont("Roboto-Regular.ttf", "Roboto", "normal");
-                    doc.addFileToVFS("Roboto-Bold.ttf", fontBold);
-                    doc.addFont("Roboto-Bold.ttf", "Roboto", "bold");
-                    fontName = "Roboto";
-                }
-
-                results.forEach((res, i) => {
-                    if (i > 0) doc.addPage([200, 50], 'l');
-
-                    doc.addImage(res.imageUrl, 'JPEG', 0, 0, 140, 50);
-                    doc.setFillColor(255, 255, 255); doc.rect(140, 0, 60, 50, 'F');
-                    doc.setDrawColor(240, 240, 240); doc.line(140, 0, 140, 50);
-
-                    // Název značky - Čistá typografie
-                    doc.setTextColor(res.tone === 'light' ? 30 : 255);
-                    doc.setFontSize(name.length > 10 ? 16 : 24);
-                    doc.setFont(fontName, "bold");
-                    doc.text(name.toUpperCase(), 15, 25, { charSpace: 6 });
-
-                    // QR Kód vložen přímo do grafiky bez bílého podkladu
-                    const qrToUse = res.tone === 'light' ? qrImgBlack : qrImgWhite;
-                    doc.addImage(qrToUse, 'PNG', 118, 28, 16, 16);
-
-                    // --- PRÁVNÍ TEXTY ---
-                    doc.setTextColor(0);
-                    doc.setFontSize(4.2); doc.setFont(fontName, "bold");
-                    doc.text("Neperlivá pramenitá voda", 142, 6);
-
-                    let currentY = 8.5;
-                    const colW = 27;
-                    const leftX = 142;
-
-                    function printText(text, isBold = false) {
-                        doc.setFont(fontName, isBold ? "bold" : "normal");
-                        doc.setFontSize(isBold ? 3.8 : 3.5);
-                        const lines = doc.splitTextToSize(text, colW);
-                        doc.text(lines, leftX, currentY);
-                        currentY += (lines.length * 1.4) + (isBold ? 0.6 : 1.5);
-                    }
-
-                    printText("Přírodní pramenitá voda ze srdce Štýrska (Steiermark). Nedotčená příroda, filtrace přes vápencové horniny Alp a trvalé kontroly zaručují špičkovou kvalitu.", false);
-                    printText("Složení: Neperlivá pramenitá voda", true);
-                    printText("Minimální trvanlivost: Viz potisk na lahvi.\nSkladování: Chraňte před teplem a sluncem.\nNázev pramene: Seisensteinquelle, Rakousko", false);
-                    printText("Vyrobeno a plněno / země původu:", true);
-                    printText("Wildalpen Wasserverwertungs GmbH\nSäusenbach 166, A-8924 Wildalpen, Rakousko", false);
-                    printText("Distributor:", true);
-                    printText("ELYSSIA s.r.o., Zenklova 24/54\n180 00 Praha 8, ČR\nwww.elyssia.cz", false);
-
-                    doc.setFont(fontName, "bold");
-                    doc.setFontSize(10); doc.text("0,33 l", leftX, 47);
-                    doc.setDrawColor(0); doc.line(158, 46, 161, 41); doc.line(161, 41, 164, 46); doc.line(164, 46, 158, 46);
-                    doc.setFontSize(3.5); doc.text("01", 159.8, 45); doc.text("PET", 159.2, 48.5);
-
-                    // --- TABULKA SLOŽENÍ ---
-                    const tX = 172;
-                    const tY = 8;
-                    const tD = [
-                        ["pH hodnota", "7,99"], ["Kyslík (O2)", "9,2"], ["Sodík (Na+)", "2,0"],
-                        ["Vápník (Ca2+)", "45"], ["Hořčík (Mg2+)", "13"], ["Hydrogenuhličitany", "170"],
-                        ["Draslík (K+)", "0,4"], ["Chloridy (Cl-)", "2,6"], ["Dusitany (NO2-)", "0,01"],
-                        ["Sírany (SO4 2-)", "11"], ["Fluoridy (F-)", "0,1"]
-                    ];
-
-                    doc.setFont(fontName, "bold");
-                    doc.setFontSize(4); doc.text("Chemické složení (mg/l):", tX, 6);
-                    doc.setFont(fontName, "normal");
-                    doc.setFontSize(3.8);
-
-                    for(let j=0; j<tD.length; j++) {
-                        let ty = tY + j*3.2;
-                        doc.text(tD[j][0], tX + 1, ty + 2.2);
-                        doc.text(tD[j][1], tX + 17, ty + 2.2);
-                        doc.line(tX, ty, 198, ty);
-                    }
-                    doc.line(tX, tY+tD.length*3.2, 198, tY+tD.length*3.2);
-                    doc.line(tX, tY, tX, tY+tD.length*3.2);
-                    doc.line(tX + 16, tY, tX + 16, tY+tD.length*3.2);
-                    doc.line(198, tY, 198, tY+tD.length*3.2);
-                });
-
-                doc.save(`${name.toUpperCase()}_Labels.pdf`);
-
-            } catch (err) {
-                console.error(err);
-                alert(`Chyba při generování: ${err.message}`);
-            } finally {
-                document.getElementById('genBtn').disabled = false;
-                document.getElementById('loader').classList.add('hidden');
-            }
+// ══════════════════════════════════════════════════════════════
+// UI HELPERS
+// ══════════════════════════════════════════════════════════════
+function showView(v) {
+    ['input-view', 'loading-view', 'preview-view'].forEach(id => {
+        const el = document.getElementById(id);
+        if (id === v + '-view') {
+            el.style.display = v === 'loading' ? 'flex' : 'block';
+        } else {
+            el.style.display = 'none';
         }
-    </script>
+    });
+}
+
+function setStep(i, state) {
+    const el = document.getElementById('step-' + i);
+    if (!el) return;
+    el.className = 'lstep ' + state;
+    if (state === 'done') {
+        const dot = el.querySelector('.lstep-dot');
+        if (dot) dot.textContent = '';
+        el.innerHTML = '<div class="lstep-dot">✓</div>' + el.textContent.replace('✓', '');
+    }
+}
+
+function setTitle(title, sub) {
+    document.getElementById('load-title').textContent = title;
+    if (sub) document.getElementById('load-sub').textContent = sub;
+}
+
+function showError(msg) {
+    const b = document.getElementById('error-box');
+    b.textContent = msg; b.style.display = 'block';
+}
+
+function hideError() {
+    document.getElementById('error-box').style.display = 'none';
+}
+
+function showLabelResult(i) {
+    document.getElementById('placeholder-' + i).style.display = 'none';
+    document.getElementById('shell-' + i).style.display = 'block';
+    document.getElementById('actions-' + i).style.display = 'flex';
+    // Color swatches
+    const d = state.brandData.designs[i];
+    const sw = document.getElementById('swatches-' + i);
+    ['bg', 'primary', 'accent'].forEach(k => {
+        const div = document.createElement('div');
+        div.className = 'swatch';
+        div.style.background = d[k];
+        div.title = k + ': ' + d[k];
+        sw.appendChild(div);
+    });
+}
+
+function populatePreviewMeta() {
+    const bd = state.brandData;
+    document.getElementById('preview-meta').textContent =
+        (bd.industry ? bd.industry + ' · ' : '') + state.companyName + ' · 200 × 50 mm print-ready';
+
+    const chips = document.getElementById('brand-chips');
+    chips.innerHTML = '';
+    if (bd.slogan) chips.innerHTML += `<div class="chip">SLOGAN: <strong>"${bd.slogan}"</strong></div>`;
+    if (bd.industry) chips.innerHTML += `<div class="chip">INDUSTRY: <strong>${bd.industry}</strong></div>`;
+    if (bd.companyColor) chips.innerHTML += `<div class="chip">BRAND COLOR: <strong style="color:${bd.companyColor}">${bd.companyColor}</strong></div>`;
+
+    // Populate design names/descs
+    bd.designs.forEach((d, i) => {
+        document.getElementById('name-' + i).textContent = d.name;
+        document.getElementById('desc-' + i).textContent = d.styleDesc;
+    });
+}
+
+function resetToInput() {
+    showView('input');
+    state.brandData = null;
+    state.images = [null, null, null];
+    state.qrImg = null;
+    // Reset placeholders
+    [0, 1, 2].forEach(i => {
+        document.getElementById('placeholder-' + i).style.display = 'flex';
+        document.getElementById('shell-' + i).style.display = 'none';
+        document.getElementById('actions-' + i).style.display = 'none';
+        document.getElementById('swatches-' + i).innerHTML = '';
+    });
+    document.getElementById('brand-chips').innerHTML = '';
+    // Reset steps
+    for (let i = 0; i < 7; i++) setStep(i, '');
+}
+
+// ══════════════════════════════════════════════════════════════
+// DOWNLOAD / EXPORT
+// ══════════════════════════════════════════════════════════════
+function downloadPNG(i) {
+    const a = document.createElement('a');
+    a.download = `label_${i + 1}_${(state.companyName || 'label').replace(/\s+/g, '_')}.png`;
+    a.href = state.canvases[i].toDataURL('image/png');
+    a.click();
+}
+
+function exportPDF() {
+    if (!window.jspdf) { alert('PDF library still loading, wait 1 second and try again.'); return; }
+    const { jsPDF } = window.jspdf;
+    const doc = new jsPDF({ orientation: 'landscape', unit: 'mm', format: [200, 50] });
+    for (let i = 0; i < 3; i++) {
+        if (!state.canvases[i]) continue;
+        if (i > 0) doc.addPage([200, 50], 'landscape');
+        doc.addImage(state.canvases[i].toDataURL('image/jpeg', 0.95), 'JPEG', 0, 0, 200, 50);
+    }
+    doc.save(`${(state.companyName || 'labels').replace(/\s+/g, '_')}_bottle_labels.pdf`);
+}
+</script>
 </body>
 </html>
