@@ -48,62 +48,62 @@ app.post('/api/analyze-brand', async (req, res) => {
         max_tokens: 2400,
         messages: [{
             role: "user",
-            content: `You are a senior packaging designer at a world-class creative agency. Reference projects: YUKI electric motorcycles label (giant motorcycle hero graphic fills the label), KP MARK boilers (smiling boiler character mascot with tools), JINA Design (oversized keyboard keys arranged as brand art on dark background).
+            content: `You are a senior packaging designer. Reference labels you've created: Turancar ISUZU (bus dealer — huge bold red TURANCAR text on white + detailed bus illustration), HSH Sport (smartwatch brand — large smartwatch photo + HSH SPORT logo), Livesport (media — dark navy bg, logo + pink geometric shapes, no illustration), KA-Glasses (eyewear — giant glasses illustration + KA-GLASSES bold name).
 
 COMPANY: ${name}
 DESCRIPTION: ${description || "Not provided"}
 WEBSITE: ${url || "Not provided"}
 BRAND COLOR HINT: ${color || "#1d4ed8"}
 
-${url ? `CRITICAL: Web search "${name}" right now. Find: exact brand hex colors, logo shape/icon/symbol, key products or services, any mascot, brand personality. Use this to make the illustration concept authentic.` : ""}
+${url ? `CRITICAL: Web search "${name}" now. Find exact brand colors, logo style, main products, brand personality. Use this to write authentic design parameters.` : ""}
 
-ILLUSTRATION RULES — read carefully:
-1. The AI illustration IS the entire creative zone of the label. It must be bold, custom, brand-specific art that immediately communicates who this brand is.
-2. Identify the brand's key visual symbol (their logo icon, their main product, a mascot). Make THAT the hero of the illustration.
-3. All 3 designs use the same core subject — just different color moods (dark / white / brand-color).
-4. ABSOLUTELY NO text, letters, words, numbers inside the illustration. Zero.
-5. Style: flat vector illustration, cel-shaded, bold outlines, limited 3-4 color palette. Like premium packaging artwork.
-6. Composition: subject fills the frame dramatically. For layouts that split, subject is slightly left-biased.
+Design 3 bottle label variations. Each has a different layout and color mood.
 
-Return ONLY raw JSON — no markdown, no backticks, nothing else:
+ILLUSTRATION RULES:
+- If the brand sells a PHYSICAL PRODUCT (vehicle, device, glasses, food, etc.) → write a prompt for a clean product illustration: the product large on a plain background, slightly angled, like a product hero shot but illustrated/rendered style.
+- If the brand is a SERVICE or MEDIA company → no illustration needed, set "imagePrompt" to "" (empty string). The design will use bold typography + geometric shapes.
+- ZERO text, letters, or numbers inside any illustration.
+- Style: clean flat vector or stylized product render, bold and graphic.
+
+Return ONLY raw JSON, no markdown:
 {
-  "slogan": "punchy 4-6 word brand slogan",
-  "industry": "precise industry name",
-  "companyColor": "#actual_hex_detected",
-  "illustrationConcept": "one sentence: what the core brand illustration shows, e.g. 'friendly cartoon boiler mascot with a thumbs-up and wrench'",
+  "slogan": "4-6 word brand slogan",
+  "industry": "precise industry",
+  "companyColor": "#actual_hex",
+  "hasProduct": true,
   "designs": [
     {
       "id": 1,
-      "name": "Dark Edition",
-      "styleDesc": "Full-bleed dramatic art on deep dark background",
-      "bg": "#0c0e16",
+      "name": "Typography Bold",
+      "styleDesc": "Geometric accent + bold brand name, like Livesport",
+      "bg": "#111111",
       "primary": "#ACTUAL_brand_color",
       "text": "#ffffff",
-      "accent": "#accent_hex",
+      "accent": "#accent",
       "tagline": "3-5 word tagline",
-      "imagePrompt": "[Write a precise FAL.ai image prompt: describe the specific brand illustration for ${name}, their industry is ${description || 'unknown'}. Describe the EXACT mascot, product, or symbol from their brand identity. Dark background #0c0e16. Flat cel-shaded vector illustration. Bold outlines. Brand color as hero accent. Subject fills 85% of frame. ZERO text ZERO letters ZERO numbers. Landscape 4:3.]"
+      "imagePrompt": "[If hasProduct: 'Clean stylized illustration of [specific product] for ${name}. [Product] centered, slightly angled 3/4 view, [brand color] accents, clean plain background matching bg color. Flat cel-shaded vector art. Bold clean outlines. NO text NO words. Landscape 4:3.' Else: empty string]"
     },
     {
       "id": 2,
-      "name": "White Hero",
-      "styleDesc": "Clean bold graphic on white background",
+      "name": "Product Hero",
+      "styleDesc": "Product illustration right, brand name left, like Turancar bus",
       "bg": "#ffffff",
       "primary": "#ACTUAL_brand_color",
       "text": "#111111",
-      "accent": "#accent_hex",
+      "accent": "#accent",
       "tagline": "3-5 word tagline",
-      "imagePrompt": "[Same core brand illustration as design 1 but on pure white background. Flat vector art. Brand color dominant. Bold graphic outlines. Clean modern packaging illustration. ZERO text ZERO letters ZERO numbers. Landscape 4:3.]"
+      "imagePrompt": "[If hasProduct: 'Stylized product illustration for ${name}. [Specific product] on pure white background, dramatic 3/4 angle, facing left, [brand color] accents. Clean bold outlines. Modern flat render style. NO text NO words NO letters. Landscape 4:3.' Else: empty string]"
     },
     {
       "id": 3,
-      "name": "Brand Color",
-      "styleDesc": "Monochromatic mascot on solid brand color",
-      "bg": "#ACTUAL_brand_color",
+      "name": "Dark Inverted",
+      "styleDesc": "Dark/brand color bg, dramatic product or pure typography",
+      "bg": "#ACTUAL_brand_color OR #0d0d0d",
       "primary": "#ffffff",
       "text": "#ffffff",
-      "accent": "#contrasting_hex",
+      "accent": "#accent",
       "tagline": "3-5 word tagline",
-      "imagePrompt": "[Same brand illustration rendered white/cream on solid brand color background. Monochromatic flat vector style — like an embossed stamp or screen print. High contrast. Bold graphic silhouette. ZERO text ZERO letters ZERO numbers. Landscape 4:3.]"
+      "imagePrompt": "[If hasProduct: 'Stylized [product] illustration for ${name} on dark/[brand color] background. White and pale tones, monochromatic, like an embossed stamp. Bold flat silhouette. NO text NO words. Landscape 4:3.' Else: empty string]"
     }
   ]
 }`
@@ -144,6 +144,11 @@ app.post('/api/generate-image', async (req, res) => {
     const { prompt, designIndex } = req.body;
     if (!process.env.FAL_KEY) {
         return res.status(500).json({ error: "Missing FAL_KEY environment variable." });
+    }
+
+    // Empty prompt = typography-only design, no illustration needed
+    if (!prompt || prompt.trim().length < 10) {
+        return res.json({ imageUrl: null, designIndex });
     }
 
     // Enforce bottle-label-appropriate style on top of the custom prompt

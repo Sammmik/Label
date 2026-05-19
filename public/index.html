@@ -507,214 +507,265 @@ async function startGeneration() {
 }
 
 // ══════════════════════════════════════════════════════════════
-// LABEL RENDERING — 3 layouts matching reference photos exactly
-// No logo element. No URL. Illustration is the hero.
+// LABEL RENDERING — 3 professional layouts
+// References: Turancar, HSH Sport, Livesport, KA-Glasses
 // ══════════════════════════════════════════════════════════════
 
-function drawQR(ctx, x, y, size) {
+function drawQR(ctx, x, y, size, light) {
     if (!state.qrImg) return;
-    ctx.fillStyle = '#ffffff';
-    rr(ctx, x - 2, y - 2, size + 4, size + 4, 2); ctx.fill();
+    if (light) {
+        ctx.fillStyle = '#ffffff';
+        rr(ctx, x - 3, y - 3, size + 6, size + 6, 3); ctx.fill();
+    }
     ctx.drawImage(state.qrImg, x, y, size, size);
 }
 
 function renderLabel(idx) {
     const canvas = document.getElementById('canvas-' + idx);
-    const design = state.brandData.designs[idx];
-    canvas.width = CW; canvas.height = CH;
-    const ctx = canvas.getContext('2d');
+    const design  = state.brandData.designs[idx];
+    canvas.width  = CW; canvas.height = CH;
+    const ctx     = canvas.getContext('2d');
     const { bg, primary, text } = design;
-    const dark = isDark(bg);
-    const name   = (state.companyName || 'COMPANY').toUpperCase();
+    const dark    = isDark(bg);
+    const name    = (state.companyName || 'COMPANY').toUpperCase();
     const tagline = (design.tagline || '').toUpperCase();
-    const slogan  = (state.brandData?.slogan || '').toUpperCase();
+    const urlClean = (state.companyUrl || '').replace(/^https?:\/\/(www\.)?/, '').replace(/\/$/, '');
+    const hasIllus = !!state.images[idx];
 
-    // ── draw illustration helper ──────────────────
-    function drawIllus(x, y, w, h) {
-        if (!state.images[idx]) return false;
-        const img = new Image(); img.src = state.images[idx];
-        ctx.drawImage(img, x, y, w, h);
-        return true;
-    }
-
-    // font size helper
-    function nameFontSize(maxW) {
-        const sizes = [72, 64, 56, 48, 40, 34, 28];
-        for (const s of sizes) {
-            ctx.font = `900 ${s}px 'Barlow Condensed', Impact, sans-serif`;
+    // Auto-fit font size to a max width
+    function fitFont(weight, maxPx, maxW, family) {
+        const fam = family || "'Barlow Condensed', Impact, sans-serif";
+        for (let s = maxPx; s >= 18; s -= 2) {
+            ctx.font = `${weight} ${s}px ${fam}`;
             if (ctx.measureText(name).width <= maxW) return s;
         }
-        return 22;
+        return 18;
     }
 
-    // ════════════════════════════════════════════════════════
-    // LAYOUT 0 — "DARK EDITION"
-    // Matches JINA Design: illustration fills entire zone,
-    // brand name lives in a clean bottom strip.
-    // ════════════════════════════════════════════════════════
-    if (idx === 0) {
-        // 1. Solid bg
-        ctx.fillStyle = bg; ctx.fillRect(0, 0, MAIN_W, CH);
-
-        // 2. Full-bleed illustration (no clipping, no fade)
-        drawIllus(0, 0, MAIN_W, CH);
-
-        // 3. Bottom gradient scrim — lets name read on any image
-        const SCRIM_H = 80;
-        const scrim = ctx.createLinearGradient(0, CH - SCRIM_H, 0, CH);
-        scrim.addColorStop(0, 'rgba(0,0,0,0)');
-        scrim.addColorStop(0.5, alpha(bg, 0.82));
-        scrim.addColorStop(1,   alpha(bg, 0.97));
-        ctx.fillStyle = scrim; ctx.fillRect(0, CH - SCRIM_H, MAIN_W, SCRIM_H);
-
-        // 4. Brand color left edge rule
-        ctx.fillStyle = primary; ctx.fillRect(0, 0, 5, CH);
-
-        // 5. Company name
-        const fs = nameFontSize(MAIN_W - 80);
-        ctx.font = `900 ${fs}px 'Barlow Condensed', Impact, sans-serif`;
-        ctx.fillStyle = '#ffffff';
-        ctx.fillText(name, 14, CH - 30);
-
-        // 6. Tagline — below name
-        ctx.font = `600 11px 'Barlow Condensed', sans-serif`;
-        ctx.fillStyle = alpha(primary, 0.95);
-        ctx.fillText('› ' + tagline, 14, CH - 14);
-
-        // 7. QR — bottom right of main zone
-        drawQR(ctx, MAIN_W - 58, CH - 60, 48);
-    }
-
-    // ════════════════════════════════════════════════════════
-    // LAYOUT 1 — "WHITE HERO"
-    // Matches YUKI: white background, illustration bleeds
-    // from the left, bold brand name on the right panel.
-    // ════════════════════════════════════════════════════════
-    else if (idx === 1) {
-        const TEXT_PANEL_W = 220;  // rightmost area for text
-        const ILLUS_W = MAIN_W - TEXT_PANEL_W + 60; // bleeds into text area
-
-        // 1. White background
-        ctx.fillStyle = bg; ctx.fillRect(0, 0, MAIN_W, CH);
-
-        // 2. Illustration on left, clips with soft fade
-        if (state.images[idx]) {
+    function drawIllus(x, y, w, h, clip) {
+        if (!hasIllus) return;
+        const img = new Image(); img.src = state.images[idx];
+        if (clip) {
             ctx.save();
-            ctx.beginPath(); ctx.rect(0, 0, MAIN_W, CH); ctx.clip();
-            const img = new Image(); img.src = state.images[idx];
-            ctx.drawImage(img, 0, 0, ILLUS_W, CH);
+            ctx.beginPath(); ctx.rect(x, y, w, h); ctx.clip();
+            ctx.drawImage(img, x, y, w, h);
             ctx.restore();
-            // Fade illustration into bg color
-            const fade = ctx.createLinearGradient(ILLUS_W - 120, 0, ILLUS_W, 0);
-            fade.addColorStop(0, 'rgba(0,0,0,0)');
-            fade.addColorStop(1, bg);
-            ctx.fillStyle = fade; ctx.fillRect(ILLUS_W - 120, 0, 120, CH);
+        } else {
+            ctx.drawImage(img, x, y, w, h);
+        }
+    }
+
+    // ════════════════════════════════════════════════════════════════
+    // LAYOUT 0 — "TYPOGRAPHY BOLD"
+    // Like Livesport / HSH Sport red / Turancar text:
+    // Brand color fills right ~60%, huge company name + tagline,
+    // URL prominent. Left ~40% has illustration OR geometric accent.
+    // No AI illustration needed — works perfectly typography-only.
+    // ════════════════════════════════════════════════════════════════
+    if (idx === 0) {
+        // Background — brand color right, slightly lighter left
+        ctx.fillStyle = bg; ctx.fillRect(0, 0, MAIN_W, CH);
+
+        const ACCENT_X = Math.round(MAIN_W * 0.35); // 245px split
+
+        if (hasIllus) {
+            // Illustration clips into left section
+            drawIllus(0, 0, ACCENT_X + 80, CH, true);
+            // Fade right edge of illustration into bg
+            const fade = ctx.createLinearGradient(ACCENT_X - 30, 0, ACCENT_X + 60, 0);
+            fade.addColorStop(0, 'rgba(0,0,0,0)'); fade.addColorStop(1, bg);
+            ctx.fillStyle = fade; ctx.fillRect(ACCENT_X - 30, 0, 90, CH);
+        } else {
+            // No illustration — geometric accent shape (like Livesport pink triangle)
+            ctx.save();
+            ctx.beginPath();
+            ctx.moveTo(0, 0); ctx.lineTo(ACCENT_X + 40, 0);
+            ctx.lineTo(ACCENT_X - 20, CH); ctx.lineTo(0, CH);
+            ctx.closePath();
+            ctx.fillStyle = alpha(primary, dark ? 0.18 : 0.10); ctx.fill();
+            // Second shape for depth
+            ctx.beginPath();
+            ctx.moveTo(0, 0); ctx.lineTo(ACCENT_X - 40, 0);
+            ctx.lineTo(ACCENT_X - 100, CH); ctx.lineTo(0, CH);
+            ctx.closePath();
+            ctx.fillStyle = alpha(primary, dark ? 0.30 : 0.18); ctx.fill();
+            ctx.restore();
         }
 
-        // 3. Thin brand-color top bar — full width
-        ctx.fillStyle = primary; ctx.fillRect(0, 0, MAIN_W, 4);
-        ctx.fillStyle = primary; ctx.fillRect(0, CH - 4, MAIN_W, 4);
+        // Right text zone
+        const TX = ACCENT_X + 20;
+        const TW = MAIN_W - TX - 14;
 
-        // 4. Vertical accent rule before text panel
-        const RX = MAIN_W - TEXT_PANEL_W;
-        ctx.fillStyle = alpha(primary, 0.25); ctx.fillRect(RX, 8, 1.5, CH - 16);
-
-        // 5. Company name — large, in text panel
-        const TX = RX + 12;
-        const TW = TEXT_PANEL_W - 20;
-        const fs = nameFontSize(TW);
+        // Brand name — max size, left-aligned
+        const fs = fitFont(900, 68, TW);
         ctx.font = `900 ${fs}px 'Barlow Condensed', Impact, sans-serif`;
         ctx.fillStyle = dark ? '#ffffff' : '#111111';
-        ctx.fillText(name, TX, CH / 2 + fs * 0.35);
+        const nameY = Math.round(CH * 0.52 + fs * 0.38);
+        ctx.fillText(name, TX, nameY);
 
-        // 6. Brand color underline
-        ctx.font = `900 ${fs}px 'Barlow Condensed', Impact, sans-serif`;
-        const nw = ctx.measureText(name).width;
+        // Tagline — smaller, brand color
+        ctx.font = `700 13px 'Barlow Condensed', sans-serif`;
         ctx.fillStyle = primary;
-        ctx.fillRect(TX, CH / 2 + fs * 0.35 + 5, Math.min(nw, TW), 3.5);
+        ctx.fillText(tagline, TX, nameY + 18);
 
-        // 7. Tagline below underline
-        ctx.font = `700 12px 'Barlow Condensed', sans-serif`;
-        ctx.fillStyle = primary;
-        ctx.fillText(tagline, TX, CH / 2 + fs * 0.35 + 22);
-
-        // 8. Slogan (if any)
-        if (slogan) {
-            ctx.font = `400 9px 'DM Mono', monospace`;
-            ctx.fillStyle = alpha(dark ? '#ffffff' : '#111111', 0.38);
-            const sl = wrapText(ctx, slogan, TW);
-            sl.slice(0, 2).forEach((ln, i) => ctx.fillText(ln, TX, CH / 2 + fs * 0.35 + 38 + i * 12));
+        // URL — small but clear (like on all reference labels)
+        if (urlClean) {
+            ctx.font = `500 11px 'DM Mono', monospace`;
+            ctx.fillStyle = alpha(dark ? '#ffffff' : '#333333', 0.55);
+            ctx.fillText(urlClean, TX, CH - 9);
         }
 
-        // 9. QR — bottom left corner
-        drawQR(ctx, 10, CH - 60, 48);
+        // Top + bottom edge rules
+        ctx.fillStyle = primary;
+        ctx.fillRect(0, 0, MAIN_W, 4);
+        ctx.fillRect(0, CH - 4, MAIN_W, 4);
+
+        // QR — bottom left
+        drawQR(ctx, 10, CH - 58, 46, !dark);
     }
 
-    // ════════════════════════════════════════════════════════
-    // LAYOUT 2 — "MASCOT / CORPORATE"
-    // Matches KP MARK: illustration left ~55%, bold brand
-    // text panel right ~45%. Clean and corporate.
-    // ════════════════════════════════════════════════════════
-    else {
-        const SPLIT = Math.round(MAIN_W * 0.52); // 364px
+    // ════════════════════════════════════════════════════════════════
+    // LAYOUT 1 — "PRODUCT HERO"
+    // Like Turancar bus / HSH watch / KA-Glasses:
+    // Illustration fills right ~55%, brand name + logo zone left ~45%.
+    // Clean split — the product IS the design.
+    // ════════════════════════════════════════════════════════════════
+    else if (idx === 1) {
+        const SPLIT = Math.round(MAIN_W * 0.44); // 308px — text left, illus right
 
-        // 1. Solid background
+        // Full bg
         ctx.fillStyle = bg; ctx.fillRect(0, 0, MAIN_W, CH);
 
-        // 2. Illustration in left half, no fade — clean edge
-        if (state.images[idx]) {
+        // Illustration fills right portion, slight fade on left edge
+        if (hasIllus) {
+            drawIllus(SPLIT - 60, 0, MAIN_W - SPLIT + 60, CH, true);
+            const fade = ctx.createLinearGradient(SPLIT - 60, 0, SPLIT + 30, 0);
+            fade.addColorStop(0, bg); fade.addColorStop(1, 'rgba(0,0,0,0)');
+            ctx.fillStyle = fade; ctx.fillRect(SPLIT - 60, 0, 90, CH);
+        } else {
+            // Fallback: diagonal stripe pattern on right side
             ctx.save();
-            ctx.beginPath(); ctx.rect(0, 0, SPLIT, CH); ctx.clip();
-            const img = new Image(); img.src = state.images[idx];
-            // Scale to fill left half at full height
-            ctx.drawImage(img, 0, 0, SPLIT * 1.3, CH);
+            ctx.beginPath(); ctx.rect(SPLIT, 0, MAIN_W - SPLIT, CH); ctx.clip();
+            ctx.strokeStyle = alpha(primary, 0.08); ctx.lineWidth = 1.5;
+            for (let x = SPLIT - CH; x < MAIN_W + CH; x += 22) {
+                ctx.beginPath(); ctx.moveTo(x, 0); ctx.lineTo(x + CH, CH); ctx.stroke();
+            }
             ctx.restore();
         }
 
-        // 3. Vertical brand-color rule — the clean divide
-        ctx.fillStyle = primary; ctx.fillRect(SPLIT, 0, 4, CH);
+        // Left text zone
+        const TX = 12;
+        const TW = SPLIT - 20;
 
-        // 4. Right text panel background (very subtle tint)
-        const panelBg = dark
-            ? alpha(bg, 0.85)
-            : (isDark(primary) ? alpha(primary, 0.04) : alpha(primary, 0.03));
-        ctx.fillStyle = panelBg; ctx.fillRect(SPLIT + 4, 0, MAIN_W - SPLIT - 4, CH);
-
-        // 5. Company name — centered vertically in text panel
-        const TX = SPLIT + 16;
-        const TW = MAIN_W - TX - 12;
-        const fs = nameFontSize(TW);
+        // Brand name — vertically centered, large
+        const fs = fitFont(900, 64, TW);
         const nameY = Math.round(CH * 0.48 + fs * 0.38);
         ctx.font = `900 ${fs}px 'Barlow Condensed', Impact, sans-serif`;
         ctx.fillStyle = dark ? '#ffffff' : '#111111';
         ctx.fillText(name, TX, nameY);
 
-        // 6. Brand-color rule below name
-        ctx.font = `900 ${fs}px 'Barlow Condensed', Impact, sans-serif`;
-        const nw2 = ctx.measureText(name).width;
+        // Brand color underline
+        const nw = ctx.measureText(name).width;
         ctx.fillStyle = primary;
-        ctx.fillRect(TX, nameY + 6, Math.min(nw2, TW), 3.5);
+        ctx.fillRect(TX, nameY + 6, Math.min(nw, TW), 3.5);
 
-        // 7. Tagline
-        ctx.font = `700 11px 'Barlow Condensed', sans-serif`;
+        // Tagline
+        ctx.font = `700 12px 'Barlow Condensed', sans-serif`;
+        ctx.fillStyle = primary;
+        ctx.fillText(tagline, TX, nameY + 22);
+
+        // URL
+        if (urlClean) {
+            ctx.font = `500 10px 'DM Mono', monospace`;
+            ctx.fillStyle = alpha(dark ? '#ffffff' : '#333333', 0.5);
+            ctx.fillText(urlClean, TX, CH - 8);
+        }
+
+        // QR — bottom right corner of main zone
+        drawQR(ctx, MAIN_W - 54, CH - 56, 44, dark);
+
+        // Thin top+bottom border
+        ctx.fillStyle = primary;
+        ctx.fillRect(0, 0, MAIN_W, 3.5);
+        ctx.fillRect(0, CH - 3.5, MAIN_W, 3.5);
+    }
+
+    // ════════════════════════════════════════════════════════════════
+    // LAYOUT 2 — "DARK / INVERTED"
+    // Like HSH Sport dark / Turancar black / KA-Glasses dark:
+    // Deep dark bg (or brand-as-bg), illustration fills zone,
+    // brand name large and white. Dramatic.
+    // ════════════════════════════════════════════════════════════════
+    else {
+        // Full bg
+        ctx.fillStyle = bg; ctx.fillRect(0, 0, MAIN_W, CH);
+
+        if (hasIllus) {
+            // Full-bleed illustration
+            drawIllus(0, 0, MAIN_W, CH, false);
+            // Scrim on LEFT for text readability
+            const scrim = ctx.createLinearGradient(0, 0, MAIN_W * 0.55, 0);
+            scrim.addColorStop(0, alpha(bg, 0.92));
+            scrim.addColorStop(0.7, alpha(bg, 0.55));
+            scrim.addColorStop(1, 'rgba(0,0,0,0)');
+            ctx.fillStyle = scrim; ctx.fillRect(0, 0, MAIN_W * 0.55, CH);
+        } else {
+            // No illustration — solid color with subtle noise/texture
+            ctx.fillStyle = bg; ctx.fillRect(0, 0, MAIN_W, CH);
+            // Diagonal grain texture
+            ctx.strokeStyle = alpha(primary, 0.07); ctx.lineWidth = 1;
+            for (let x = -CH; x < MAIN_W + CH; x += 18) {
+                ctx.beginPath(); ctx.moveTo(x, 0); ctx.lineTo(x + CH, CH); ctx.stroke();
+            }
+            // Right accent shape (like Livesport geometric)
+            ctx.save();
+            ctx.beginPath();
+            ctx.moveTo(MAIN_W * 0.72, CH); ctx.lineTo(MAIN_W, CH * 0.3);
+            ctx.lineTo(MAIN_W, CH); ctx.closePath();
+            ctx.fillStyle = alpha(primary, 0.35); ctx.fill();
+            ctx.beginPath();
+            ctx.moveTo(MAIN_W * 0.82, CH); ctx.lineTo(MAIN_W, CH * 0.6);
+            ctx.lineTo(MAIN_W, CH); ctx.closePath();
+            ctx.fillStyle = alpha(primary, 0.55); ctx.fill();
+            ctx.restore();
+        }
+
+        // Left-side text
+        const TX = 14;
+        const TW = Math.round(MAIN_W * 0.55) - 20;
+
+        // Large company name
+        const fs = fitFont(900, 68, TW);
+        const nameY = Math.round(CH * 0.50 + fs * 0.38);
+        ctx.font = `900 ${fs}px 'Barlow Condensed', Impact, sans-serif`;
+        ctx.fillStyle = dark ? '#ffffff' : '#111111';
+        ctx.shadowColor = 'rgba(0,0,0,0.6)'; ctx.shadowBlur = 8;
+        ctx.fillText(name, TX, nameY);
+        ctx.shadowBlur = 0;
+
+        // Accent rule
+        const nw3 = ctx.measureText(name).width;
+        ctx.fillStyle = primary;
+        ctx.fillRect(TX, nameY + 6, Math.min(nw3, TW), 4);
+
+        // Tagline
+        ctx.font = `600 12px 'Barlow Condensed', sans-serif`;
         ctx.fillStyle = alpha(primary, 0.9);
         ctx.fillText(tagline, TX, nameY + 22);
 
-        // 8. Industry tag — bottom of text panel
-        if (state.brandData?.industry) {
-            const ind = state.brandData.industry.toUpperCase().substring(0, 22);
-            ctx.font = `600 9px 'Barlow Condensed', sans-serif`;
-            ctx.fillStyle = alpha(dark ? '#ffffff' : '#111111', 0.35);
-            ctx.fillText(ind, TX, CH - 10);
+        // URL — white/light
+        if (urlClean) {
+            ctx.font = `500 11px 'DM Mono', monospace`;
+            ctx.fillStyle = alpha(dark ? '#ffffff' : '#111111', 0.45);
+            ctx.fillText(urlClean, TX, CH - 8);
         }
 
-        // 9. QR — bottom of text panel
-        drawQR(ctx, MAIN_W - 54, CH - 56, 44);
+        // QR — bottom right
+        drawQR(ctx, MAIN_W - 56, CH - 58, 46, true);
 
-        // 10. Top + bottom thin bars on full main zone
-        ctx.fillStyle = alpha(primary, 0.6);
-        ctx.fillRect(0, 0, MAIN_W, 3);
-        ctx.fillRect(0, CH - 3, MAIN_W, 3);
+        // Brand-color top bar
+        ctx.fillStyle = primary;
+        ctx.fillRect(0, 0, MAIN_W, 4);
     }
 
     // ═══════════════════════════════════════════════════════════════════════
