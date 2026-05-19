@@ -507,26 +507,14 @@ async function startGeneration() {
 }
 
 // ══════════════════════════════════════════════════════════════
-// LABEL RENDERING  — 3 distinct professional layouts
+// LABEL RENDERING — 3 layouts matching reference photos exactly
+// No logo element. No URL. Illustration is the hero.
 // ══════════════════════════════════════════════════════════════
-function drawLogo(ctx, x, y, maxW, maxH) {
-    if (!state.logoImg) return;
-    const sc = Math.min(maxW / state.logoImg.width, maxH / state.logoImg.height) * 0.9;
-    const lw = state.logoImg.width * sc, lh = state.logoImg.height * sc;
-    // Drop shadow only — no white box
-    ctx.save();
-    ctx.shadowColor = 'rgba(0,0,0,0.55)';
-    ctx.shadowBlur = 10;
-    ctx.shadowOffsetX = 1; ctx.shadowOffsetY = 2;
-    ctx.drawImage(state.logoImg, x + (maxW - lw)/2, y + (maxH - lh)/2, lw, lh);
-    ctx.restore();
-}
 
-function drawQR(ctx, x, y, size, primary, dark) {
+function drawQR(ctx, x, y, size) {
     if (!state.qrImg) return;
-    // Minimal white chip — just enough for QR to be scannable
-    ctx.fillStyle = 'rgba(255,255,255,0.92)';
-    rr(ctx, x - 3, y - 3, size + 6, size + 6, 3); ctx.fill();
+    ctx.fillStyle = '#ffffff';
+    rr(ctx, x - 2, y - 2, size + 4, size + 4, 2); ctx.fill();
     ctx.drawImage(state.qrImg, x, y, size, size);
 }
 
@@ -535,235 +523,198 @@ function renderLabel(idx) {
     const design = state.brandData.designs[idx];
     canvas.width = CW; canvas.height = CH;
     const ctx = canvas.getContext('2d');
-    const { bg, primary, text, accent } = design;
+    const { bg, primary, text } = design;
     const dark = isDark(bg);
-    const name = (state.companyName || 'COMPANY').toUpperCase();
+    const name   = (state.companyName || 'COMPANY').toUpperCase();
     const tagline = (design.tagline || '').toUpperCase();
-    const slogan = (state.brandData?.slogan || '');
-    const urlClean = (state.companyUrl||'').replace(/^https?:\/\/(www\.)?/,'').replace(/\/$/,'');
-    const hasImg = !!state.images[idx];
+    const slogan  = (state.brandData?.slogan || '').toUpperCase();
 
-    // ── Load illustration ──
-    let illus = null;
-    if (hasImg) {
-        illus = new Image();
-        illus.src = state.images[idx];
+    // ── draw illustration helper ──────────────────
+    function drawIllus(x, y, w, h) {
+        if (!state.images[idx]) return false;
+        const img = new Image(); img.src = state.images[idx];
+        ctx.drawImage(img, x, y, w, h);
+        return true;
     }
 
-    // ══════════════════════════════════════════════
-    // LAYOUT 0 — "Cinematic Dark"
-    // Full-bleed illustration, bold bottom band for name
-    // Like JINA Design label: art IS the label
-    // ══════════════════════════════════════════════
+    // font size helper
+    function nameFontSize(maxW) {
+        const sizes = [72, 64, 56, 48, 40, 34, 28];
+        for (const s of sizes) {
+            ctx.font = `900 ${s}px 'Barlow Condensed', Impact, sans-serif`;
+            if (ctx.measureText(name).width <= maxW) return s;
+        }
+        return 22;
+    }
+
+    // ════════════════════════════════════════════════════════
+    // LAYOUT 0 — "DARK EDITION"
+    // Matches JINA Design: illustration fills entire zone,
+    // brand name lives in a clean bottom strip.
+    // ════════════════════════════════════════════════════════
     if (idx === 0) {
-        // Background
+        // 1. Solid bg
         ctx.fillStyle = bg; ctx.fillRect(0, 0, MAIN_W, CH);
 
-        // Full-bleed illustration
-        if (illus) {
-            ctx.drawImage(illus, 0, 0, MAIN_W, CH);
-            // Vignette left edge
-            const vigL = ctx.createLinearGradient(0, 0, 80, 0);
-            vigL.addColorStop(0, alpha(bg, 0.7)); vigL.addColorStop(1, 'rgba(0,0,0,0)');
-            ctx.fillStyle = vigL; ctx.fillRect(0, 0, 80, CH);
-        } else {
-            // Fallback geometric
-            ctx.fillStyle = bg; ctx.fillRect(0, 0, MAIN_W, CH);
-            ctx.strokeStyle = alpha(primary, 0.1); ctx.lineWidth = 1.5;
-            for (let x = -CH; x < MAIN_W + CH; x += 28) {
-                ctx.beginPath(); ctx.moveTo(x, 0); ctx.lineTo(x + CH, CH); ctx.stroke();
-            }
-        }
+        // 2. Full-bleed illustration (no clipping, no fade)
+        drawIllus(0, 0, MAIN_W, CH);
 
-        // Bottom band — solid brand color strip for name
-        const BAND = 68;
-        const bandGrd = ctx.createLinearGradient(0, CH - BAND - 20, 0, CH);
-        bandGrd.addColorStop(0, 'rgba(0,0,0,0)');
-        bandGrd.addColorStop(0.35, alpha(bg, 0.88));
-        bandGrd.addColorStop(1, alpha(bg, 0.97));
-        ctx.fillStyle = bandGrd; ctx.fillRect(0, CH - BAND - 20, MAIN_W, BAND + 20);
+        // 3. Bottom gradient scrim — lets name read on any image
+        const SCRIM_H = 80;
+        const scrim = ctx.createLinearGradient(0, CH - SCRIM_H, 0, CH);
+        scrim.addColorStop(0, 'rgba(0,0,0,0)');
+        scrim.addColorStop(0.5, alpha(bg, 0.82));
+        scrim.addColorStop(1,   alpha(bg, 0.97));
+        ctx.fillStyle = scrim; ctx.fillRect(0, CH - SCRIM_H, MAIN_W, SCRIM_H);
 
-        // Primary color left stripe
-        ctx.fillStyle = primary; ctx.fillRect(0, 0, 6, CH);
+        // 4. Brand color left edge rule
+        ctx.fillStyle = primary; ctx.fillRect(0, 0, 5, CH);
 
-        // Top thin bar
-        ctx.fillStyle = alpha(primary, 0.7); ctx.fillRect(6, 0, MAIN_W - 6, 3);
-
-        // Logo — top left, NO background
-        if (state.logoImg) drawLogo(ctx, 14, 12, 90, 72);
-
-        // Company name — bold, bottom of main zone
-        const nLen = name.length;
-        const fs = nLen > 20 ? 34 : nLen > 14 ? 42 : nLen > 9 ? 52 : 62;
+        // 5. Company name
+        const fs = nameFontSize(MAIN_W - 80);
         ctx.font = `900 ${fs}px 'Barlow Condensed', Impact, sans-serif`;
-        ctx.shadowColor = 'rgba(0,0,0,0.8)'; ctx.shadowBlur = 14;
         ctx.fillStyle = '#ffffff';
-        ctx.fillText(name, 14, CH - 34);
-        ctx.shadowBlur = 0;
+        ctx.fillText(name, 14, CH - 30);
 
-        // Accent line above name
-        const nw = ctx.measureText(name).width;
-        ctx.fillStyle = primary; ctx.fillRect(14, CH - 38, Math.min(nw, MAIN_W - 28), 2.5);
+        // 6. Tagline — below name
+        ctx.font = `600 11px 'Barlow Condensed', sans-serif`;
+        ctx.fillStyle = alpha(primary, 0.95);
+        ctx.fillText('› ' + tagline, 14, CH - 14);
 
-        // Tagline
-        ctx.font = `600 12px 'Barlow Condensed', sans-serif`;
-        ctx.fillStyle = alpha(primary, 0.9);
-        ctx.letterSpacing = '0.15em';
-        ctx.fillText('› ' + tagline, 14, CH - 16);
-
-        // URL vertical — right edge, subtle
-        if (urlClean) {
-            ctx.save(); ctx.translate(MAIN_W - 10, CH - 20); ctx.rotate(-Math.PI / 2);
-            ctx.font = `400 8px 'DM Mono', monospace`;
-            ctx.fillStyle = alpha('#ffffff', 0.3); ctx.textAlign = 'left';
-            ctx.fillText(urlClean, 0, 0); ctx.restore();
-        }
-
-        // QR — bottom left inside main zone
-        drawQR(ctx, 14, CH - 76, 52, primary, dark);
+        // 7. QR — bottom right of main zone
+        drawQR(ctx, MAIN_W - 58, CH - 60, 48);
     }
 
-    // ══════════════════════════════════════════════
-    // LAYOUT 1 — "Split Composition"
-    // Illustration left ~55%, clean brand panel right ~45%
-    // Like YUKI label: pure product hero on left, crisp text panel
-    // ══════════════════════════════════════════════
+    // ════════════════════════════════════════════════════════
+    // LAYOUT 1 — "WHITE HERO"
+    // Matches YUKI: white background, illustration bleeds
+    // from the left, bold brand name on the right panel.
+    // ════════════════════════════════════════════════════════
     else if (idx === 1) {
-        const SPLIT = MAIN_W * 0.56; // 392px
+        const TEXT_PANEL_W = 220;  // rightmost area for text
+        const ILLUS_W = MAIN_W - TEXT_PANEL_W + 60; // bleeds into text area
 
-        // Right panel first (white or light bg)
+        // 1. White background
         ctx.fillStyle = bg; ctx.fillRect(0, 0, MAIN_W, CH);
 
-        // Illustration fills left side, bleeds slightly past split
-        if (illus) {
+        // 2. Illustration on left, clips with soft fade
+        if (state.images[idx]) {
             ctx.save();
-            ctx.beginPath(); ctx.rect(0, 0, SPLIT + 40, CH); ctx.clip();
-            ctx.drawImage(illus, 0, 0, SPLIT + 60, CH);
+            ctx.beginPath(); ctx.rect(0, 0, MAIN_W, CH); ctx.clip();
+            const img = new Image(); img.src = state.images[idx];
+            ctx.drawImage(img, 0, 0, ILLUS_W, CH);
             ctx.restore();
-            // Fade out at split
-            const fadeGrd = ctx.createLinearGradient(SPLIT - 60, 0, SPLIT + 30, 0);
-            fadeGrd.addColorStop(0, 'rgba(0,0,0,0)');
-            fadeGrd.addColorStop(1, bg);
-            ctx.fillStyle = fadeGrd; ctx.fillRect(SPLIT - 60, 0, 90, CH);
-        } else {
-            ctx.fillStyle = bg; ctx.fillRect(0, 0, MAIN_W, CH);
-            // Pattern on left
-            ctx.strokeStyle = alpha(primary, 0.06); ctx.lineWidth = 1;
-            for (let y = 0; y < CH; y += 14) { ctx.beginPath(); ctx.moveTo(0, y); ctx.lineTo(SPLIT, y); ctx.stroke(); }
+            // Fade illustration into bg color
+            const fade = ctx.createLinearGradient(ILLUS_W - 120, 0, ILLUS_W, 0);
+            fade.addColorStop(0, 'rgba(0,0,0,0)');
+            fade.addColorStop(1, bg);
+            ctx.fillStyle = fade; ctx.fillRect(ILLUS_W - 120, 0, 120, CH);
         }
 
-        // Right text panel
-        const TX = SPLIT + 10;
-        const TW = MAIN_W - TX - 12;
+        // 3. Thin brand-color top bar — full width
+        ctx.fillStyle = primary; ctx.fillRect(0, 0, MAIN_W, 4);
+        ctx.fillStyle = primary; ctx.fillRect(0, CH - 4, MAIN_W, 4);
 
-        // Primary accent bar — top of text zone
-        ctx.fillStyle = primary; ctx.fillRect(TX - 4, 0, 4, CH);
+        // 4. Vertical accent rule before text panel
+        const RX = MAIN_W - TEXT_PANEL_W;
+        ctx.fillStyle = alpha(primary, 0.25); ctx.fillRect(RX, 8, 1.5, CH - 16);
 
-        // Logo — at top of text panel
-        if (state.logoImg) {
-            drawLogo(ctx, TX, 8, TW, 64);
-        }
-
-        // Company name
-        const nLen = name.length;
-        const fs = nLen > 18 ? 30 : nLen > 12 ? 38 : nLen > 8 ? 48 : 56;
+        // 5. Company name — large, in text panel
+        const TX = RX + 12;
+        const TW = TEXT_PANEL_W - 20;
+        const fs = nameFontSize(TW);
         ctx.font = `900 ${fs}px 'Barlow Condensed', Impact, sans-serif`;
         ctx.fillStyle = dark ? '#ffffff' : '#111111';
-        const nameY = state.logoImg ? 116 : 98;
-        ctx.fillText(name, TX, nameY);
+        ctx.fillText(name, TX, CH / 2 + fs * 0.35);
 
-        // Underline
+        // 6. Brand color underline
+        ctx.font = `900 ${fs}px 'Barlow Condensed', Impact, sans-serif`;
         const nw = ctx.measureText(name).width;
-        ctx.fillStyle = primary; ctx.fillRect(TX, nameY + 5, Math.min(nw, TW), 3);
+        ctx.fillStyle = primary;
+        ctx.fillRect(TX, CH / 2 + fs * 0.35 + 5, Math.min(nw, TW), 3.5);
 
-        // Tagline
-        ctx.font = `700 11px 'Barlow Condensed', sans-serif`;
-        ctx.fillStyle = primary; ctx.letterSpacing = '0.1em';
-        ctx.fillText(tagline, TX, nameY + 22);
+        // 7. Tagline below underline
+        ctx.font = `700 12px 'Barlow Condensed', sans-serif`;
+        ctx.fillStyle = primary;
+        ctx.fillText(tagline, TX, CH / 2 + fs * 0.35 + 22);
 
-        // Slogan
+        // 8. Slogan (if any)
         if (slogan) {
-            ctx.font = `400 10px 'DM Mono', monospace`;
-            ctx.fillStyle = alpha(dark ? '#ffffff' : '#111111', 0.45);
-            const sloganLines = wrapText(ctx, slogan, TW);
-            sloganLines.slice(0, 2).forEach((ln, i) => ctx.fillText(ln, TX, nameY + 38 + i * 13));
-        }
-
-        // URL bottom of panel
-        if (urlClean) {
             ctx.font = `400 9px 'DM Mono', monospace`;
-            ctx.fillStyle = alpha(dark ? '#ffffff' : '#111111', 0.35);
-            ctx.fillText(urlClean, TX, CH - 10);
+            ctx.fillStyle = alpha(dark ? '#ffffff' : '#111111', 0.38);
+            const sl = wrapText(ctx, slogan, TW);
+            sl.slice(0, 2).forEach((ln, i) => ctx.fillText(ln, TX, CH / 2 + fs * 0.35 + 38 + i * 12));
         }
 
-        // QR — bottom left corner of illustration side
-        drawQR(ctx, 12, CH - 68, 54, primary, dark);
+        // 9. QR — bottom left corner
+        drawQR(ctx, 10, CH - 60, 48);
     }
 
-    // ══════════════════════════════════════════════
-    // LAYOUT 2 — "Full Bleed Hero"
-    // Illustration fills entire main zone, text as minimal
-    // floating overlay — like KP MARK mascot style
-    // ══════════════════════════════════════════════
+    // ════════════════════════════════════════════════════════
+    // LAYOUT 2 — "MASCOT / CORPORATE"
+    // Matches KP MARK: illustration left ~55%, bold brand
+    // text panel right ~45%. Clean and corporate.
+    // ════════════════════════════════════════════════════════
     else {
+        const SPLIT = Math.round(MAIN_W * 0.52); // 364px
+
+        // 1. Solid background
         ctx.fillStyle = bg; ctx.fillRect(0, 0, MAIN_W, CH);
 
-        if (illus) {
-            ctx.drawImage(illus, 0, 0, MAIN_W, CH);
-        } else {
-            ctx.fillStyle = bg; ctx.fillRect(0, 0, MAIN_W, CH);
-            ctx.strokeStyle = alpha(primary, 0.09); ctx.lineWidth = 1;
-            for (let x = 0; x < MAIN_W; x += 20) { ctx.beginPath(); ctx.moveTo(x, 0); ctx.lineTo(x, CH); ctx.stroke(); }
+        // 2. Illustration in left half, no fade — clean edge
+        if (state.images[idx]) {
+            ctx.save();
+            ctx.beginPath(); ctx.rect(0, 0, SPLIT, CH); ctx.clip();
+            const img = new Image(); img.src = state.images[idx];
+            // Scale to fill left half at full height
+            ctx.drawImage(img, 0, 0, SPLIT * 1.3, CH);
+            ctx.restore();
         }
 
-        // Bold top bar with brand color — name lives here
-        const TOP_BAR = 46;
-        ctx.fillStyle = primary; ctx.fillRect(0, 0, MAIN_W, TOP_BAR);
+        // 3. Vertical brand-color rule — the clean divide
+        ctx.fillStyle = primary; ctx.fillRect(SPLIT, 0, 4, CH);
 
-        // Subtle texture on bar
-        ctx.fillStyle = 'rgba(0,0,0,0.12)';
-        for (let x = 0; x < MAIN_W; x += 12) { ctx.fillRect(x, 0, 6, TOP_BAR); }
+        // 4. Right text panel background (very subtle tint)
+        const panelBg = dark
+            ? alpha(bg, 0.85)
+            : (isDark(primary) ? alpha(primary, 0.04) : alpha(primary, 0.03));
+        ctx.fillStyle = panelBg; ctx.fillRect(SPLIT + 4, 0, MAIN_W - SPLIT - 4, CH);
 
-        // Company name — in bar
-        const nLen = name.length;
-        const fs = nLen > 20 ? 26 : nLen > 14 ? 32 : nLen > 9 ? 38 : 42;
+        // 5. Company name — centered vertically in text panel
+        const TX = SPLIT + 16;
+        const TW = MAIN_W - TX - 12;
+        const fs = nameFontSize(TW);
+        const nameY = Math.round(CH * 0.48 + fs * 0.38);
         ctx.font = `900 ${fs}px 'Barlow Condensed', Impact, sans-serif`;
-        ctx.fillStyle = isDark(primary) ? '#ffffff' : '#111111';
-        ctx.shadowColor = 'rgba(0,0,0,0.3)'; ctx.shadowBlur = 4;
-        ctx.fillText(name, 14, TOP_BAR - 10);
-        ctx.shadowBlur = 0;
+        ctx.fillStyle = dark ? '#ffffff' : '#111111';
+        ctx.fillText(name, TX, nameY);
 
-        // Tagline in bar
-        ctx.font = `600 10px 'Barlow Condensed', sans-serif`;
-        ctx.fillStyle = isDark(primary) ? 'rgba(255,255,255,0.7)' : 'rgba(0,0,0,0.6)';
-        const nw = ctx.measureText(name).width;
-        ctx.fillText('  ·  ' + tagline, 14 + nw, TOP_BAR - 10);
+        // 6. Brand-color rule below name
+        ctx.font = `900 ${fs}px 'Barlow Condensed', Impact, sans-serif`;
+        const nw2 = ctx.measureText(name).width;
+        ctx.fillStyle = primary;
+        ctx.fillRect(TX, nameY + 6, Math.min(nw2, TW), 3.5);
 
-        // Logo — right side of bar
-        if (state.logoImg) {
-            drawLogo(ctx, MAIN_W - 90, 3, 82, 40);
+        // 7. Tagline
+        ctx.font = `700 11px 'Barlow Condensed', sans-serif`;
+        ctx.fillStyle = alpha(primary, 0.9);
+        ctx.fillText(tagline, TX, nameY + 22);
+
+        // 8. Industry tag — bottom of text panel
+        if (state.brandData?.industry) {
+            const ind = state.brandData.industry.toUpperCase().substring(0, 22);
+            ctx.font = `600 9px 'Barlow Condensed', sans-serif`;
+            ctx.fillStyle = alpha(dark ? '#ffffff' : '#111111', 0.35);
+            ctx.fillText(ind, TX, CH - 10);
         }
 
-        // Bottom info strip
-        const BOT_STRIP = 32;
-        const botGrd = ctx.createLinearGradient(0, CH - BOT_STRIP - 10, 0, CH);
-        botGrd.addColorStop(0, 'rgba(0,0,0,0)');
-        botGrd.addColorStop(1, 'rgba(0,0,0,0.72)');
-        ctx.fillStyle = botGrd; ctx.fillRect(0, CH - BOT_STRIP - 10, MAIN_W, BOT_STRIP + 10);
+        // 9. QR — bottom of text panel
+        drawQR(ctx, MAIN_W - 54, CH - 56, 44);
 
-        if (slogan) {
-            ctx.font = `400 11px 'DM Mono', monospace`;
-            ctx.fillStyle = 'rgba(255,255,255,0.75)';
-            ctx.fillText(slogan.toUpperCase(), 14, CH - 12);
-        }
-        if (urlClean) {
-            ctx.font = `400 9px 'DM Mono', monospace`;
-            ctx.fillStyle = 'rgba(255,255,255,0.45)';
-            ctx.fillText(urlClean, 14, CH - 2 > CH ? CH - 2 : CH - 1);
-        }
-
-        // QR — bottom right of main zone, before the white zone
-        drawQR(ctx, MAIN_W - 66, CH - 66, 54, primary, dark);
+        // 10. Top + bottom thin bars on full main zone
+        ctx.fillStyle = alpha(primary, 0.6);
+        ctx.fillRect(0, 0, MAIN_W, 3);
+        ctx.fillRect(0, CH - 3, MAIN_W, 3);
     }
 
     // ═══════════════════════════════════════════════════════════════════════

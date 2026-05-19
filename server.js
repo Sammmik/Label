@@ -45,65 +45,65 @@ app.post('/api/analyze-brand', async (req, res) => {
 
     const body = {
         model: "claude-sonnet-4-6",
-        max_tokens: 2200,
+        max_tokens: 2400,
         messages: [{
             role: "user",
-            content: `You are a senior packaging designer at a top creative agency. You've designed bottle labels for brands like YUKI (electric motorcycles), KP MARK (boiler manufacturer), JINA Design (graphic studio). Each of those had a CUSTOM mascot or hero illustration — not generic stock art.
+            content: `You are a senior packaging designer at a world-class creative agency. Reference projects: YUKI electric motorcycles label (giant motorcycle hero graphic fills the label), KP MARK boilers (smiling boiler character mascot with tools), JINA Design (oversized keyboard keys arranged as brand art on dark background).
 
 COMPANY: ${name}
 DESCRIPTION: ${description || "Not provided"}
 WEBSITE: ${url || "Not provided"}
 BRAND COLOR HINT: ${color || "#1d4ed8"}
 
-${url ? `CRITICAL: Web search "${name}" now. Find their real brand colors, actual products, any mascots or characters, visual style, and industry specifics. Use this to make the illustration prompts highly specific and authentic to this exact brand.` : ""}
+${url ? `CRITICAL: Web search "${name}" right now. Find: exact brand hex colors, logo shape/icon/symbol, key products or services, any mascot, brand personality. Use this to make the illustration concept authentic.` : ""}
 
-Create 3 bottle label design variations. For each, write a HIGHLY SPECIFIC FAL.ai image generation prompt that produces a custom brand illustration — the kind you'd see on a premium branded water bottle:
-- Electric vehicle brand → dramatic vehicle hero + rider silhouette
-- Industrial/manufacturing → friendly product mascot character  
-- Design/creative agency → oversized artistic tools arranged as brand art
-- Food/beverage → appetizing product hero with vibrant surroundings
-- Sports/fitness → athlete in dynamic action pose
-- Tech company → abstract circuit/device artwork with brand aesthetic
-etc. — ALWAYS match the exact brand, industry, and products.
+ILLUSTRATION RULES — read carefully:
+1. The AI illustration IS the entire creative zone of the label. It must be bold, custom, brand-specific art that immediately communicates who this brand is.
+2. Identify the brand's key visual symbol (their logo icon, their main product, a mascot). Make THAT the hero of the illustration.
+3. All 3 designs use the same core subject — just different color moods (dark / white / brand-color).
+4. ABSOLUTELY NO text, letters, words, numbers inside the illustration. Zero.
+5. Style: flat vector illustration, cel-shaded, bold outlines, limited 3-4 color palette. Like premium packaging artwork.
+6. Composition: subject fills the frame dramatically. For layouts that split, subject is slightly left-biased.
 
-Return ONLY raw JSON, no markdown, no backticks:
+Return ONLY raw JSON — no markdown, no backticks, nothing else:
 {
   "slogan": "punchy 4-6 word brand slogan",
-  "industry": "precise industry",
-  "companyColor": "#actual_hex_from_their_website",
+  "industry": "precise industry name",
+  "companyColor": "#actual_hex_detected",
+  "illustrationConcept": "one sentence: what the core brand illustration shows, e.g. 'friendly cartoon boiler mascot with a thumbs-up and wrench'",
   "designs": [
     {
       "id": 1,
-      "name": "Cinematic Dark",
-      "styleDesc": "Full-bleed dramatic hero on dark",
-      "bg": "#0b0e16",
+      "name": "Dark Edition",
+      "styleDesc": "Full-bleed dramatic art on deep dark background",
+      "bg": "#0c0e16",
       "primary": "#ACTUAL_brand_color",
       "text": "#ffffff",
-      "accent": "#secondary_accent_hex",
+      "accent": "#accent_hex",
       "tagline": "3-5 word tagline",
-      "imagePrompt": "Premium bottle label artwork for [${name}]. [WRITE HIGHLY SPECIFIC description: exact subject matter tailored to this brand's products/industry, e.g. 'dynamic low-angle electric motorcycle hero shot, rider in full racing gear silhouette, speed lines radiating outward' OR 'friendly smiling boiler character mascot with wrench and pressure gauge, thumbs up pose']. Dark background #0b0e16. Art style: professional flat vector illustration like premium packaging design, bold cel-shading, crisp clean outlines, 3-color palette dominated by [PRIMARY_COLOR]. Subject fills 80% of frame, slightly left-biased composition leaving right third open. Zero text, zero words, zero typography anywhere in image. Landscape 4:3 aspect ratio. High contrast, print-ready quality."
+      "imagePrompt": "[Write a precise FAL.ai image prompt: describe the specific brand illustration for ${name}, their industry is ${description || 'unknown'}. Describe the EXACT mascot, product, or symbol from their brand identity. Dark background #0c0e16. Flat cel-shaded vector illustration. Bold outlines. Brand color as hero accent. Subject fills 85% of frame. ZERO text ZERO letters ZERO numbers. Landscape 4:3.]"
     },
     {
       "id": 2,
-      "name": "Clean Hero",
-      "styleDesc": "Product hero on light ground",
-      "bg": "#f4f4f4",
+      "name": "White Hero",
+      "styleDesc": "Clean bold graphic on white background",
+      "bg": "#ffffff",
       "primary": "#ACTUAL_brand_color",
       "text": "#111111",
       "accent": "#accent_hex",
       "tagline": "3-5 word tagline",
-      "imagePrompt": "Premium bottle label artwork for [${name}]. [SAME specific brand subject, adapted for light background]. Pure white background. Art style: clean bold flat vector illustration, packaging design quality — similar to how YUKI motorcycle labels look. [PRIMARY_COLOR] as dominant brand color, bold black outlines, clean flat shapes. Large scale hero composition, dramatic angle, fills frame. Zero text. Landscape 4:3."
+      "imagePrompt": "[Same core brand illustration as design 1 but on pure white background. Flat vector art. Brand color dominant. Bold graphic outlines. Clean modern packaging illustration. ZERO text ZERO letters ZERO numbers. Landscape 4:3.]"
     },
     {
       "id": 3,
-      "name": "Bold Immersive",
-      "styleDesc": "Brand color as the canvas",
-      "bg": "#ACTUAL_brand_color_as_bg",
+      "name": "Brand Color",
+      "styleDesc": "Monochromatic mascot on solid brand color",
+      "bg": "#ACTUAL_brand_color",
       "primary": "#ffffff",
       "text": "#ffffff",
-      "accent": "#contrasting_color",
+      "accent": "#contrasting_hex",
       "tagline": "3-5 word tagline",
-      "imagePrompt": "Premium bottle label artwork for [${name}]. [SAME brand-specific subject rendered as white/light monochromatic illustration on solid [PRIMARY_COLOR] background]. Monochromatic white and light [PRIMARY_COLOR] tones illustration on solid [PRIMARY_COLOR] background. Style: embossed stamp look, flat vector silhouette with subtle detail, bold graphic art. Strong contrast. The subject should look like a premium brand emblem. Zero text. Landscape 4:3."
+      "imagePrompt": "[Same brand illustration rendered white/cream on solid brand color background. Monochromatic flat vector style — like an embossed stamp or screen print. High contrast. Bold graphic silhouette. ZERO text ZERO letters ZERO numbers. Landscape 4:3.]"
     }
   ]
 }`
