@@ -208,7 +208,7 @@ app.post('/api/generate-image', async (req, res) => {
         return res.json({ imageUrl: null, designIndex });
     }
 
-    const finalPrompt = `${prompt} IMPORTANT: absolutely NO text, NO letters, NO words, NO numbers in image. Rich detailed illustration with depth, gradients, atmosphere, supporting objects.`;
+    const finalPrompt = `${prompt} CRITICAL VISUAL REQUIREMENTS: Subject must fill at least 70% of frame, dramatically composed and instantly recognizable. Rich detailed illustration with multiple visual elements, gradients, depth, atmosphere, supporting background objects. Absolutely NO text, NO letters, NO words, NO numbers anywhere. Bold marketing-quality artwork suitable for premium product packaging.`;
 
     const seed = Math.floor(Math.random() * 1000000);
 
@@ -225,7 +225,7 @@ app.post('/api/generate-image', async (req, res) => {
                 image_size: "landscape_4_3",
                 num_images: 1,
                 seed: seed,
-                safety_tolerance: "6",
+                safety_tolerance: 6,
                 enable_safety_checker: false,
                 output_format: "jpeg"
             })

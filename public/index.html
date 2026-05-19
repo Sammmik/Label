@@ -475,13 +475,32 @@ async function startGeneration() {
         state.brandData = brandRes;
         setStep(0, 'done'); setStep(1, 'done');
 
-        // STEP 2–4: Generate 3 illustrations in parallel
+        // STEP 2–4: Generate 3 illustrations in parallel, pre-load each Image
         setTitle('Generating label illustrations...', 'FAL.ai is creating your brand artwork (this takes 20–40s)');
         const imgPromises = state.brandData.designs.map((d, i) => {
             setStep(2 + i, 'active');
             return apiFetch('/api/generate-image', { prompt: d.imagePrompt, designIndex: i })
-                .then(r => { state.images[i] = r.imageUrl; setStep(2 + i, 'done'); })
-                .catch(err => { console.error(`Image ${i} failed:`, err); setStep(2 + i, 'done'); });
+                .then(async r => {
+                    if (r.imageUrl) {
+                        // CRITICAL: actually load the image before storing it
+                        const img = new Image();
+                        img.src = r.imageUrl;
+                        try { await img.decode(); }
+                        catch (e) {
+                            // Fallback for browsers without decode()
+                            await new Promise((res, rej) => { img.onload = res; img.onerror = rej; });
+                        }
+                        state.images[i] = img;
+                        console.log(`✓ Image ${i+1} loaded (${img.width}×${img.height})`);
+                    } else {
+                        console.warn(`Image ${i+1} returned null from server`);
+                    }
+                    setStep(2 + i, 'done');
+                })
+                .catch(err => {
+                    console.error(`Image ${i+1} FAILED:`, err);
+                    setStep(2 + i, 'done');
+                });
         });
         await Promise.all(imgPromises);
 
@@ -551,19 +570,19 @@ function renderLabel(idx) {
     ctx.save();
     ctx.translate(CZ_X, 0);
 
-    // Auto-fit font size to a max width
+    // Auto-fit font size to a max width - bigger ceiling for shelf impact
     function fitFont(weight, maxPx, maxW, family) {
         const fam = family || DISPLAY_FONT;
-        for (let s = maxPx; s >= 18; s -= 2) {
+        for (let s = maxPx; s >= 20; s -= 2) {
             ctx.font = `${weight} ${s}px ${fam}`;
             if (ctx.measureText(name).width <= maxW) return s;
         }
-        return 18;
+        return 20;
     }
 
     function drawIllus(x, y, w, h, clip) {
-        if (!hasIllus) return;
-        const img = new Image(); img.src = state.images[idx];
+        const img = state.images[idx];
+        if (!img || !img.complete || img.naturalWidth === 0) return false;
         if (clip) {
             ctx.save();
             ctx.beginPath(); ctx.rect(x, y, w, h); ctx.clip();
@@ -572,6 +591,7 @@ function renderLabel(idx) {
         } else {
             ctx.drawImage(img, x, y, w, h);
         }
+        return true;
     }
 
     // ════════════════════════════════════════════════════════════════
@@ -595,19 +615,34 @@ function renderLabel(idx) {
             fade.addColorStop(0, 'rgba(0,0,0,0)'); fade.addColorStop(1, bg);
             ctx.fillStyle = fade; ctx.fillRect(ACCENT_X - 30, 0, 90, CH);
         } else {
-            // No illustration — geometric accent shape (like Livesport pink triangle)
+            // No illustration — rich geometric fallback
             ctx.save();
+            // Background gradient overlay
+            const bgGrd = ctx.createLinearGradient(0, 0, MAIN_W, CH);
+            bgGrd.addColorStop(0, alpha(primary, dark ? 0.25 : 0.12));
+            bgGrd.addColorStop(0.5, alpha(primary, dark ? 0.08 : 0.04));
+            bgGrd.addColorStop(1, 'rgba(0,0,0,0)');
+            ctx.fillStyle = bgGrd; ctx.fillRect(0, 0, MAIN_W, CH);
+
+            // Large brand-color circle (off-canvas, peeks in)
             ctx.beginPath();
-            ctx.moveTo(0, 0); ctx.lineTo(ACCENT_X + 40, 0);
-            ctx.lineTo(ACCENT_X - 20, CH); ctx.lineTo(0, CH);
-            ctx.closePath();
-            ctx.fillStyle = alpha(primary, dark ? 0.18 : 0.10); ctx.fill();
-            // Second shape for depth
+            ctx.arc(ACCENT_X - 60, CH / 2, 180, 0, Math.PI * 2);
+            ctx.fillStyle = alpha(primary, dark ? 0.35 : 0.18); ctx.fill();
+
+            // Diagonal stripe
             ctx.beginPath();
-            ctx.moveTo(0, 0); ctx.lineTo(ACCENT_X - 40, 0);
-            ctx.lineTo(ACCENT_X - 100, CH); ctx.lineTo(0, CH);
+            ctx.moveTo(0, 0); ctx.lineTo(ACCENT_X + 60, 0);
+            ctx.lineTo(ACCENT_X - 30, CH); ctx.lineTo(0, CH);
             ctx.closePath();
-            ctx.fillStyle = alpha(primary, dark ? 0.30 : 0.18); ctx.fill();
+            ctx.fillStyle = alpha(primary, dark ? 0.42 : 0.22); ctx.fill();
+
+            // Small accent dots scattered
+            for (let i = 0; i < 12; i++) {
+                ctx.beginPath();
+                ctx.arc(20 + i * 18 + Math.random() * 10, 30 + (i % 4) * 50, 3 + Math.random() * 4, 0, Math.PI * 2);
+                ctx.fillStyle = alpha(primary, 0.5 + Math.random() * 0.3);
+                ctx.fill();
+            }
             ctx.restore();
         }
 
@@ -616,7 +651,7 @@ function renderLabel(idx) {
         const TW = MAIN_W - TX - 14;
 
         // Brand name — max size, left-aligned
-        const fs = fitFont(900, 68, TW);
+        const fs = fitFont(900, 110, TW);
         ctx.font = `900 ${fs}px ${DISPLAY_FONT}`;
         ctx.fillStyle = dark ? '#ffffff' : '#111111';
         const nameY = Math.round(CH * 0.52 + fs * 0.38);
@@ -677,7 +712,7 @@ function renderLabel(idx) {
         const TW = SPLIT - 20;
 
         // Brand name — vertically centered, large
-        const fs = fitFont(900, 64, TW);
+        const fs = fitFont(900, 100, TW);
         const nameY = Math.round(CH * 0.48 + fs * 0.38);
         ctx.font = `900 ${fs}px ${DISPLAY_FONT}`;
         ctx.fillStyle = dark ? '#ffffff' : '#111111';
@@ -754,7 +789,7 @@ function renderLabel(idx) {
         const TW = Math.round(MAIN_W * 0.55) - 20;
 
         // Large company name
-        const fs = fitFont(900, 68, TW);
+        const fs = fitFont(900, 110, TW);
         const nameY = Math.round(CH * 0.50 + fs * 0.38);
         ctx.font = `900 ${fs}px ${DISPLAY_FONT}`;
         ctx.fillStyle = dark ? '#ffffff' : '#111111';
