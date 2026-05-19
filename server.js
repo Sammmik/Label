@@ -44,7 +44,7 @@ app.post('/api/analyze-brand', async (req, res) => {
     }
 
     const body = {
-        model: "claude-sonnet-4-20250514",
+        model: "claude-sonnet-4-6",
         max_tokens: 1600,
         messages: [{
             role: "user",
