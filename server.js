@@ -45,65 +45,76 @@ app.post('/api/analyze-brand', async (req, res) => {
 
     const body = {
         model: "claude-sonnet-4-6",
-        max_tokens: 2400,
+        max_tokens: 2600,
         messages: [{
             role: "user",
-            content: `You are a senior packaging designer. Reference labels you've created: Turancar ISUZU (bus dealer — huge bold red TURANCAR text on white + detailed bus illustration), HSH Sport (smartwatch brand — large smartwatch photo + HSH SPORT logo), Livesport (media — dark navy bg, logo + pink geometric shapes, no illustration), KA-Glasses (eyewear — giant glasses illustration + KA-GLASSES bold name).
+            content: `You are a senior packaging illustrator. You write FAL.ai image generation prompts for bottle label artwork. 
+
+Study these real label examples and how their illustrations work:
+- JINA Design (graphic studio): Diagonal arrangement of oversized pink keyboard keys + green pencils on dark background. Background has subtle grid lines and scattered small design elements. Rich, layered composition.
+- KP MARK (boiler company): Friendly blue boiler mascot character in foreground. Background has coils of copper pipe, pressure gauges, technical pipe diagrams, steam wisps, workshop tools. Feels like a busy workshop scene.
+- YUKI (motorcycle brand): Large motorcycle in foreground at dramatic angle. Background has speed lines radiating outward, subtle road surface below, sparks, motion blur streaks. Feels fast and dynamic.
+- Turancar ISUZU (bus dealer): Bus hero shot slightly angled. Ground shadow below bus, subtle road markings, gradient sky. Clean but NOT empty.
+- HSH Sport (smartwatch): Smartwatch face dominant, angled slightly. Behind it: subtle fitness graphs/charts as background elements, digital grid lines, small running figure silhouette.
+
+KEY INSIGHT: Every good label illustration has THREE layers:
+1. HERO subject (the main product/mascot/symbol)
+2. SUPPORTING ELEMENTS (industry-specific objects around the hero)  
+3. BACKGROUND TEXTURE (subtle patterns, environment, atmosphere)
 
 COMPANY: ${name}
 DESCRIPTION: ${description || "Not provided"}
 WEBSITE: ${url || "Not provided"}
 BRAND COLOR HINT: ${color || "#1d4ed8"}
 
-${url ? `CRITICAL: Web search "${name}" now. Find exact brand colors, logo style, main products, brand personality. Use this to write authentic design parameters.` : ""}
+${url ? `CRITICAL: Web search "${name}" now. Find exact brand colors, products, visual identity. Use this to make illustrations authentic.` : ""}
 
-Design 3 bottle label variations. Each has a different layout and color mood.
+Write 3 illustration prompts that describe ALL THREE LAYERS for this specific brand.
 
-ILLUSTRATION RULES:
-- If the brand sells a PHYSICAL PRODUCT (vehicle, device, glasses, food, etc.) → write a prompt for a clean product illustration: the product large on a plain background, slightly angled, like a product hero shot but illustrated/rendered style.
-- If the brand is a SERVICE or MEDIA company → no illustration needed, set "imagePrompt" to "" (empty string). The design will use bold typography + geometric shapes.
-- ZERO text, letters, or numbers inside any illustration.
-- Style: clean flat vector or stylized product render, bold and graphic.
+RULES:
+- Physical product brands → rich product illustration with environmental context
+- Service/media brands → abstract brand symbol with decorative graphic elements (NOT empty, never just a logo on a background)
+- ZERO text, letters, numbers, words in ANY illustration
+- Style: bold graphic illustration, cel-shaded or stylized render
 
 Return ONLY raw JSON, no markdown:
 {
   "slogan": "4-6 word brand slogan",
   "industry": "precise industry",
   "companyColor": "#actual_hex",
-  "hasProduct": true,
   "designs": [
     {
       "id": 1,
       "name": "Typography Bold",
-      "styleDesc": "Geometric accent + bold brand name, like Livesport",
-      "bg": "#111111",
+      "styleDesc": "Illustrated accent left, bold name right",
+      "bg": "#0d0f14",
       "primary": "#ACTUAL_brand_color",
       "text": "#ffffff",
-      "accent": "#accent",
+      "accent": "#accent_hex",
       "tagline": "3-5 word tagline",
-      "imagePrompt": "[If hasProduct: 'Clean stylized illustration of [specific product] for ${name}. [Product] centered, slightly angled 3/4 view, [brand color] accents, clean plain background matching bg color. Flat cel-shaded vector art. Bold clean outlines. NO text NO words. Landscape 4:3.' Else: empty string]"
+      "imagePrompt": "Bottle label illustration for ${name} (${description || 'brand'}). HERO: [describe specific main subject]. SUPPORTING ELEMENTS: [list 4-5 brand-specific background objects floating around the hero, e.g. 'scattered copper pipe coils, pressure gauges, wrench tools, steam clouds' or 'speed lines, sparks, asphalt road surface, motion blur streaks']. BACKGROUND: [atmosphere/texture, e.g. 'dark navy background with subtle diagonal grid lines and faint technical diagram patterns']. Color palette: deep dark background, [brand color] as primary accent, white highlights. Bold cel-shaded vector graphic style. Dynamic diagonal composition. STRICTLY NO text, NO letters, NO words, NO numbers anywhere in image. Landscape 4:3."
     },
     {
       "id": 2,
       "name": "Product Hero",
-      "styleDesc": "Product illustration right, brand name left, like Turancar bus",
+      "styleDesc": "Product illustration on light/white background",
       "bg": "#ffffff",
       "primary": "#ACTUAL_brand_color",
       "text": "#111111",
-      "accent": "#accent",
+      "accent": "#accent_hex",
       "tagline": "3-5 word tagline",
-      "imagePrompt": "[If hasProduct: 'Stylized product illustration for ${name}. [Specific product] on pure white background, dramatic 3/4 angle, facing left, [brand color] accents. Clean bold outlines. Modern flat render style. NO text NO words NO letters. Landscape 4:3.' Else: empty string]"
+      "imagePrompt": "Bottle label illustration for ${name} (${description || 'brand'}). HERO: [same main subject, slightly left-facing, 3/4 angle]. SUPPORTING ELEMENTS: [same 4-5 supporting objects but lighter/outlined versions floating in background]. BACKGROUND: [white or very light background with subtle [brand color] geometric shapes, light shadow under hero subject]. Color palette: white background, [brand color] dominant on hero, black outlines. Clean bold cel-shaded vector art style. STRICTLY NO text, NO letters, NO words, NO numbers. Landscape 4:3."
     },
     {
       "id": 3,
       "name": "Dark Inverted",
-      "styleDesc": "Dark/brand color bg, dramatic product or pure typography",
-      "bg": "#ACTUAL_brand_color OR #0d0d0d",
-      "primary": "#ffffff",
+      "styleDesc": "Full scene on dark or brand-color background",
+      "bg": "#0d0f14",
+      "primary": "#ACTUAL_brand_color",
       "text": "#ffffff",
-      "accent": "#accent",
+      "accent": "#accent_hex",
       "tagline": "3-5 word tagline",
-      "imagePrompt": "[If hasProduct: 'Stylized [product] illustration for ${name} on dark/[brand color] background. White and pale tones, monochromatic, like an embossed stamp. Bold flat silhouette. NO text NO words. Landscape 4:3.' Else: empty string]"
+      "imagePrompt": "Bottle label illustration for ${name} (${description || 'brand'}). HERO: [same main subject rendered in white/pale tones]. SUPPORTING ELEMENTS: [same supporting objects in subtle pale/ghost tones]. BACKGROUND: [dark or solid brand-color background with faint decorative pattern — diagonal lines, dots grid, or subtle industry-relevant texture]. Style: monochromatic white-on-dark illustration, like a premium silkscreen print. Bold graphic shapes. STRICTLY NO text, NO letters, NO words, NO numbers. Landscape 4:3."
     }
   ]
 }`
@@ -151,24 +162,10 @@ app.post('/api/generate-image', async (req, res) => {
         return res.json({ imageUrl: null, designIndex });
     }
 
-    // Enforce bottle-label-appropriate style on top of the custom prompt
-    const styleEnforcement = [
-        "professional packaging illustration",
-        "flat vector art",
-        "bold clean outlines",
-        "cel-shaded illustration",
-        "premium brand label design quality",
-        "NO photorealism",
-        "NO 3D renders",
-        "NO gradients",
-        "NO text",
-        "NO words",
-        "NO typography",
-        "NO letters",
-        "landscape 4:3"
-    ].join(", ");
+    // Only enforce what actually matters — no text. Let the illustration be rich.
+    const styleEnforcement = "IMPORTANT: absolutely NO text, NO letters, NO words, NO numbers, NO typography anywhere in the image. The illustration should be rich and detailed with background elements.";
 
-    const finalPrompt = `${prompt}. Additional style requirements: ${styleEnforcement}`;
+    const finalPrompt = `${prompt} ${styleEnforcement}`;
 
     try {
         const falResponse = await fetchWithRetry("https://fal.run/fal-ai/flux/dev", {
