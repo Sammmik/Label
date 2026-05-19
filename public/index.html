@@ -5,7 +5,8 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Label Studio AI</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@700;800;900&family=DM+Mono:wght@400;500&family=Barlow:wght@400;500;600&display=swap" rel="stylesheet">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@700;800;900&family=Barlow:wght@400;500;600&family=DM+Mono:wght@400;500&family=Anton&family=Bebas+Neue&family=Oswald:wght@700;800&family=Russo+One&family=Archivo+Black&family=Black+Ops+One&family=Bowlby+One&family=Staatliches&family=Saira+Condensed:wght@800;900&family=Bungee&family=Passion+One:wght@700;900&family=Big+Shoulders+Display:wght@800;900&display=swap" rel="stylesheet">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
     <style>
         :root {
@@ -399,9 +400,15 @@ let state = {
 };
 
 // Canvas dimensions: 1000×250px = 200mm×50mm @ 5px/mm
+// LAYOUT (matching reference photos):
+//   LEFT  zone (0 to LEGAL_W=290px = 58mm) = legal text + chem table
+//   RIGHT zone (CZ_X=290 to CW=1000)        = creative brand area (710px = 142mm)
 const CW = 1000, CH = 250;
-const MAIN_W = 700;  // left illustrated zone (140mm)
-const INFO_W = 300;  // right legal text zone (60mm)
+const LEGAL_W = 290;
+const CZ_X = LEGAL_W;
+const CZ_W = CW - CZ_X;  // 710
+// Backward-compat aliases (used in unchanged creative code)
+const MAIN_W = CZ_W;
 
 // ══════════════════════════════════════════════════════════════
 // LOGO UPLOAD
@@ -532,9 +539,21 @@ function renderLabel(idx) {
     const urlClean = (state.companyUrl || '').replace(/^https?:\/\/(www\.)?/, '').replace(/\/$/, '');
     const hasIllus = !!state.images[idx];
 
+    // Display font selected by Claude per design (fallback to Barlow Condensed)
+    const DISPLAY_FONT = `'${design.displayFont || 'Barlow Condensed'}', 'Barlow Condensed', Impact, sans-serif`;
+
+    // Clear full canvas first
+    ctx.fillStyle = '#ffffff';
+    ctx.fillRect(0, 0, CW, CH);
+
+    // ═══════════════ STEP 1: RENDER CREATIVE ZONE FIRST ═══════════
+    // Translate so all creative code thinks it's drawing at (0,0)
+    ctx.save();
+    ctx.translate(CZ_X, 0);
+
     // Auto-fit font size to a max width
     function fitFont(weight, maxPx, maxW, family) {
-        const fam = family || "'Barlow Condensed', Impact, sans-serif";
+        const fam = family || DISPLAY_FONT;
         for (let s = maxPx; s >= 18; s -= 2) {
             ctx.font = `${weight} ${s}px ${fam}`;
             if (ctx.measureText(name).width <= maxW) return s;
@@ -598,7 +617,7 @@ function renderLabel(idx) {
 
         // Brand name — max size, left-aligned
         const fs = fitFont(900, 68, TW);
-        ctx.font = `900 ${fs}px 'Barlow Condensed', Impact, sans-serif`;
+        ctx.font = `900 ${fs}px ${DISPLAY_FONT}`;
         ctx.fillStyle = dark ? '#ffffff' : '#111111';
         const nameY = Math.round(CH * 0.52 + fs * 0.38);
         ctx.fillText(name, TX, nameY);
@@ -660,7 +679,7 @@ function renderLabel(idx) {
         // Brand name — vertically centered, large
         const fs = fitFont(900, 64, TW);
         const nameY = Math.round(CH * 0.48 + fs * 0.38);
-        ctx.font = `900 ${fs}px 'Barlow Condensed', Impact, sans-serif`;
+        ctx.font = `900 ${fs}px ${DISPLAY_FONT}`;
         ctx.fillStyle = dark ? '#ffffff' : '#111111';
         ctx.fillText(name, TX, nameY);
 
@@ -737,7 +756,7 @@ function renderLabel(idx) {
         // Large company name
         const fs = fitFont(900, 68, TW);
         const nameY = Math.round(CH * 0.50 + fs * 0.38);
-        ctx.font = `900 ${fs}px 'Barlow Condensed', Impact, sans-serif`;
+        ctx.font = `900 ${fs}px ${DISPLAY_FONT}`;
         ctx.fillStyle = dark ? '#ffffff' : '#111111';
         ctx.shadowColor = 'rgba(0,0,0,0.6)'; ctx.shadowBlur = 8;
         ctx.fillText(name, TX, nameY);
@@ -768,28 +787,30 @@ function renderLabel(idx) {
         ctx.fillRect(0, 0, MAIN_W, 4);
     }
 
+    // ═══════════════ END CREATIVE — restore translate ═══════════════
+    ctx.restore();
+
     // ═══════════════════════════════════════════════════════════════════════
-    // RIGHT ZONE — White legal text area (300px wide)
-    // Layout (matching photo): left 58% = main text, right 42% = vertical chem table
+    // STEP 2: LEGAL ZONE on LEFT side (x: 0 to LEGAL_W=290)
+    // Matches Turancar / HSH / Livesport / KA-Glasses reference photos
+    // Layout: paragraphs col + vertical chemical table
     // ═══════════════════════════════════════════════════════════════════════
     ctx.fillStyle = '#ffffff';
-    ctx.fillRect(MAIN_W, 0, INFO_W, CH);
+    ctx.fillRect(0, 0, LEGAL_W, CH);
 
-    // Left border line
+    // Right border between legal & creative zones
     ctx.strokeStyle = '#c8c8c8'; ctx.lineWidth = 0.75;
-    ctx.beginPath(); ctx.moveTo(MAIN_W, 0); ctx.lineTo(MAIN_W, CH); ctx.stroke();
+    ctx.beginPath(); ctx.moveTo(LEGAL_W, 0); ctx.lineTo(LEGAL_W, CH); ctx.stroke();
 
-    // ──────────────────────────────────────────────
-    // LEFT TEXT COLUMN  (MAIN_W … COL_SPLIT)
-    // ──────────────────────────────────────────────
-    const COL_SPLIT = MAIN_W + 174;  // divider between text and chem table
-    const LX2 = MAIN_W + 7;
-    const COL1_W = 162;              // wrap width in px
-    const FS_BODY = 3.5;             // body font size px
+    // ── PARAGRAPH COLUMN ─────────────────────────────────────────
+    const COL_SPLIT = 168;            // divider between text and chem table
+    const LX2 = 7;                    // text left x
+    const COL1_W = 158;               // wrap width
+    const FS_BODY = 3.5;
     const FS_BOLD = 3.8;
-    const LH_BODY = 4.6;             // line height px
+    const LH_BODY = 4.6;
     const LH_BOLD = 5.0;
-    let cy = 10;                     // current Y cursor
+    let cy = 10;
 
     // Helper: print one styled text block, returns new cy
     function printBlock(text, bold, wrap) {
@@ -900,9 +921,9 @@ function renderLabel(idx) {
     ];
 
     const TABLE_START_X = COL_SPLIT + 2;
-    const TABLE_END_X   = CW - 2;
-    const TABLE_W_PX    = TABLE_END_X - TABLE_START_X;      // ~124px
-    const BAND_H        = (CH - 4) / chemRows.length;       // height of each row band
+    const TABLE_END_X   = LEGAL_W - 2;
+    const TABLE_W_PX    = TABLE_END_X - TABLE_START_X;
+    const BAND_H        = (CH - 4) / chemRows.length;
     const MID_Y         = CH / 2;
 
     ctx.save();
