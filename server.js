@@ -45,60 +45,65 @@ app.post('/api/analyze-brand', async (req, res) => {
 
     const body = {
         model: "claude-sonnet-4-6",
-        max_tokens: 1600,
+        max_tokens: 2200,
         messages: [{
             role: "user",
-            content: `You are a world-class packaging designer specializing in custom PET bottle labels (200mm × 50mm wrap-around format).
+            content: `You are a senior packaging designer at a top creative agency. You've designed bottle labels for brands like YUKI (electric motorcycles), KP MARK (boiler manufacturer), JINA Design (graphic studio). Each of those had a CUSTOM mascot or hero illustration — not generic stock art.
 
 COMPANY: ${name}
 DESCRIPTION: ${description || "Not provided"}
 WEBSITE: ${url || "Not provided"}
 BRAND COLOR HINT: ${color || "#1d4ed8"}
 
-${url ? `IMPORTANT: Use web search to find "${name}" online. Detect their real logo colors, brand style, industry, and visual identity.` : ""}
+${url ? `CRITICAL: Web search "${name}" now. Find their real brand colors, actual products, any mascots or characters, visual style, and industry specifics. Use this to make the illustration prompts highly specific and authentic to this exact brand.` : ""}
 
-Your job: Design parameters for 3 bottle label variations + FAL.ai illustration prompts.
+Create 3 bottle label design variations. For each, write a HIGHLY SPECIFIC FAL.ai image generation prompt that produces a custom brand illustration — the kind you'd see on a premium branded water bottle:
+- Electric vehicle brand → dramatic vehicle hero + rider silhouette
+- Industrial/manufacturing → friendly product mascot character  
+- Design/creative agency → oversized artistic tools arranged as brand art
+- Food/beverage → appetizing product hero with vibrant surroundings
+- Sports/fitness → athlete in dynamic action pose
+- Tech company → abstract circuit/device artwork with brand aesthetic
+etc. — ALWAYS match the exact brand, industry, and products.
 
-The illustration (AI-generated) fills the LEFT 70% of the label. It should look like the illustrated graphics on professional branded bottle labels — think flat vector mascots, product silhouettes, bold brand art.
-
-Return ONLY a raw JSON object, no markdown, no explanation:
+Return ONLY raw JSON, no markdown, no backticks:
 {
-  "slogan": "max 5 word punchy brand slogan",
-  "industry": "specific industry name",
-  "companyColor": "#actual detected hex color",
+  "slogan": "punchy 4-6 word brand slogan",
+  "industry": "precise industry",
+  "companyColor": "#actual_hex_from_their_website",
   "designs": [
     {
       "id": 1,
-      "name": "Signature Dark",
-      "styleDesc": "Premium dark edition",
-      "bg": "#0a0d18",
-      "primary": "#brand_color_hex",
+      "name": "Cinematic Dark",
+      "styleDesc": "Full-bleed dramatic hero on dark",
+      "bg": "#0b0e16",
+      "primary": "#ACTUAL_brand_color",
       "text": "#ffffff",
-      "accent": "#accent_hex",
-      "tagline": "short 3-5 word tagline",
-      "imagePrompt": "Flat 2D vector illustration: [brand-specific graphic matching their industry and logo style]. Dark navy background #0a0d18. Flat cell-shaded vector art, bold outlines, limited color palette using [brand_color]. NO text, NO photorealism, NO gradients. Clean digital illustration in landscape 4:3 ratio."
+      "accent": "#secondary_accent_hex",
+      "tagline": "3-5 word tagline",
+      "imagePrompt": "Premium bottle label artwork for [${name}]. [WRITE HIGHLY SPECIFIC description: exact subject matter tailored to this brand's products/industry, e.g. 'dynamic low-angle electric motorcycle hero shot, rider in full racing gear silhouette, speed lines radiating outward' OR 'friendly smiling boiler character mascot with wrench and pressure gauge, thumbs up pose']. Dark background #0b0e16. Art style: professional flat vector illustration like premium packaging design, bold cel-shading, crisp clean outlines, 3-color palette dominated by [PRIMARY_COLOR]. Subject fills 80% of frame, slightly left-biased composition leaving right third open. Zero text, zero words, zero typography anywhere in image. Landscape 4:3 aspect ratio. High contrast, print-ready quality."
     },
     {
       "id": 2,
-      "name": "Clean White",
-      "styleDesc": "Professional minimal white",
-      "bg": "#f8f8f8",
-      "primary": "#brand_color_hex",
+      "name": "Clean Hero",
+      "styleDesc": "Product hero on light ground",
+      "bg": "#f4f4f4",
+      "primary": "#ACTUAL_brand_color",
       "text": "#111111",
-      "accent": "#light_accent_hex",
-      "tagline": "short 3-5 word tagline",
-      "imagePrompt": "Flat 2D vector illustration: [brand-specific graphic]. White/light grey background. Clean minimal vector art, brand color [brand_color] as main accent. Bold flat shapes, crisp outlines. NO text, NO photorealism. Landscape 4:3."
+      "accent": "#accent_hex",
+      "tagline": "3-5 word tagline",
+      "imagePrompt": "Premium bottle label artwork for [${name}]. [SAME specific brand subject, adapted for light background]. Pure white background. Art style: clean bold flat vector illustration, packaging design quality — similar to how YUKI motorcycle labels look. [PRIMARY_COLOR] as dominant brand color, bold black outlines, clean flat shapes. Large scale hero composition, dramatic angle, fills frame. Zero text. Landscape 4:3."
     },
     {
       "id": 3,
-      "name": "Bold Brand",
-      "styleDesc": "Full brand color statement",
-      "bg": "#brand_color_as_bg",
+      "name": "Bold Immersive",
+      "styleDesc": "Brand color as the canvas",
+      "bg": "#ACTUAL_brand_color_as_bg",
       "primary": "#ffffff",
       "text": "#ffffff",
-      "accent": "#contrasting_accent",
-      "tagline": "short 3-5 word tagline",
-      "imagePrompt": "Flat 2D vector illustration: [brand-specific graphic]. Solid [brand_color] background. White and light-colored flat vector art, bold silhouette style. Dynamic composition. NO text, NO photorealism. Landscape 4:3."
+      "accent": "#contrasting_color",
+      "tagline": "3-5 word tagline",
+      "imagePrompt": "Premium bottle label artwork for [${name}]. [SAME brand-specific subject rendered as white/light monochromatic illustration on solid [PRIMARY_COLOR] background]. Monochromatic white and light [PRIMARY_COLOR] tones illustration on solid [PRIMARY_COLOR] background. Style: embossed stamp look, flat vector silhouette with subtle detail, bold graphic art. Strong contrast. The subject should look like a premium brand emblem. Zero text. Landscape 4:3."
     }
   ]
 }`
@@ -141,24 +146,27 @@ app.post('/api/generate-image', async (req, res) => {
         return res.status(500).json({ error: "Missing FAL_KEY environment variable." });
     }
 
-    // Enforce bottle-label-appropriate style
-    const enforcedStyle = [
-        "flat 2D vector graphic",
-        "bold outlines",
-        "clean cell-shaded illustration",
-        "professional brand packaging art",
+    // Enforce bottle-label-appropriate style on top of the custom prompt
+    const styleEnforcement = [
+        "professional packaging illustration",
+        "flat vector art",
+        "bold clean outlines",
+        "cel-shaded illustration",
+        "premium brand label design quality",
         "NO photorealism",
-        "NO 3D rendering",
+        "NO 3D renders",
         "NO gradients",
-        "NO text in image",
+        "NO text",
+        "NO words",
         "NO typography",
-        "landscape 4:3 aspect ratio"
+        "NO letters",
+        "landscape 4:3"
     ].join(", ");
 
-    const finalPrompt = `${prompt} Style enforcement: ${enforcedStyle}`;
+    const finalPrompt = `${prompt}. Additional style requirements: ${styleEnforcement}`;
 
     try {
-        const falResponse = await fetchWithRetry("https://fal.run/fal-ai/flux/schnell", {
+        const falResponse = await fetchWithRetry("https://fal.run/fal-ai/flux/dev", {
             method: "POST",
             headers: {
                 "Authorization": `Key ${process.env.FAL_KEY}`,
@@ -167,11 +175,12 @@ app.post('/api/generate-image', async (req, res) => {
             body: JSON.stringify({
                 prompt: finalPrompt,
                 image_size: "landscape_4_3",
-                num_inference_steps: 8,   // More steps = higher quality
-                guidance_scale: 4.5,
-                num_images: 1
+                num_inference_steps: 28,
+                guidance_scale: 7.5,
+                num_images: 1,
+                enable_safety_checker: false
             })
-        }, 2, 55000);
+        }, 2, 90000);
 
         const falData = await falResponse.json();
         if (!falData.images || !falData.images[0]) {

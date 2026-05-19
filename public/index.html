@@ -507,8 +507,29 @@ async function startGeneration() {
 }
 
 // ══════════════════════════════════════════════════════════════
-// LABEL RENDERING
+// LABEL RENDERING  — 3 distinct professional layouts
 // ══════════════════════════════════════════════════════════════
+function drawLogo(ctx, x, y, maxW, maxH) {
+    if (!state.logoImg) return;
+    const sc = Math.min(maxW / state.logoImg.width, maxH / state.logoImg.height) * 0.9;
+    const lw = state.logoImg.width * sc, lh = state.logoImg.height * sc;
+    // Drop shadow only — no white box
+    ctx.save();
+    ctx.shadowColor = 'rgba(0,0,0,0.55)';
+    ctx.shadowBlur = 10;
+    ctx.shadowOffsetX = 1; ctx.shadowOffsetY = 2;
+    ctx.drawImage(state.logoImg, x + (maxW - lw)/2, y + (maxH - lh)/2, lw, lh);
+    ctx.restore();
+}
+
+function drawQR(ctx, x, y, size, primary, dark) {
+    if (!state.qrImg) return;
+    // Minimal white chip — just enough for QR to be scannable
+    ctx.fillStyle = 'rgba(255,255,255,0.92)';
+    rr(ctx, x - 3, y - 3, size + 6, size + 6, 3); ctx.fill();
+    ctx.drawImage(state.qrImg, x, y, size, size);
+}
+
 function renderLabel(idx) {
     const canvas = document.getElementById('canvas-' + idx);
     const design = state.brandData.designs[idx];
@@ -517,137 +538,232 @@ function renderLabel(idx) {
     const { bg, primary, text, accent } = design;
     const dark = isDark(bg);
     const name = (state.companyName || 'COMPANY').toUpperCase();
-    const tagline = design.tagline || '';
-    const slogan = state.brandData?.slogan || '';
+    const tagline = (design.tagline || '').toUpperCase();
+    const slogan = (state.brandData?.slogan || '');
     const urlClean = (state.companyUrl||'').replace(/^https?:\/\/(www\.)?/,'').replace(/\/$/,'');
+    const hasImg = !!state.images[idx];
 
-    // ── BACKGROUND ──────────────────────────────
-    ctx.fillStyle = bg;
-    ctx.fillRect(0, 0, CW, CH);
+    // ── Load illustration ──
+    let illus = null;
+    if (hasImg) {
+        illus = new Image();
+        illus.src = state.images[idx];
+    }
 
-    // ── AI ILLUSTRATION ──────────────────────────
-    if (state.images[idx]) {
-        const img = new Image();
-        img.src = state.images[idx];
-        // Draw illustration filling the main zone, with slight right fade
-        ctx.drawImage(img, 0, 0, MAIN_W, CH);
-        // Gradient fade on the right edge of illustration zone
-        const fadeGrd = ctx.createLinearGradient(MAIN_W * 0.55, 0, MAIN_W, 0);
-        fadeGrd.addColorStop(0, 'rgba(0,0,0,0)');
-        fadeGrd.addColorStop(1, dark ? 'rgba(0,0,0,0.75)' : 'rgba(255,255,255,0.85)');
-        ctx.fillStyle = fadeGrd;
-        ctx.fillRect(0, 0, MAIN_W, CH);
-    } else {
-        // Fallback pattern if no image
+    // ══════════════════════════════════════════════
+    // LAYOUT 0 — "Cinematic Dark"
+    // Full-bleed illustration, bold bottom band for name
+    // Like JINA Design label: art IS the label
+    // ══════════════════════════════════════════════
+    if (idx === 0) {
+        // Background
         ctx.fillStyle = bg; ctx.fillRect(0, 0, MAIN_W, CH);
-        // Subtle geometric pattern
-        ctx.strokeStyle = alpha(primary, 0.08); ctx.lineWidth = 1;
-        for (let x = -CH; x < MAIN_W + CH; x += 32) {
-            ctx.beginPath(); ctx.moveTo(x, 0); ctx.lineTo(x + CH, CH); ctx.stroke();
+
+        // Full-bleed illustration
+        if (illus) {
+            ctx.drawImage(illus, 0, 0, MAIN_W, CH);
+            // Vignette left edge
+            const vigL = ctx.createLinearGradient(0, 0, 80, 0);
+            vigL.addColorStop(0, alpha(bg, 0.7)); vigL.addColorStop(1, 'rgba(0,0,0,0)');
+            ctx.fillStyle = vigL; ctx.fillRect(0, 0, 80, CH);
+        } else {
+            // Fallback geometric
+            ctx.fillStyle = bg; ctx.fillRect(0, 0, MAIN_W, CH);
+            ctx.strokeStyle = alpha(primary, 0.1); ctx.lineWidth = 1.5;
+            for (let x = -CH; x < MAIN_W + CH; x += 28) {
+                ctx.beginPath(); ctx.moveTo(x, 0); ctx.lineTo(x + CH, CH); ctx.stroke();
+            }
         }
-    }
 
-    // ── COLOR BARS ───────────────────────────────
-    const barGrd = ctx.createLinearGradient(0, 0, MAIN_W, 0);
-    barGrd.addColorStop(0, primary);
-    barGrd.addColorStop(0.6, primary);
-    barGrd.addColorStop(1, alpha(primary, 0.2));
-    ctx.fillStyle = barGrd;
-    ctx.fillRect(0, 0, MAIN_W, 5);
-    ctx.fillRect(0, CH - 5, MAIN_W, 5);
-    ctx.fillStyle = primary; ctx.fillRect(0, 0, 5, CH);
+        // Bottom band — solid brand color strip for name
+        const BAND = 68;
+        const bandGrd = ctx.createLinearGradient(0, CH - BAND - 20, 0, CH);
+        bandGrd.addColorStop(0, 'rgba(0,0,0,0)');
+        bandGrd.addColorStop(0.35, alpha(bg, 0.88));
+        bandGrd.addColorStop(1, alpha(bg, 0.97));
+        ctx.fillStyle = bandGrd; ctx.fillRect(0, CH - BAND - 20, MAIN_W, BAND + 20);
 
-    // ── TEXT AREA (right portion of main zone) ───
-    // Translucent panel for readability if image is present
-    if (state.images[idx]) {
-        const panelGrd = ctx.createLinearGradient(MAIN_W * 0.42, 0, MAIN_W, 0);
-        panelGrd.addColorStop(0, 'rgba(0,0,0,0)');
-        panelGrd.addColorStop(0.3, dark ? 'rgba(8,10,20,0.82)' : 'rgba(252,252,252,0.88)');
-        panelGrd.addColorStop(1, dark ? 'rgba(8,10,20,0.92)' : 'rgba(252,252,252,0.95)');
-        ctx.fillStyle = panelGrd; ctx.fillRect(MAIN_W * 0.42, 0, MAIN_W * 0.58, CH);
-    }
+        // Primary color left stripe
+        ctx.fillStyle = primary; ctx.fillRect(0, 0, 6, CH);
 
-    const TX = state.logoImg ? 470 : 440; // text x position
-    // Shadow for dark on light or light on dark
-    if (dark) { ctx.shadowColor = 'rgba(0,0,0,0.7)'; ctx.shadowBlur = 12; ctx.shadowOffsetY = 2; }
+        // Top thin bar
+        ctx.fillStyle = alpha(primary, 0.7); ctx.fillRect(6, 0, MAIN_W - 6, 3);
 
-    // Company name
-    const nLen = name.length;
-    const fs = nLen > 22 ? 30 : nLen > 16 ? 36 : nLen > 11 ? 44 : nLen > 7 ? 52 : 60;
-    ctx.font = `900 ${fs}px 'Barlow Condensed', 'Arial Black', Impact, sans-serif`;
-    ctx.fillStyle = text;
-    ctx.fillText(name, TX, 108);
-    ctx.shadowBlur = 0; ctx.shadowOffsetY = 0;
+        // Logo — top left, NO background
+        if (state.logoImg) drawLogo(ctx, 14, 12, 90, 72);
 
-    // Underline accent
-    const nw = ctx.measureText(name).width;
-    ctx.fillStyle = primary;
-    ctx.fillRect(TX, 114, Math.min(nw * 0.5, MAIN_W - TX - 16), 3);
-
-    // Tagline
-    ctx.font = `500 14px 'DM Mono', 'Courier New', monospace`;
-    let tCol = primary;
-    if (isDark(primary) && !dark) tCol = darken(primary, 0.05);
-    ctx.fillStyle = tCol;
-    ctx.fillText(tagline.toUpperCase(), TX, 142);
-
-    // Slogan
-    if (slogan) {
-        ctx.font = `400 12px 'DM Mono', 'Courier New', monospace`;
-        ctx.fillStyle = alpha(text, 0.5);
-        ctx.fillText(slogan, TX, 164);
-    }
-
-    // URL
-    if (urlClean) {
-        ctx.font = `400 11px 'DM Mono', 'Courier New', monospace`;
-        ctx.fillStyle = alpha(text, 0.35);
-        ctx.fillText(urlClean, TX, 200);
-    }
-
-    // Industry badge
-    if (state.brandData?.industry) {
-        const ind = state.brandData.industry.toUpperCase().substring(0, 20);
-        ctx.font = `500 8px 'DM Mono', monospace`;
-        const bw = ctx.measureText(ind).width + 14;
-        rr(ctx, TX, 216, bw, 16, 3);
-        ctx.fillStyle = alpha(primary, dark ? 0.2 : 0.1); ctx.fill();
-        ctx.fillStyle = alpha(primary, 0.9);
-        ctx.fillText(ind, TX + 7, 227);
-    }
-
-    // ── LOGO (left side of main zone) ────────────
-    if (state.logoImg) {
-        const LX = 24, LY = 30, LS = 100;
-        if (dark) {
-            rr(ctx, LX - 6, LY - 6, LS + 12, LS + 12, 12);
-            ctx.fillStyle = 'rgba(255,255,255,0.93)'; ctx.fill();
-        }
-        const sc = Math.min(LS / state.logoImg.width, LS / state.logoImg.height) * 0.82;
-        const lw = state.logoImg.width * sc, lh = state.logoImg.height * sc;
-        ctx.drawImage(state.logoImg, LX + (LS - lw)/2, LY + (LS - lh)/2, lw, lh);
-    }
-
-    // ── QR (bottom-left of main zone) ────────────
-    const QX = 16, QY = CH - 78;
-    if (state.qrImg) {
+        // Company name — bold, bottom of main zone
+        const nLen = name.length;
+        const fs = nLen > 20 ? 34 : nLen > 14 ? 42 : nLen > 9 ? 52 : 62;
+        ctx.font = `900 ${fs}px 'Barlow Condensed', Impact, sans-serif`;
+        ctx.shadowColor = 'rgba(0,0,0,0.8)'; ctx.shadowBlur = 14;
         ctx.fillStyle = '#ffffff';
-        rr(ctx, QX - 2, QY - 2, 68, 68, 4); ctx.fill();
-        ctx.strokeStyle = alpha(primary, 0.25); ctx.lineWidth = 1.5;
-        rr(ctx, QX - 2, QY - 2, 68, 68, 4); ctx.stroke();
-        ctx.drawImage(state.qrImg, QX, QY, 64, 64);
+        ctx.fillText(name, 14, CH - 34);
+        ctx.shadowBlur = 0;
+
+        // Accent line above name
+        const nw = ctx.measureText(name).width;
+        ctx.fillStyle = primary; ctx.fillRect(14, CH - 38, Math.min(nw, MAIN_W - 28), 2.5);
+
+        // Tagline
+        ctx.font = `600 12px 'Barlow Condensed', sans-serif`;
+        ctx.fillStyle = alpha(primary, 0.9);
+        ctx.letterSpacing = '0.15em';
+        ctx.fillText('› ' + tagline, 14, CH - 16);
+
+        // URL vertical — right edge, subtle
+        if (urlClean) {
+            ctx.save(); ctx.translate(MAIN_W - 10, CH - 20); ctx.rotate(-Math.PI / 2);
+            ctx.font = `400 8px 'DM Mono', monospace`;
+            ctx.fillStyle = alpha('#ffffff', 0.3); ctx.textAlign = 'left';
+            ctx.fillText(urlClean, 0, 0); ctx.restore();
+        }
+
+        // QR — bottom left inside main zone
+        drawQR(ctx, 14, CH - 76, 52, primary, dark);
     }
 
-    // URL vertical text (far right of main zone)
-    if (urlClean) {
-        ctx.save();
-        ctx.translate(MAIN_W - 10, CH / 2 + urlClean.length * 3);
-        ctx.rotate(-Math.PI / 2);
-        ctx.fillStyle = alpha(text, 0.22);
-        ctx.font = `400 9px 'DM Mono', monospace`;
-        ctx.textAlign = 'center';
-        ctx.fillText(urlClean.toUpperCase(), 0, 0);
-        ctx.restore();
+    // ══════════════════════════════════════════════
+    // LAYOUT 1 — "Split Composition"
+    // Illustration left ~55%, clean brand panel right ~45%
+    // Like YUKI label: pure product hero on left, crisp text panel
+    // ══════════════════════════════════════════════
+    else if (idx === 1) {
+        const SPLIT = MAIN_W * 0.56; // 392px
+
+        // Right panel first (white or light bg)
+        ctx.fillStyle = bg; ctx.fillRect(0, 0, MAIN_W, CH);
+
+        // Illustration fills left side, bleeds slightly past split
+        if (illus) {
+            ctx.save();
+            ctx.beginPath(); ctx.rect(0, 0, SPLIT + 40, CH); ctx.clip();
+            ctx.drawImage(illus, 0, 0, SPLIT + 60, CH);
+            ctx.restore();
+            // Fade out at split
+            const fadeGrd = ctx.createLinearGradient(SPLIT - 60, 0, SPLIT + 30, 0);
+            fadeGrd.addColorStop(0, 'rgba(0,0,0,0)');
+            fadeGrd.addColorStop(1, bg);
+            ctx.fillStyle = fadeGrd; ctx.fillRect(SPLIT - 60, 0, 90, CH);
+        } else {
+            ctx.fillStyle = bg; ctx.fillRect(0, 0, MAIN_W, CH);
+            // Pattern on left
+            ctx.strokeStyle = alpha(primary, 0.06); ctx.lineWidth = 1;
+            for (let y = 0; y < CH; y += 14) { ctx.beginPath(); ctx.moveTo(0, y); ctx.lineTo(SPLIT, y); ctx.stroke(); }
+        }
+
+        // Right text panel
+        const TX = SPLIT + 10;
+        const TW = MAIN_W - TX - 12;
+
+        // Primary accent bar — top of text zone
+        ctx.fillStyle = primary; ctx.fillRect(TX - 4, 0, 4, CH);
+
+        // Logo — at top of text panel
+        if (state.logoImg) {
+            drawLogo(ctx, TX, 8, TW, 64);
+        }
+
+        // Company name
+        const nLen = name.length;
+        const fs = nLen > 18 ? 30 : nLen > 12 ? 38 : nLen > 8 ? 48 : 56;
+        ctx.font = `900 ${fs}px 'Barlow Condensed', Impact, sans-serif`;
+        ctx.fillStyle = dark ? '#ffffff' : '#111111';
+        const nameY = state.logoImg ? 116 : 98;
+        ctx.fillText(name, TX, nameY);
+
+        // Underline
+        const nw = ctx.measureText(name).width;
+        ctx.fillStyle = primary; ctx.fillRect(TX, nameY + 5, Math.min(nw, TW), 3);
+
+        // Tagline
+        ctx.font = `700 11px 'Barlow Condensed', sans-serif`;
+        ctx.fillStyle = primary; ctx.letterSpacing = '0.1em';
+        ctx.fillText(tagline, TX, nameY + 22);
+
+        // Slogan
+        if (slogan) {
+            ctx.font = `400 10px 'DM Mono', monospace`;
+            ctx.fillStyle = alpha(dark ? '#ffffff' : '#111111', 0.45);
+            const sloganLines = wrapText(ctx, slogan, TW);
+            sloganLines.slice(0, 2).forEach((ln, i) => ctx.fillText(ln, TX, nameY + 38 + i * 13));
+        }
+
+        // URL bottom of panel
+        if (urlClean) {
+            ctx.font = `400 9px 'DM Mono', monospace`;
+            ctx.fillStyle = alpha(dark ? '#ffffff' : '#111111', 0.35);
+            ctx.fillText(urlClean, TX, CH - 10);
+        }
+
+        // QR — bottom left corner of illustration side
+        drawQR(ctx, 12, CH - 68, 54, primary, dark);
+    }
+
+    // ══════════════════════════════════════════════
+    // LAYOUT 2 — "Full Bleed Hero"
+    // Illustration fills entire main zone, text as minimal
+    // floating overlay — like KP MARK mascot style
+    // ══════════════════════════════════════════════
+    else {
+        ctx.fillStyle = bg; ctx.fillRect(0, 0, MAIN_W, CH);
+
+        if (illus) {
+            ctx.drawImage(illus, 0, 0, MAIN_W, CH);
+        } else {
+            ctx.fillStyle = bg; ctx.fillRect(0, 0, MAIN_W, CH);
+            ctx.strokeStyle = alpha(primary, 0.09); ctx.lineWidth = 1;
+            for (let x = 0; x < MAIN_W; x += 20) { ctx.beginPath(); ctx.moveTo(x, 0); ctx.lineTo(x, CH); ctx.stroke(); }
+        }
+
+        // Bold top bar with brand color — name lives here
+        const TOP_BAR = 46;
+        ctx.fillStyle = primary; ctx.fillRect(0, 0, MAIN_W, TOP_BAR);
+
+        // Subtle texture on bar
+        ctx.fillStyle = 'rgba(0,0,0,0.12)';
+        for (let x = 0; x < MAIN_W; x += 12) { ctx.fillRect(x, 0, 6, TOP_BAR); }
+
+        // Company name — in bar
+        const nLen = name.length;
+        const fs = nLen > 20 ? 26 : nLen > 14 ? 32 : nLen > 9 ? 38 : 42;
+        ctx.font = `900 ${fs}px 'Barlow Condensed', Impact, sans-serif`;
+        ctx.fillStyle = isDark(primary) ? '#ffffff' : '#111111';
+        ctx.shadowColor = 'rgba(0,0,0,0.3)'; ctx.shadowBlur = 4;
+        ctx.fillText(name, 14, TOP_BAR - 10);
+        ctx.shadowBlur = 0;
+
+        // Tagline in bar
+        ctx.font = `600 10px 'Barlow Condensed', sans-serif`;
+        ctx.fillStyle = isDark(primary) ? 'rgba(255,255,255,0.7)' : 'rgba(0,0,0,0.6)';
+        const nw = ctx.measureText(name).width;
+        ctx.fillText('  ·  ' + tagline, 14 + nw, TOP_BAR - 10);
+
+        // Logo — right side of bar
+        if (state.logoImg) {
+            drawLogo(ctx, MAIN_W - 90, 3, 82, 40);
+        }
+
+        // Bottom info strip
+        const BOT_STRIP = 32;
+        const botGrd = ctx.createLinearGradient(0, CH - BOT_STRIP - 10, 0, CH);
+        botGrd.addColorStop(0, 'rgba(0,0,0,0)');
+        botGrd.addColorStop(1, 'rgba(0,0,0,0.72)');
+        ctx.fillStyle = botGrd; ctx.fillRect(0, CH - BOT_STRIP - 10, MAIN_W, BOT_STRIP + 10);
+
+        if (slogan) {
+            ctx.font = `400 11px 'DM Mono', monospace`;
+            ctx.fillStyle = 'rgba(255,255,255,0.75)';
+            ctx.fillText(slogan.toUpperCase(), 14, CH - 12);
+        }
+        if (urlClean) {
+            ctx.font = `400 9px 'DM Mono', monospace`;
+            ctx.fillStyle = 'rgba(255,255,255,0.45)';
+            ctx.fillText(urlClean, 14, CH - 2 > CH ? CH - 2 : CH - 1);
+        }
+
+        // QR — bottom right of main zone, before the white zone
+        drawQR(ctx, MAIN_W - 66, CH - 66, 54, primary, dark);
     }
 
     // ═══════════════════════════════════════════════════════════════════════
