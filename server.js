@@ -35,106 +35,62 @@ async function fetchWithRetry(url, options, maxRetries = 2, timeoutMs = 55000) {
     }
 }
 
-// ─── BRAND ANALYSIS via Claude ────────────────────────────────
-// Returns brand colors, design params, and FAL.ai image prompts
+// ─── BRAND ANALYSIS (Dynamicky generované bez Anthropic API) ───
 app.post('/api/analyze-brand', async (req, res) => {
     const { name, description, url, color } = req.body;
-    if (!process.env.ANTHROPIC_API_KEY) {
-        return res.status(500).json({ error: "Missing ANTHROPIC_API_KEY environment variable." });
-    }
 
-    const body = {
-        model: "claude-sonnet-4-20250514",
-        max_tokens: 1600,
-        messages: [{
-            role: "user",
-            content: `You are a world-class packaging designer specializing in custom PET bottle labels (200mm × 50mm wrap-around format).
+    // Dynamicky sestavíme data na základě uživatelského vstupu
+    const primaryColor = color || "#1d4ed8";
+    const brandContext = description ? description : name;
 
-COMPANY: ${name}
-DESCRIPTION: ${description || "Not provided"}
-WEBSITE: ${url || "Not provided"}
-BRAND COLOR HINT: ${color || "#1d4ed8"}
-
-${url ? `IMPORTANT: Use web search to find "${name}" online. Detect their real logo colors, brand style, industry, and visual identity.` : ""}
-
-Your job: Design parameters for 3 bottle label variations + FAL.ai illustration prompts.
-
-The illustration (AI-generated) fills the LEFT 70% of the label. It should look like the illustrated graphics on professional branded bottle labels — think flat vector mascots, product silhouettes, bold brand art.
-
-Return ONLY a raw JSON object, no markdown, no explanation:
-{
-  "slogan": "max 5 word punchy brand slogan",
-  "industry": "specific industry name",
-  "companyColor": "#actual detected hex color",
-  "designs": [
-    {
-      "id": 1,
-      "name": "Signature Dark",
-      "styleDesc": "Premium dark edition",
-      "bg": "#0a0d18",
-      "primary": "#brand_color_hex",
-      "text": "#ffffff",
-      "accent": "#accent_hex",
-      "tagline": "short 3-5 word tagline",
-      "imagePrompt": "Flat 2D vector illustration: [brand-specific graphic matching their industry and logo style]. Dark navy background #0a0d18. Flat cell-shaded vector art, bold outlines, limited color palette using [brand_color]. NO text, NO photorealism, NO gradients. Clean digital illustration in landscape 4:3 ratio."
-    },
-    {
-      "id": 2,
-      "name": "Clean White",
-      "styleDesc": "Professional minimal white",
-      "bg": "#f8f8f8",
-      "primary": "#brand_color_hex",
-      "text": "#111111",
-      "accent": "#light_accent_hex",
-      "tagline": "short 3-5 word tagline",
-      "imagePrompt": "Flat 2D vector illustration: [brand-specific graphic]. White/light grey background. Clean minimal vector art, brand color [brand_color] as main accent. Bold flat shapes, crisp outlines. NO text, NO photorealism. Landscape 4:3."
-    },
-    {
-      "id": 3,
-      "name": "Bold Brand",
-      "styleDesc": "Full brand color statement",
-      "bg": "#brand_color_as_bg",
-      "primary": "#ffffff",
-      "text": "#ffffff",
-      "accent": "#contrasting_accent",
-      "tagline": "short 3-5 word tagline",
-      "imagePrompt": "Flat 2D vector illustration: [brand-specific graphic]. Solid [brand_color] background. White and light-colored flat vector art, bold silhouette style. Dynamic composition. NO text, NO photorealism. Landscape 4:3."
-    }
-  ]
-}`
-        }]
+    const parsed = {
+        slogan: "Premium Quality Edition",
+        industry: description ? "Custom Brand" : "Product & Tech",
+        companyColor: primaryColor,
+        designs: [
+            {
+                id: 1,
+                name: "Signature Dark",
+                styleDesc: "Premium dark edition",
+                bg: "#0a0d18",
+                primary: primaryColor,
+                text: "#ffffff",
+                accent: "#334155",
+                tagline: "Pure & Essential",
+                imagePrompt: `Flat 2D vector illustration: abstract graphic representing ${brandContext}. Dark navy background #0a0d18. Flat cell-shaded vector art, bold outlines, limited color palette using ${primaryColor}. NO text, NO photorealism, NO gradients. Clean digital illustration in landscape 4:3 ratio.`
+            },
+            {
+                id: 2,
+                name: "Clean White",
+                styleDesc: "Professional minimal white",
+                bg: "#f8f8f8",
+                primary: primaryColor,
+                text: "#111111",
+                accent: "#e2e8f0",
+                tagline: "Refreshingly Simple",
+                imagePrompt: `Flat 2D vector illustration: abstract graphic representing ${brandContext}. White/light grey background. Clean minimal vector art, brand color ${primaryColor} as main accent. Bold flat shapes, crisp outlines. NO text, NO photorealism. Landscape 4:3.`
+            },
+            {
+                id: 3,
+                name: "Bold Brand",
+                styleDesc: "Full brand color statement",
+                bg: primaryColor,
+                primary: "#ffffff",
+                text: "#ffffff",
+                accent: "#0f172a",
+                tagline: "Stand Out",
+                imagePrompt: `Flat 2D vector illustration: abstract graphic representing ${brandContext}. Solid ${primaryColor} background. White and light-colored flat vector art, bold silhouette style. Dynamic composition. NO text, NO photorealism. Landscape 4:3.`
+            }
+        ]
     };
 
-    if (url) {
-        body.tools = [{ type: "web_search_20250305", name: "web_search" }];
-    }
-
-    try {
-        const response = await fetchWithRetry("https://api.anthropic.com/v1/messages", {
-            method: "POST",
-            headers: {
-                "Content-Type": "application/json",
-                "x-api-key": process.env.ANTHROPIC_API_KEY,
-                "anthropic-version": "2023-06-01"
-            },
-            body: JSON.stringify(body)
-        }, 1, 60000);
-
-        const data = await response.json();
-        const textContent = data.content.filter(b => b.type === "text").map(b => b.text).join("");
-        const match = textContent.match(/\{[\s\S]*\}/);
-        if (!match) throw new Error("AI returned unexpected format. Try again.");
-
-        const parsed = JSON.parse(match[0]);
+    // Nasimulujeme lehké zpoždění pro plynulý chod animací ve frontendu
+    setTimeout(() => {
         res.json(parsed);
-    } catch (err) {
-        console.error("Brand analysis error:", err);
-        res.status(500).json({ error: err.message });
-    }
+    }, 800);
 });
 
 // ─── IMAGE GENERATION via FAL.ai ─────────────────────────────
-// Generates one illustration per design
 app.post('/api/generate-image', async (req, res) => {
     const { prompt, designIndex } = req.body;
     if (!process.env.FAL_KEY) {
