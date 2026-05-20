@@ -102,14 +102,14 @@ app.post('/api/analyze-brand', async (req, res) => {
 
     const body = {
         model: "claude-sonnet-4-6",
-        max_tokens: 3000,
+        max_tokens: 2400,
         messages: [{
             role: "user",
-            content: `You are a senior packaging illustrator and brand designer.
+            content: `You are a product label illustrator. You design clean, restrained bottle labels for Czech companies.
 
-═══ VARIATION DIRECTIVE ═══
+═══ VARIATION SEED ═══
 Creative seed: ${variationSeed}
-Even if you've seen this exact company before, you MUST produce a completely different design concept this time. Be surprising. Pick unexpected angles, unusual moods, fresh illustration concepts.
+Even with the same input, produce a different design each run.
 
 ═══ BRAND ═══
 Company: ${name}
@@ -117,53 +117,63 @@ Description: ${description || "Not provided"}
 Website: ${url || "Not provided"}
 Brand Color Hint: ${color || "#1d4ed8"}
 
-${url ? `CRITICAL: Web search "${name}" right now. Find exact brand hex colors, logo style, products, mascots, brand personality.` : ""}
+${url ? `Web search "${name}" to find: real brand colors, products, logo style, visual identity.` : ""}
 
-═══ DESIGN INSTRUCTIONS ═══
-Generate 3 distinct bottle label designs. Each must use:
-- A different MOOD direction (pick from): ${moodHints.join(" / ")}
-- A different COMPOSITION (pick from): ${compHints.join(" / ")}
-- A different DISPLAY FONT (pick 3 different ones from): ${fontsThisRun.join(", ")}
+═══ ILLUSTRATION STYLE ═══
+Reference style: clean product illustrations on a SINGLE solid background color. Like the bus on the Turancar label, the watch on HSH Sport, the glasses on KA-Glasses. NOT editorial, NOT dramatic, NOT atmospheric. Just a clean product hero illustration on a plain background.
 
-═══ ILLUSTRATION RULES (CRITICAL) ═══
-Every illustration MUST have THREE layers explicitly described:
-1. HERO — main brand subject (product, mascot, key symbol)
-2. SUPPORTING ELEMENTS — 4-6 brand-specific objects floating in scene
-3. BACKGROUND — atmospheric gradient, texture, pattern, environment
+For each design write a SHORT, FOCUSED image prompt:
+- The SUBJECT: their main product or brand symbol (e.g. "red and silver electric motorcycle, 3/4 angle view", "smartwatch with metallic bezel facing forward", "stack of leather wallets")
+- The BACKGROUND: just specify a solid color (matches design's bg color)
+- Style: clean modern illustration, flat shading or subtle vector shading, crisp clean outlines
 
-EXAMPLES of rich illustration concepts:
-- Motorcycle brand: HERO motorcycle at low angle / SUPPORTING speed lines, sparks, exhaust trails, scattered helmets, road markings / BACKGROUND gradient sunset sky with distant city silhouette
-- Boiler brand: HERO smiling boiler mascot / SUPPORTING copper coils, pressure gauges, wrench, steam wisps / BACKGROUND blueprint grid pattern
-- Coffee shop: HERO steaming cup / SUPPORTING coffee beans, latte art swirls, croissant, sugar cubes, leaves / BACKGROUND warm coffee-stain texture
-- Design studio: HERO oversized creative tools / SUPPORTING color swatches, paint splashes, geometric shapes / BACKGROUND grainy paper texture
-- Outdoor brand: HERO mountain peak / SUPPORTING evergreen trees, climbing gear, compass, trail markers / BACKGROUND gradient sky with clouds
+Keep prompts SHORT (40-60 words max). Don't request "rich atmosphere", "gradients everywhere", "dramatic lighting", "supporting objects scattered around" — those make FAL.ai produce busy AI-looking results.
 
-Generic "subject on plain background" is FORBIDDEN. Always rich, layered, atmospheric.
+═══ FONT VARIETY ═══
+Use 3 different fonts from: ${fontsThisRun.join(", ")}
 
-Style: modern editorial illustration with subtle gradients, dimensional shading, depth, atmosphere. NOT flat boring vectors.
-
-ZERO text, ZERO letters, ZERO numbers inside any illustration.
-
-═══ OUTPUT — raw JSON only, no markdown, no backticks ═══
+═══ OUTPUT — raw JSON only ═══
 {
-  "slogan": "punchy 4-6 word brand slogan",
-  "industry": "precise industry",
-  "companyColor": "#actual_hex_detected",
+  "slogan": "punchy 4-6 word slogan",
+  "industry": "industry",
+  "companyColor": "#actual_hex_from_web",
   "designs": [
     {
       "id": 1,
-      "name": "Creative name for this variation",
-      "styleDesc": "one sentence describing the approach",
-      "displayFont": "exact font name from list above",
-      "bg": "#hex",
-      "primary": "#hex",
-      "text": "#hex",
-      "accent": "#hex",
-      "tagline": "3-5 word tagline (different per design)",
-      "imagePrompt": "Rich detailed illustration with HERO: [specific]. SUPPORTING: [4-6 brand-specific objects]. BACKGROUND: [gradient/texture/environment]. Color palette: [specific colors]. Style: modern editorial illustration with subtle gradients and depth. STRICTLY NO text NO letters NO words NO numbers. Landscape 4:3."
+      "name": "Light Edition",
+      "styleDesc": "Clean product hero on white",
+      "displayFont": "<font from list>",
+      "bg": "#ffffff",
+      "primary": "#brand_color",
+      "text": "#111111",
+      "accent": "#accent_hex",
+      "tagline": "3-5 word tagline",
+      "imagePrompt": "Clean illustration of [SPECIFIC product/symbol for ${name}, e.g. 'silver and red motorcycle in 3/4 view, slightly tilted left']. Solid white background. Modern flat vector style with subtle shading and clean outlines. Brand color [hex] as primary accent. NO text NO letters NO words NO numbers. Landscape 4:3."
     },
-    { "id": 2, ... different mood, different font, different angle },
-    { "id": 3, ... third unique direction }
+    {
+      "id": 2,
+      "name": "Brand Color",
+      "styleDesc": "Product on solid brand-color background",
+      "displayFont": "<different font>",
+      "bg": "#brand_color_or_tinted",
+      "primary": "#ffffff",
+      "text": "#ffffff",
+      "accent": "#accent_hex",
+      "tagline": "different 3-5 word tagline",
+      "imagePrompt": "Clean illustration of [SAME product type, different angle, e.g. 'side profile motorcycle silhouette']. Solid [brand_color] background. White and pale-toned flat vector illustration, clean outlines. NO text NO letters NO words NO numbers. Landscape 4:3."
+    },
+    {
+      "id": 3,
+      "name": "Dark Edition",
+      "styleDesc": "Product hero on dark background",
+      "displayFont": "<third font>",
+      "bg": "#0d0e14",
+      "primary": "#brand_color",
+      "text": "#ffffff",
+      "accent": "#accent_hex",
+      "tagline": "third 3-5 word tagline",
+      "imagePrompt": "Clean illustration of [SAME product type, hero composition]. Solid dark background #0d0e14. Modern flat vector style with [brand_color] accents on the product, clean outlines, subtle shading. NO text NO letters NO words NO numbers. Landscape 4:3."
+    }
   ]
 }`
         }]
@@ -208,7 +218,8 @@ app.post('/api/generate-image', async (req, res) => {
         return res.json({ imageUrl: null, designIndex });
     }
 
-    const finalPrompt = `${prompt} CRITICAL VISUAL REQUIREMENTS: Subject must fill at least 70% of frame, dramatically composed and instantly recognizable. Rich detailed illustration with multiple visual elements, gradients, depth, atmosphere, supporting background objects. Absolutely NO text, NO letters, NO words, NO numbers anywhere. Bold marketing-quality artwork suitable for premium product packaging.`;
+    // Keep enforcement minimal — match the clean restrained reference style
+    const finalPrompt = `${prompt} Subject is the focal point, fills most of the frame. Clean product illustration style. NO text, NO letters, NO words, NO numbers anywhere in image.`;
 
     const seed = Math.floor(Math.random() * 1000000);
 
