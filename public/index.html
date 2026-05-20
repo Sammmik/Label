@@ -662,13 +662,6 @@ function renderLabel(idx) {
         ctx.fillStyle = primary;
         ctx.fillText(tagline, TX, nameY + 18);
 
-        // URL — small but clear (like on all reference labels)
-        if (urlClean) {
-            ctx.font = `500 11px 'DM Mono', monospace`;
-            ctx.fillStyle = alpha(dark ? '#ffffff' : '#333333', 0.55);
-            ctx.fillText(urlClean, TX, CH - 9);
-        }
-
         // Top + bottom edge rules
         ctx.fillStyle = primary;
         ctx.fillRect(0, 0, MAIN_W, 4);
@@ -727,13 +720,6 @@ function renderLabel(idx) {
         ctx.font = `700 12px 'Barlow Condensed', sans-serif`;
         ctx.fillStyle = primary;
         ctx.fillText(tagline, TX, nameY + 22);
-
-        // URL
-        if (urlClean) {
-            ctx.font = `500 10px 'DM Mono', monospace`;
-            ctx.fillStyle = alpha(dark ? '#ffffff' : '#333333', 0.5);
-            ctx.fillText(urlClean, TX, CH - 8);
-        }
 
         // QR — bottom right corner of main zone
         drawQR(ctx, MAIN_W - 54, CH - 56, 44, dark);
@@ -807,13 +793,6 @@ function renderLabel(idx) {
         ctx.fillStyle = alpha(primary, 0.9);
         ctx.fillText(tagline, TX, nameY + 22);
 
-        // URL — white/light
-        if (urlClean) {
-            ctx.font = `500 11px 'DM Mono', monospace`;
-            ctx.fillStyle = alpha(dark ? '#ffffff' : '#111111', 0.45);
-            ctx.fillText(urlClean, TX, CH - 8);
-        }
-
         // QR — bottom right
         drawQR(ctx, MAIN_W - 56, CH - 58, 46, true);
 
@@ -847,12 +826,12 @@ function renderLabel(idx) {
     const LH_BOLD = 5.0;
     let cy = 10;
 
-    // Helper: print one styled text block, returns new cy
+    // Helper: regular text block, optional wrap
     function printBlock(text, bold, wrap) {
         ctx.font = bold
             ? `bold ${FS_BOLD}px Arial, sans-serif`
             : `normal ${FS_BODY}px Arial, sans-serif`;
-        ctx.fillStyle = bold ? '#111' : '#333';
+        ctx.fillStyle = bold ? '#111' : '#222';
         const rawLines = text.split('\n');
         for (const raw of rawLines) {
             const lines = wrap ? wrapText(ctx, raw, COL1_W) : [raw];
@@ -862,40 +841,85 @@ function renderLabel(idx) {
                 cy += bold ? LH_BOLD : LH_BODY;
             }
         }
-        cy += bold ? 1.2 : 1.8; // paragraph gap
     }
 
-    // — EXACT TEXT FROM PHOTO —
-    printBlock('Neperlivá pramenitá voda', true, false);
+    // Helper: BOLD label + regular value on the SAME line (wraps to next lines in regular)
+    function printLabeled(boldLabel, regularValue) {
+        // Draw bold label
+        ctx.font = `bold ${FS_BOLD}px Arial, sans-serif`;
+        ctx.fillStyle = '#111';
+        ctx.fillText(boldLabel, LX2, cy);
+        const labelW = ctx.measureText(boldLabel).width;
 
+        // Switch to regular for value
+        ctx.font = `normal ${FS_BODY}px Arial, sans-serif`;
+        ctx.fillStyle = '#222';
+
+        // Fit as much value as possible on the same line as the label
+        const firstLineMaxW = COL1_W - labelW - 3;
+        const words = regularValue.split(' ');
+        let firstLine = '';
+        let i = 0;
+        for (; i < words.length; i++) {
+            const test = firstLine ? firstLine + ' ' + words[i] : words[i];
+            if (ctx.measureText(test).width <= firstLineMaxW) {
+                firstLine = test;
+            } else {
+                break;
+            }
+        }
+
+        if (firstLine) ctx.fillText(' ' + firstLine, LX2 + labelW, cy);
+        cy += LH_BODY;
+
+        // Remaining words wrap to full-width subsequent lines
+        if (i < words.length) {
+            const restLines = wrapText(ctx, words.slice(i).join(' '), COL1_W);
+            for (const ln of restLines) {
+                if (cy > CH - 22) return;
+                ctx.fillText(ln, LX2, cy);
+                cy += LH_BODY;
+            }
+        }
+    }
+
+    // ─── LEGAL TEXT — matches reference photo 1:1 ─────────────
+
+    // Bold product header
+    printBlock('Neperlivá pramenitá voda', true, false);
+    cy += 0.5;
+
+    // Product description paragraph (regular weight, wraps)
     printBlock(
         'Přírodní pramenitá voda z srdce Štýrska (Steiermark). ' +
         'Nedotčená příroda, filtrace přes vápencové horniny ' +
         'Alp a trvalé přísné kontroly zaručují neustálé špičkovou kvalitu.',
         false, true
     );
-    cy += 2;
-
-    printBlock('Složení: Neperlivá pramenitá voda', false, false);
     cy += 3;
 
-    printBlock('Minimální trvanlivost: Viz potisk na lahvi.', true, false);
-    printBlock('Skladování: Chraňte před teplem a přímým\nslunečním zářením.', true, false);
-    printBlock('Název a místo pramene: Seisensteinquelle,\nWildalpen, Rakousko', true, false);
-    cy += 2;
+    // Composition
+    printLabeled('Složení:', 'Neperlivá pramenitá voda');
+    cy += 3;
 
+    // Storage / source group — bold label + regular value, same line
+    printLabeled('Minimální trvanlivost:', 'Viz potisk na lahvi.');
+    printLabeled('Skladování:', 'Chraňte před teplem a přímým slunečním zářením.');
+    printLabeled('Název a místo pramene:', 'Seisensteinquelle, Wildalpen, Rakousko');
+    cy += 3;
+
+    // Manufacturer block (regular weight throughout)
     printBlock('Vyrobeno a plněno / země původu:', false, false);
-    printBlock('Wildalpen Wasserverwertungs GmbH\nSäusenbach 166, A-8924 Wildalpen, Rakousko', false, false);
-    cy += 2;
+    printBlock('Wildalpen Wasserverwertungs GmbH', false, false);
+    printBlock('Säusenbach 166, A-8924 Wildalpen, Rakousko', false, true);
+    cy += 2.5;
 
-    printBlock('Distributor: ' + (state.companyName || 'ELYSSIA s.r.o.') + '.', false, false);
-    // Address line — use description as address hint or fallback
-    const distAddr = state.companyDesc
-        ? state.companyDesc.substring(0, 38)
-        : 'Zenklova 24/54, 180 00 Praha 8\nČeská republika';
-    printBlock(distAddr, false, true);
-    const distUrl = (state.companyUrl || 'www.company.cz').replace(/^https?:\/\//,'');
-    printBlock(distUrl, false, false);
+    // Distributor block — ELYSSIA s.r.o. is the actual CZ distributor
+    // (matches the reference bottle template the user is producing)
+    printLabeled('Distributor:', 'ELYSSIA s.r.o.');
+    printBlock('Zenklova 24/54, 180 00 Praha 8', false, false);
+    printBlock('Česká republika', false, false);
+    printBlock('www.elyssia.cz', false, false);
 
     // Volume — large, bottom-left
     ctx.fillStyle = '#111';
@@ -978,31 +1002,28 @@ function renderLabel(idx) {
             ctx.beginPath(); ctx.moveTo(bandX, 2); ctx.lineTo(bandX, CH - 2); ctx.stroke();
         }
 
-        // Draw rotated text inside each band
+        // Rotated text: "ParamName: value mg/l" — single line, param first, value after
         ctx.save();
         ctx.translate(bandCX, CH - 4);
         ctx.rotate(-Math.PI / 2);
 
-        // Value (bold, top of rotated text = right side of band)
-        ctx.font = `bold 3.8px Arial, sans-serif`;
-        ctx.fillStyle = '#111';
-        ctx.textAlign = 'left';
         const valStr = row.unit ? `${row.val} ${row.unit}` : row.val;
-        ctx.fillText(valStr, 2, 0);
+        const fullStr = `${row.param}: ${valStr}`;
 
-        // Parameter name
-        ctx.font = `normal 3.4px Arial, sans-serif`;
-        ctx.fillStyle = '#444';
-        // If long name, truncate to fit
-        const maxLen = CH - 10;
-        let paramStr = row.param;
-        ctx.font = `normal 3.2px Arial, sans-serif`;
-        // measure and maybe trim
-        const mw = ctx.measureText(paramStr).width;
-        if (mw > maxLen - 20) {
-            paramStr = paramStr.substring(0, Math.floor(paramStr.length * (maxLen - 20) / mw));
+        ctx.font = `normal 3.5px Arial, sans-serif`;
+        ctx.fillStyle = '#1a1a1a';
+        ctx.textAlign = 'left';
+
+        // Truncate if too long for band height
+        const maxLen = CH - 12;
+        let displayStr = fullStr;
+        if (ctx.measureText(displayStr).width > maxLen) {
+            // Shorten the long parameter names if needed
+            const shortParam = row.param.replace(/\s*\([^)]*\)/, ''); // strip English in parens
+            displayStr = `${shortParam}: ${valStr}`;
         }
-        ctx.fillText(paramStr, 2 + ctx.measureText(valStr).width + 4, 0);
+
+        ctx.fillText(displayStr, 4, 0);
 
         ctx.restore();
     }
