@@ -401,13 +401,12 @@ let state = {
 
 // Canvas dimensions: 1000×250px = 200mm×50mm @ 5px/mm
 // LAYOUT (matching reference photos):
-//   LEFT  zone (0 to LEGAL_W=290px = 58mm) = legal text + chem table
-//   RIGHT zone (CZ_X=290 to CW=1000)        = creative brand area (710px = 142mm)
+//   LEFT  zone (0 to LEGAL_W=360px = 72mm) = legal text + chem table
+//   RIGHT zone (CZ_X=360 to CW=1000)       = creative brand area (640px = 128mm)
 const CW = 1000, CH = 250;
-const LEGAL_W = 290;
+const LEGAL_W = 360;
 const CZ_X = LEGAL_W;
-const CZ_W = CW - CZ_X;  // 710
-// Backward-compat aliases (used in unchanged creative code)
+const CZ_W = CW - CZ_X;  // 640
 const MAIN_W = CZ_W;
 
 // ══════════════════════════════════════════════════════════════
@@ -690,12 +689,43 @@ function renderLabel(idx) {
             fade.addColorStop(0, bg); fade.addColorStop(1, 'rgba(0,0,0,0)');
             ctx.fillStyle = fade; ctx.fillRect(SPLIT - 60, 0, 90, CH);
         } else {
-            // Fallback: diagonal stripe pattern on right side
+            // Rich fallback — gradient + shapes + accent dots
             ctx.save();
             ctx.beginPath(); ctx.rect(SPLIT, 0, MAIN_W - SPLIT, CH); ctx.clip();
-            ctx.strokeStyle = alpha(primary, 0.08); ctx.lineWidth = 1.5;
-            for (let x = SPLIT - CH; x < MAIN_W + CH; x += 22) {
+
+            // Background radial gradient
+            const radGrd = ctx.createRadialGradient(
+                MAIN_W * 0.78, CH * 0.45, 30,
+                MAIN_W * 0.78, CH * 0.45, MAIN_W * 0.5
+            );
+            radGrd.addColorStop(0, alpha(primary, dark ? 0.35 : 0.18));
+            radGrd.addColorStop(1, 'rgba(0,0,0,0)');
+            ctx.fillStyle = radGrd; ctx.fillRect(SPLIT, 0, MAIN_W - SPLIT, CH);
+
+            // Large brand-color circle (partial, peeks in)
+            ctx.beginPath();
+            ctx.arc(MAIN_W * 0.85, CH * 0.5, CH * 0.55, 0, Math.PI * 2);
+            ctx.fillStyle = alpha(primary, dark ? 0.28 : 0.14); ctx.fill();
+
+            // Inner circle for depth
+            ctx.beginPath();
+            ctx.arc(MAIN_W * 0.85, CH * 0.5, CH * 0.35, 0, Math.PI * 2);
+            ctx.fillStyle = alpha(primary, dark ? 0.40 : 0.22); ctx.fill();
+
+            // Diagonal stripes
+            ctx.strokeStyle = alpha(primary, dark ? 0.18 : 0.10); ctx.lineWidth = 1.2;
+            for (let x = SPLIT - CH; x < MAIN_W + CH; x += 28) {
                 ctx.beginPath(); ctx.moveTo(x, 0); ctx.lineTo(x + CH, CH); ctx.stroke();
+            }
+
+            // Scattered accent dots
+            for (let i = 0; i < 14; i++) {
+                const px = SPLIT + 20 + Math.random() * (MAIN_W - SPLIT - 40);
+                const py = 15 + Math.random() * (CH - 30);
+                ctx.beginPath();
+                ctx.arc(px, py, 2 + Math.random() * 4, 0, Math.PI * 2);
+                ctx.fillStyle = alpha(primary, 0.4 + Math.random() * 0.4);
+                ctx.fill();
             }
             ctx.restore();
         }
@@ -750,24 +780,56 @@ function renderLabel(idx) {
             scrim.addColorStop(1, 'rgba(0,0,0,0)');
             ctx.fillStyle = scrim; ctx.fillRect(0, 0, MAIN_W * 0.55, CH);
         } else {
-            // No illustration — solid color with subtle noise/texture
+            // Rich fallback for dark/inverted layout — gradient + shapes + atmosphere
             ctx.fillStyle = bg; ctx.fillRect(0, 0, MAIN_W, CH);
-            // Diagonal grain texture
-            ctx.strokeStyle = alpha(primary, 0.07); ctx.lineWidth = 1;
+
+            // Radial glow from right side
+            const radGrd = ctx.createRadialGradient(
+                MAIN_W * 0.75, CH * 0.5, 20,
+                MAIN_W * 0.75, CH * 0.5, MAIN_W * 0.7
+            );
+            radGrd.addColorStop(0, alpha(primary, 0.55));
+            radGrd.addColorStop(0.5, alpha(primary, 0.18));
+            radGrd.addColorStop(1, 'rgba(0,0,0,0)');
+            ctx.fillStyle = radGrd; ctx.fillRect(0, 0, MAIN_W, CH);
+
+            // Diagonal grain
+            ctx.strokeStyle = alpha(primary, 0.08); ctx.lineWidth = 1;
             for (let x = -CH; x < MAIN_W + CH; x += 18) {
                 ctx.beginPath(); ctx.moveTo(x, 0); ctx.lineTo(x + CH, CH); ctx.stroke();
             }
-            // Right accent shape (like Livesport geometric)
+
+            // Big brand-color circle on right
+            ctx.beginPath();
+            ctx.arc(MAIN_W * 0.78, CH * 0.5, CH * 0.55, 0, Math.PI * 2);
+            ctx.fillStyle = alpha(primary, 0.32); ctx.fill();
+
+            // Inner circle for depth
+            ctx.beginPath();
+            ctx.arc(MAIN_W * 0.78, CH * 0.5, CH * 0.32, 0, Math.PI * 2);
+            ctx.fillStyle = alpha(primary, 0.5); ctx.fill();
+
+            // Geometric accent shapes (bottom-right)
             ctx.save();
             ctx.beginPath();
             ctx.moveTo(MAIN_W * 0.72, CH); ctx.lineTo(MAIN_W, CH * 0.3);
             ctx.lineTo(MAIN_W, CH); ctx.closePath();
-            ctx.fillStyle = alpha(primary, 0.35); ctx.fill();
+            ctx.fillStyle = alpha(primary, 0.42); ctx.fill();
             ctx.beginPath();
             ctx.moveTo(MAIN_W * 0.82, CH); ctx.lineTo(MAIN_W, CH * 0.6);
             ctx.lineTo(MAIN_W, CH); ctx.closePath();
-            ctx.fillStyle = alpha(primary, 0.55); ctx.fill();
+            ctx.fillStyle = alpha(primary, 0.65); ctx.fill();
             ctx.restore();
+
+            // Scattered accent dots
+            for (let i = 0; i < 16; i++) {
+                const px = 30 + Math.random() * (MAIN_W - 60);
+                const py = 15 + Math.random() * (CH - 30);
+                ctx.beginPath();
+                ctx.arc(px, py, 1.5 + Math.random() * 3.5, 0, Math.PI * 2);
+                ctx.fillStyle = alpha(primary, 0.35 + Math.random() * 0.45);
+                ctx.fill();
+            }
         }
 
         // Left-side text
@@ -817,9 +879,9 @@ function renderLabel(idx) {
     ctx.beginPath(); ctx.moveTo(LEGAL_W, 0); ctx.lineTo(LEGAL_W, CH); ctx.stroke();
 
     // ── PARAGRAPH COLUMN ─────────────────────────────────────────
-    const COL_SPLIT = 168;            // divider between text and chem table
-    const LX2 = 7;                    // text left x
-    const COL1_W = 158;               // wrap width
+    const COL_SPLIT = 212;            // divider between text and chem table (wider paragraph now)
+    const LX2 = 8;                    // text left x
+    const COL1_W = 198;               // wrap width (~24% wider than before)
     const FS_BODY = 3.5;
     const FS_BOLD = 3.8;
     const LH_BODY = 4.6;
@@ -1010,7 +1072,7 @@ function renderLabel(idx) {
         const valStr = row.unit ? `${row.val} ${row.unit}` : row.val;
         const fullStr = `${row.param}: ${valStr}`;
 
-        ctx.font = `normal 3.5px Arial, sans-serif`;
+        ctx.font = `normal 3.9px Arial, sans-serif`;
         ctx.fillStyle = '#1a1a1a';
         ctx.textAlign = 'left';
 
@@ -1018,8 +1080,8 @@ function renderLabel(idx) {
         const maxLen = CH - 12;
         let displayStr = fullStr;
         if (ctx.measureText(displayStr).width > maxLen) {
-            // Shorten the long parameter names if needed
-            const shortParam = row.param.replace(/\s*\([^)]*\)/, ''); // strip English in parens
+            // Shorten by stripping English in parens if needed
+            const shortParam = row.param.replace(/\s*\([^)]*\)/, '');
             displayStr = `${shortParam}: ${valStr}`;
         }
 
