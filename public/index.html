@@ -955,7 +955,7 @@ function renderLabel(idx) {
     printBlock(
         'Přírodní pramenitá voda z srdce Štýrska (Steiermark). ' +
         'Nedotčená příroda, filtrace přes vápencové horniny ' +
-        'Alp a trvalé přísné kontroly zaručují neustálé špičkovou kvalitu.',
+        'Alp a trvalé přísné kontroly zaručují neustále špičkovou kvalitu.',
         false, true
     );
     cy += 3;
@@ -1041,55 +1041,76 @@ function renderLabel(idx) {
         { param: 'Fluoridy (Fluoride)',            unit: 'mg/l',  val: '0,1'  },
     ];
 
+    // ── CHEMICAL TABLE — 2 sub-columns with black borders ────────
+    // Sub-table 1: 6 major minerals
+    // Sub-table 2: 5 trace minerals
+    const majorRows = chemRows.slice(0, 6);   // pH, Kyslík, Sodík, Vápník, Hořčík, Hydrogenuhličitany
+    const traceRows = chemRows.slice(6, 11);  // Draslík, Chloridy, Dusitany, Sírany, Fluoridy
+
     const TABLE_START_X = COL_SPLIT + 2;
     const TABLE_END_X   = LEGAL_W - 2;
-    const TABLE_W_PX    = TABLE_END_X - TABLE_START_X;
-    const BAND_H        = (CH - 4) / chemRows.length;
-    const MID_Y         = CH / 2;
+    const TABLE_W_TOTAL = TABLE_END_X - TABLE_START_X;
+    const GAP_BETWEEN   = 4;                          // visible gap between the 2 sub-tables
+    const TABLE_Y       = 2;
+    const TABLE_H       = CH - 4;
 
-    ctx.save();
-    // Draw table outline
-    ctx.strokeStyle = '#bbb'; ctx.lineWidth = 0.5;
-    ctx.strokeRect(TABLE_START_X, 2, TABLE_W_PX, CH - 4);
+    // Each band same width; 11 total bands across both sub-tables
+    const bandW       = (TABLE_W_TOTAL - GAP_BETWEEN) / 11;
+    const subT1_X     = TABLE_START_X;
+    const subT1_W     = majorRows.length * bandW;     // 6 bands
+    const subT2_X     = subT1_X + subT1_W + GAP_BETWEEN;
+    const subT2_W     = traceRows.length * bandW;     // 5 bands
 
-    for (let j = 0; j < chemRows.length; j++) {
-        const row = chemRows[j];
-        const bandX = TABLE_START_X + j * TABLE_W_PX / chemRows.length;
-        const bandW = TABLE_W_PX / chemRows.length;
-        const bandCX = bandX + bandW / 2;
+    function drawSubTable(startX, totalW, rows) {
+        // Black outer border
+        ctx.strokeStyle = '#000';
+        ctx.lineWidth   = 0.9;
+        ctx.strokeRect(startX, TABLE_Y, totalW, TABLE_H);
 
-        // Band separator
-        if (j > 0) {
-            ctx.strokeStyle = '#ccc'; ctx.lineWidth = 0.4;
-            ctx.beginPath(); ctx.moveTo(bandX, 2); ctx.lineTo(bandX, CH - 2); ctx.stroke();
+        const bw = totalW / rows.length;
+
+        for (let j = 0; j < rows.length; j++) {
+            const row    = rows[j];
+            const bandX  = startX + j * bw;
+            const bandCX = bandX + bw / 2;
+
+            // Black internal band separator
+            if (j > 0) {
+                ctx.strokeStyle = '#000';
+                ctx.lineWidth   = 0.45;
+                ctx.beginPath();
+                ctx.moveTo(bandX, TABLE_Y + 0.5);
+                ctx.lineTo(bandX, TABLE_Y + TABLE_H - 0.5);
+                ctx.stroke();
+            }
+
+            // Rotated text: "ParamName: value mg/l" — param first, value after
+            ctx.save();
+            ctx.translate(bandCX, CH - 5);
+            ctx.rotate(-Math.PI / 2);
+
+            const valStr  = row.unit ? `${row.val} ${row.unit}` : row.val;
+            const fullStr = `${row.param}: ${valStr}`;
+
+            ctx.font      = `normal 3.9px Arial, sans-serif`;
+            ctx.fillStyle = '#000';
+            ctx.textAlign = 'left';
+
+            // Truncate if too long for band height
+            const maxLen = TABLE_H - 8;
+            let displayStr = fullStr;
+            if (ctx.measureText(displayStr).width > maxLen) {
+                const shortParam = row.param.replace(/\s*\([^)]*\)/, '');
+                displayStr = `${shortParam}: ${valStr}`;
+            }
+
+            ctx.fillText(displayStr, 4, 0);
+            ctx.restore();
         }
-
-        // Rotated text: "ParamName: value mg/l" — single line, param first, value after
-        ctx.save();
-        ctx.translate(bandCX, CH - 4);
-        ctx.rotate(-Math.PI / 2);
-
-        const valStr = row.unit ? `${row.val} ${row.unit}` : row.val;
-        const fullStr = `${row.param}: ${valStr}`;
-
-        ctx.font = `normal 3.9px Arial, sans-serif`;
-        ctx.fillStyle = '#1a1a1a';
-        ctx.textAlign = 'left';
-
-        // Truncate if too long for band height
-        const maxLen = CH - 12;
-        let displayStr = fullStr;
-        if (ctx.measureText(displayStr).width > maxLen) {
-            // Shorten by stripping English in parens if needed
-            const shortParam = row.param.replace(/\s*\([^)]*\)/, '');
-            displayStr = `${shortParam}: ${valStr}`;
-        }
-
-        ctx.fillText(displayStr, 4, 0);
-
-        ctx.restore();
     }
-    ctx.restore();
+
+    drawSubTable(subT1_X, subT1_W, majorRows);
+    drawSubTable(subT2_X, subT2_W, traceRows);
 
     state.canvases[idx] = canvas;
 }
