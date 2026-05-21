@@ -5,7 +5,8 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Label Studio AI</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@700;800;900&family=DM+Mono:wght@400;500&family=Barlow:wght@400;500;600&display=swap" rel="stylesheet">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=Barlow+Condensed:wght@700;800;900&family=DM+Mono:wght@400;500&family=Barlow:wght@400;500;600&display=swap" rel="stylesheet">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
     <style>
         :root {
@@ -464,8 +465,8 @@ function renderLabel(idx) {
     const nameMax = state.logoImg ? 230 : 260;  // available width for name
     const TX = state.logoImg ? 470 : 440;
     const upperName = (state.companyName || 'COMPANY').toUpperCase();
-    const fs = fitFont(ctx, upperName, '900', "'Barlow Condensed'", 64, nameMax);
-    ctx.font = `900 ${fs}px 'Barlow Condensed'`;
+    const fs = fitFont(ctx, upperName, '900', "'Inter'", 64, nameMax);
+    ctx.font = `900 ${fs}px 'Inter'`;
     ctx.fillStyle = text;
     ctx.fillText(upperName, TX, 96);
 
@@ -476,7 +477,7 @@ function renderLabel(idx) {
 
     // ── TAGLINE ─────────────────────────────────────
     if (tagline) {
-        ctx.font = `700 13px 'Barlow Condensed'`;
+        ctx.font = `700 13px 'Inter'`;
         ctx.fillStyle = primary;
         ctx.fillText(tagline, TX, 122);
     }
