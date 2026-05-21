@@ -129,6 +129,13 @@ For each design write a SHORT, FOCUSED image prompt:
 
 Keep prompts SHORT (40-60 words max). Don't request "rich atmosphere", "gradients everywhere", "dramatic lighting", "supporting objects scattered around" — those make FAL.ai produce busy AI-looking results.
 
+═══ LANGUAGE — CRITICAL ═══
+The "slogan", all "tagline" fields, and all "styleDesc" fields MUST be written in CZECH language (čeština).
+The "industry", "name" (design variation name like "Light Edition"), and "imagePrompt" fields stay in English (imagePrompt MUST be English so FAL.ai understands it).
+Use natural, punchy Czech marketing language with proper diacritics (á, č, ď, é, ě, í, ň, ó, ř, š, ť, ú, ů, ý, ž).
+Examples of good Czech taglines: "Síla z hor", "Čistota každý den", "Pravá česká kvalita", "Vyrobeno s láskou", "Pro každého z nás".
+Examples of good Czech styleDesc: "Čistý hrdina produktu na bílém pozadí", "Produkt na firemní barvě", "Hrdina na tmavém pozadí".
+
 ═══ FONT VARIETY ═══
 Use 3 different fonts from: ${fontsThisRun.join(", ")}
 
@@ -141,37 +148,37 @@ Use 3 different fonts from: ${fontsThisRun.join(", ")}
     {
       "id": 1,
       "name": "Light Edition",
-      "styleDesc": "Clean product hero on white",
+      "styleDesc": "Čistý hrdina produktu na bílém pozadí",
       "displayFont": "<font from list>",
       "bg": "#ffffff",
       "primary": "#brand_color",
       "text": "#111111",
       "accent": "#accent_hex",
-      "tagline": "3-5 word tagline",
+      "tagline": "3-5 word tagline IN CZECH",
       "imagePrompt": "Clean illustration of [SPECIFIC product/symbol for ${name}, e.g. 'silver and red motorcycle in 3/4 view, slightly tilted left']. Solid white background. Modern flat vector style with subtle shading and clean outlines. Brand color [hex] as primary accent. NO text NO letters NO words NO numbers. Landscape 4:3."
     },
     {
       "id": 2,
       "name": "Brand Color",
-      "styleDesc": "Product on solid brand-color background",
+      "styleDesc": "Produkt na firemní barvě",
       "displayFont": "<different font>",
       "bg": "#brand_color_or_tinted",
       "primary": "#ffffff",
       "text": "#ffffff",
       "accent": "#accent_hex",
-      "tagline": "different 3-5 word tagline",
+      "tagline": "different 3-5 word tagline IN CZECH",
       "imagePrompt": "Clean illustration of [SAME product type, different angle, e.g. 'side profile motorcycle silhouette']. Solid [brand_color] background. White and pale-toned flat vector illustration, clean outlines. NO text NO letters NO words NO numbers. Landscape 4:3."
     },
     {
       "id": 3,
       "name": "Dark Edition",
-      "styleDesc": "Product hero on dark background",
+      "styleDesc": "Hrdina produktu na tmavém pozadí",
       "displayFont": "<third font>",
       "bg": "#0d0e14",
       "primary": "#brand_color",
       "text": "#ffffff",
       "accent": "#accent_hex",
-      "tagline": "third 3-5 word tagline",
+      "tagline": "third 3-5 word tagline IN CZECH",
       "imagePrompt": "Clean illustration of [SAME product type, hero composition]. Solid dark background #0d0e14. Modern flat vector style with [brand_color] accents on the product, clean outlines, subtle shading. NO text NO letters NO words NO numbers. Landscape 4:3."
     }
   ]
