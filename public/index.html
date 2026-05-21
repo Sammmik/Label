@@ -375,14 +375,14 @@ function renderLabel(idx) {
 
     // ── TEXTOVÁ ČÁST (Levá strana bloku) ──
     const leftX = MAIN_W + 14;
-    let currentY = 20;
+    let currentY = 18; // Opravený začátek pro kompenzaci řádkování
     ctx.fillStyle = '#000000';
     ctx.textBaseline = 'alphabetic';
 
     // Pomocná funkce na vykreslení textu s limitovanou šířkou proti přetečení
     function renderTextLine(txt, isBold, yOffset) {
         ctx.font = `${isBold ? 'bold' : 'normal'} 7.5px 'Arial', sans-serif`;
-        ctx.fillText(txt, leftX, currentY, 190);
+        ctx.fillText(txt, leftX, currentY, 185);
         currentY += yOffset;
     }
 
@@ -391,40 +391,41 @@ function renderLabel(idx) {
         ctx.fillText(boldText, leftX, currentY);
         const boldWidth = ctx.measureText(boldText + " ").width;
         ctx.font = `normal 7.5px 'Arial', sans-serif`;
-        ctx.fillText(normalText, leftX + boldWidth, currentY, 190 - boldWidth);
+        ctx.fillText(normalText, leftX + boldWidth, currentY, 185 - boldWidth);
         currentY += yOffset;
     }
 
-    renderTextLine("Neperlivá pramenitá voda", true, 11);
-    renderTextLine("Přírodní pramenitá voda ze srdce Štýrska (Steiermark).", false, 11);
-    renderTextLine("Nedotčená příroda, filtrace přes vápencové horniny", false, 11);
-    renderTextLine("Alp a trvalé přísné kontroly zaručují neustále", false, 11);
-    renderTextLine("špičkovou kvalitu.", false, 18);
+    // ── Vykreslení odstavců s opraveným kratším Y-odstupem ──
+    renderTextLine("Neperlivá pramenitá voda", true, 10);
+    renderTextLine("Přírodní pramenitá voda ze srdce Štýrska (Steiermark).", false, 10);
+    renderTextLine("Nedotčená příroda, filtrace přes vápencové horniny", false, 10);
+    renderTextLine("Alp a trvalé přísné kontroly zaručují neustále", false, 10);
+    renderTextLine("špičkovou kvalitu.", false, 16);
 
-    renderMixedLine("Složení:", "Neperlivá pramenitá voda", 18);
+    renderMixedLine("Složení:", " Neperlivá pramenitá voda", 16);
 
-    renderMixedLine("Minimální trvanlivost:", "Viz potisk na lahvi.", 11);
-    renderMixedLine("Skladování:", "Chraňte před teplem a přímým", 11);
-    renderTextLine("slunečním zářením.", false, 11);
-    renderMixedLine("Název a místo pramene:", "Seisensteinquelle,", 11);
-    renderTextLine("Wildalpen, Rakousko", false, 18);
+    renderMixedLine("Minimální trvanlivost:", " Viz potisk na lahvi.", 10);
+    renderMixedLine("Skladování:", " Chraňte před teplem a přímým", 10);
+    renderTextLine("slunečním zářením.", false, 10);
+    renderMixedLine("Název a místo pramene:", " Seisensteinquelle,", 10);
+    renderTextLine("Wildalpen, Rakousko", false, 16);
 
-    renderTextLine("Vyrobeno a plněno / země původu:", true, 11);
-    renderTextLine("Wildalpen Wasserverwertungs GmbH", false, 11);
-    renderTextLine("Säusenbach 166, A-8924 Wildalpen, Rakousko", false, 18);
+    renderTextLine("Vyrobeno a plněno / země původu:", true, 10);
+    renderTextLine("Wildalpen Wasserverwertungs GmbH", false, 10);
+    renderTextLine("Säusenbach 166, A-8924 Wildalpen, Rakousko", false, 16);
 
-    renderMixedLine("Distributor:", "ELYSSIA s.r.o.", 11);
-    renderTextLine("Zenklova 24/54, 180 00 Praha 8", false, 11);
-    renderTextLine("Česká republika", false, 11);
-    renderTextLine("www.elyssia.cz", false, 24);
+    renderMixedLine("Distributor:", " ELYSSIA s.r.o.", 10);
+    renderTextLine("Zenklova 24/54, 180 00 Praha 8", false, 10);
+    renderTextLine("Česká republika", false, 10);
+    renderTextLine("www.elyssia.cz", false, 15);
 
-    // 0,33 l (Větší font, levý dolní roh)
-    ctx.font = "bold 26px 'Arial', sans-serif";
-    ctx.fillText("0,33 l", leftX, 235);
+    // 0,33 l (Větší font, levý dolní roh - Nyní bezpečně pod textem)
+    ctx.font = "bold 28px 'Arial', sans-serif";
+    ctx.fillText("0,33 l", leftX, 238);
 
-    // PET Logo
+    // PET Logo (Zmenšený a posunutý rámeček, aby nekolidoval)
     const petX = leftX + 130;
-    const petY = 226;
+    const petY = 230;
     ctx.lineWidth = 2.5;
     ctx.strokeStyle = '#000000';
 
@@ -450,11 +451,11 @@ function renderLabel(idx) {
     ctx.textAlign = "left"; // Návrat zpět
 
     // ── TABULKA SLOŽENÍ (Pravá strana bloku, svislá dle předlohy) ──
-    const tableX = MAIN_W + 212; // Start tabulky s dostatečnou rezervou pro text
-    const tableYTop = 12;        // Horní okraj první tabulky
-    const tableYBot = 129;       // Horní okraj druhé tabulky
-    const blockH = 113;          // Výška každého bloku
-    const tableW = 76;           // Šířka tabulky
+    const tableX = MAIN_W + 212;
+    const tableYTop = 12;
+    const tableYBot = 129;
+    const blockH = 113;
+    const tableW = 76;
 
     ctx.lineWidth = 1;
     ctx.strokeStyle = '#000000';
