@@ -5,8 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Label Studio AI</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@700;800;900&family=Barlow:wght@400;500;600&family=DM+Mono:wght@400;500&family=Anton&family=Bebas+Neue&family=Oswald:wght@700;800&family=Russo+One&family=Archivo+Black&family=Black+Ops+One&family=Bowlby+One&family=Staatliches&family=Saira+Condensed:wght@800;900&family=Bungee&family=Passion+One:wght@700;900&family=Big+Shoulders+Display:wght@800;900&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@700;800;900&family=DM+Mono:wght@400;500&family=Barlow:wght@400;500;600&display=swap" rel="stylesheet">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
     <style>
         :root {
@@ -79,26 +78,13 @@
             transition: border-color .2s, background .2s;
         }
         .field input:focus { border-color: var(--blue-border); background: rgba(37,99,235,0.05); }
-        .field input::placeholder { color: rgba(255,255,255,0.2); }
-
         .row2 { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
         @media(max-width: 500px) { .row2 { grid-template-columns: 1fr; } }
-
-        /* color picker */
         .color-row { display: flex; align-items: center; gap: 12px; }
-        .color-swatch {
-            width: 44px; height: 44px; border-radius: 10px;
-            border: 2px solid var(--border); overflow: hidden; flex-shrink: 0; cursor: pointer;
-        }
+        .color-swatch { width: 44px; height: 44px; border-radius: 10px; border: 2px solid var(--border); overflow: hidden; flex-shrink: 0; cursor: pointer; }
         .color-swatch input { width: 200%; height: 200%; margin: -50%; border: none; cursor: pointer; }
         .color-info { font-family: var(--mono); font-size: 12px; color: var(--muted); line-height: 1.6; }
-
-        /* logo zone */
-        .logo-drop {
-            position: relative; border: 1.5px dashed rgba(255,255,255,0.12);
-            border-radius: 12px; padding: 22px; text-align: center; cursor: pointer;
-            transition: all .2s;
-        }
+        .logo-drop { position: relative; border: 1.5px dashed rgba(255,255,255,0.12); border-radius: 12px; padding: 22px; text-align: center; cursor: pointer; transition: all .2s; }
         .logo-drop:hover { border-color: rgba(255,255,255,0.25); background: rgba(255,255,255,0.02); }
         .logo-drop input { position: absolute; inset: 0; opacity: 0; cursor: pointer; width: 100%; height: 100%; }
         .logo-drop.ready { border-color: rgba(34,197,94,0.4); background: rgba(34,197,94,0.04); }
@@ -106,53 +92,16 @@
         .logo-drop.ready .logo-preview { display: block; }
         .logo-hint { font-family: var(--mono); font-size: 11px; color: var(--muted); }
         .logo-icon { font-size: 26px; margin-bottom: 6px; }
-
-        /* ── BUTTONS ── */
-        .btn-primary {
-            width: 100%; padding: 16px; background: var(--blue);
-            border: none; border-radius: 12px; color: #fff;
-            font-family: 'Barlow Condensed', sans-serif; font-size: 18px; font-weight: 700;
-            letter-spacing: .04em; text-transform: uppercase; cursor: pointer;
-            transition: all .2s; position: relative; overflow: hidden; margin-top: 8px;
-        }
+        .btn-primary { width: 100%; padding: 16px; background: var(--blue); border: none; border-radius: 12px; color: #fff; font-family: 'Barlow Condensed', sans-serif; font-size: 18px; font-weight: 700; letter-spacing: .04em; text-transform: uppercase; cursor: pointer; transition: all .2s; margin-top: 8px; }
         .btn-primary:hover { background: #1d4ed8; transform: translateY(-1px); box-shadow: 0 8px 32px rgba(37,99,235,0.4); }
         .btn-primary:disabled { opacity: 0.5; cursor: not-allowed; transform: none; box-shadow: none; }
-        .btn-secondary {
-            flex: 1; padding: 10px 14px; background: transparent;
-            border: 1px solid var(--border); border-radius: 10px;
-            color: rgba(255,255,255,0.6); font-size: 13px; font-weight: 500;
-            cursor: pointer; transition: all .2s; font-family: 'Barlow', sans-serif;
-        }
+        .btn-secondary { flex: 1; padding: 10px 14px; background: transparent; border: 1px solid var(--border); border-radius: 10px; color: rgba(255,255,255,0.6); font-size: 13px; font-weight: 500; cursor: pointer; transition: all .2s; font-family: 'Barlow', sans-serif; }
         .btn-secondary:hover { border-color: rgba(255,255,255,0.25); color: #fff; background: rgba(255,255,255,0.04); }
-        .btn-pdf {
-            width: 100%; padding: 16px;
-            background: linear-gradient(135deg, #1e40af, #1d4ed8);
-            border: none; border-radius: 12px; color: #fff;
-            font-family: 'Barlow Condensed', sans-serif; font-size: 18px; font-weight: 700;
-            letter-spacing: .04em; text-transform: uppercase; cursor: pointer;
-            transition: all .2s; box-shadow: 0 4px 24px rgba(37,99,235,0.3);
-        }
+        .btn-pdf { width: 100%; padding: 16px; background: linear-gradient(135deg, #1e40af, #1d4ed8); border: none; border-radius: 12px; color: #fff; font-family: 'Barlow Condensed', sans-serif; font-size: 18px; font-weight: 700; letter-spacing: .04em; text-transform: uppercase; cursor: pointer; transition: all .2s; box-shadow: 0 4px 24px rgba(37,99,235,0.3); }
         .btn-pdf:hover { transform: translateY(-1px); box-shadow: 0 8px 40px rgba(37,99,235,0.5); }
-
-        /* ── ERROR ── */
-        .error-box {
-            background: rgba(239,68,68,0.1); border: 1px solid rgba(239,68,68,0.25);
-            border-radius: 10px; padding: 12px 16px; color: #fca5a5;
-            font-size: 13px; margin-top: 12px; display: none;
-        }
-
-        /* ── LOADING SCREEN ── */
-        #loading-view {
-            display: none; min-height: 80vh;
-            align-items: center; justify-content: center;
-            flex-direction: column; gap: 0; text-align: center;
-        }
-        .spinner {
-            width: 56px; height: 56px; border-radius: 50%;
-            border: 2px solid rgba(37,99,235,0.2);
-            border-top-color: var(--blue);
-            animation: spin .85s linear infinite; margin-bottom: 28px;
-        }
+        .error-box { background: rgba(239,68,68,0.1); border: 1px solid rgba(239,68,68,0.25); border-radius: 10px; padding: 12px 16px; color: #fca5a5; font-size: 13px; margin-top: 12px; display: none; }
+        #loading-view { display: none; min-height: 80vh; align-items: center; justify-content: center; flex-direction: column; text-align: center; }
+        .spinner { width: 56px; height: 56px; border-radius: 50%; border: 2px solid rgba(37,99,235,0.2); border-top-color: var(--blue); animation: spin .85s linear infinite; margin-bottom: 28px; }
         @keyframes spin { to { transform: rotate(360deg); } }
         .load-title { font-family: 'Barlow Condensed', sans-serif; font-size: 22px; font-weight: 700; margin-bottom: 6px; }
         .load-sub { font-family: var(--mono); font-size: 11px; color: var(--muted); margin-bottom: 32px; }
@@ -161,156 +110,77 @@
         .lstep.active { color: #93c5fd; }
         .lstep.done { color: var(--green); }
         .lstep-dot { width: 6px; height: 6px; border-radius: 50%; background: currentColor; flex-shrink: 0; }
-
-        /* ── PREVIEW ── */
         #preview-view { display: none; }
         .preview-header { margin-bottom: 28px; }
         .preview-title { font-family: 'Barlow Condensed', sans-serif; font-size: 32px; font-weight: 800; }
         .preview-meta { font-family: var(--mono); font-size: 11px; color: var(--muted); margin-top: 4px; }
         .brand-chips { display: flex; gap: 10px; flex-wrap: wrap; margin-top: 12px; }
-        .chip {
-            background: var(--surface); border: 1px solid var(--border);
-            border-radius: 8px; padding: 6px 12px;
-            font-family: var(--mono); font-size: 11px; color: var(--muted);
-        }
+        .chip { background: var(--surface); border: 1px solid var(--border); border-radius: 8px; padding: 6px 12px; font-family: var(--mono); font-size: 11px; color: var(--muted); }
         .chip strong { color: var(--text); }
-
         .design-block { margin-bottom: 32px; }
         .design-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 12px; }
         .design-name { font-weight: 700; font-size: 16px; }
         .design-desc { font-family: var(--mono); font-size: 11px; color: var(--muted); }
-        .design-tag {
-            font-family: var(--mono); font-size: 10px; font-weight: 600;
-            padding: 4px 10px; border-radius: 100px; letter-spacing: .05em;
-        }
-        .canvas-shell {
-            border-radius: 12px; overflow: hidden;
-            box-shadow: 0 16px 56px rgba(0,0,0,0.6), 0 0 0 1px rgba(255,255,255,0.06);
-        }
+        .design-tag { font-family: var(--mono); font-size: 10px; font-weight: 600; padding: 4px 10px; border-radius: 100px; letter-spacing: .05em; }
+        .canvas-shell { border-radius: 12px; overflow: hidden; box-shadow: 0 16px 56px rgba(0,0,0,0.6), 0 0 0 1px rgba(255,255,255,0.06); }
         canvas { display: block; width: 100%; height: auto; }
         .canvas-actions { display: flex; gap: 10px; margin-top: 10px; align-items: center; }
         .swatches { display: flex; gap: 5px; flex-shrink: 0; }
         .swatch { width: 16px; height: 16px; border-radius: 4px; border: 1px solid rgba(255,255,255,0.15); }
-
-        /* generating placeholder */
-        .gen-placeholder {
-            width: 100%; height: 180px; background: rgba(255,255,255,0.02);
-            border: 1px solid var(--border); border-radius: 12px;
-            display: flex; align-items: center; justify-content: center;
-            flex-direction: column; gap: 8px; color: var(--muted);
-            font-family: var(--mono); font-size: 11px;
-        }
-        .mini-spin {
-            width: 24px; height: 24px; border-radius: 50%;
-            border: 2px solid rgba(37,99,235,0.2); border-top-color: var(--blue);
-            animation: spin .7s linear infinite;
-        }
-
-        /* export zone */
-        .export-zone {
-            background: linear-gradient(135deg, rgba(37,99,235,0.08), rgba(37,99,235,0.04));
-            border: 1px solid var(--blue-border); border-radius: 20px;
-            padding: 32px; text-align: center; margin-top: 8px;
-        }
+        .gen-placeholder { width: 100%; height: 180px; background: rgba(255,255,255,0.02); border: 1px solid var(--border); border-radius: 12px; display: flex; align-items: center; justify-content: center; flex-direction: column; gap: 8px; color: var(--muted); font-family: var(--mono); font-size: 11px; }
+        .mini-spin { width: 24px; height: 24px; border-radius: 50%; border: 2px solid rgba(37,99,235,0.2); border-top-color: var(--blue); animation: spin .7s linear infinite; }
+        .export-zone { background: linear-gradient(135deg, rgba(37,99,235,0.08), rgba(37,99,235,0.04)); border: 1px solid var(--blue-border); border-radius: 20px; padding: 32px; text-align: center; margin-top: 8px; }
         .export-title { font-family: 'Barlow Condensed', sans-serif; font-size: 20px; font-weight: 700; margin-bottom: 6px; }
         .export-desc { font-family: var(--mono); font-size: 11px; color: var(--muted); margin-bottom: 22px; }
         .divider { height: 1px; background: var(--border); margin: 32px 0; }
-
-        /* back */
-        .back-btn {
-            background: none; border: none; color: var(--muted); cursor: pointer;
-            font-family: var(--mono); font-size: 12px; display: flex; align-items: center;
-            gap: 6px; margin-bottom: 12px; padding: 0; transition: color .2s;
-        }
+        .back-btn { background: none; border: none; color: var(--muted); cursor: pointer; font-family: var(--mono); font-size: 12px; display: flex; align-items: center; gap: 6px; margin-bottom: 12px; padding: 0; transition: color .2s; }
         .back-btn:hover { color: var(--text); }
-
-        /* footer */
         .footer { margin-top: 40px; text-align: center; font-family: var(--mono); font-size: 10px; color: #1f2937; }
     </style>
 </head>
 <body>
 
 <div class="page">
-
-    <!-- ══════════════ INPUT VIEW ══════════════ -->
     <div id="input-view">
         <header class="header">
             <div class="badge">◈ &nbsp;LABEL STUDIO AI</div>
             <h1>Scan. Design.<br><em>Print-ready.</em></h1>
-            <p class="subtitle">Enter company → AI scans website → 3 label designs → PDF 200×50mm</p>
         </header>
 
         <div class="card">
-            <div class="card-head">
-                <div class="step-pill">1</div>
-                <div class="card-title">Brand Information</div>
-            </div>
-
-            <div class="field">
-                <label>Company Name *</label>
-                <input type="text" id="inp-name" placeholder="e.g. YUKI s.r.o." autocomplete="off">
-            </div>
-
+            <div class="card-head"><div class="step-pill">1</div><div class="card-title">Brand Information</div></div>
+            <div class="field"><label>Company Name *</label><input type="text" id="inp-name" placeholder="e.g. YUKI s.r.o." autocomplete="off"></div>
             <div class="row2">
-                <div class="field">
-                    <label>Description / Industry</label>
-                    <input type="text" id="inp-desc" placeholder="e.g. Electric motorcycles">
-                </div>
-                <div class="field">
-                    <label>Website URL (for QR + scan)</label>
-                    <input type="text" id="inp-url" placeholder="https://www.yourco.cz">
-                </div>
+                <div class="field"><label>Description / Industry</label><input type="text" id="inp-desc" placeholder="e.g. Electric motorcycles"></div>
+                <div class="field"><label>Website URL (for QR)</label><input type="text" id="inp-url" placeholder="https://www.yourco.cz"></div>
             </div>
-
             <div class="field">
-                <label>Primary Brand Color — AI detects real colors from your site</label>
+                <label>Primary Brand Color</label>
                 <div class="color-row">
-                    <div class="color-swatch" id="color-swatch" style="background:#2563eb">
-                        <input type="color" id="inp-color" value="#2563eb">
-                    </div>
-                    <div class="color-info" id="color-info">#2563eb &nbsp;·&nbsp; AI will override this with your real brand color</div>
+                    <div class="color-swatch" id="color-swatch" style="background:#2563eb"><input type="color" id="inp-color" value="#2563eb"></div>
+                    <div class="color-info" id="color-info">#2563eb</div>
                 </div>
             </div>
-
             <div class="field">
-                <label>Company Logo (optional — appears on all 3 labels)</label>
+                <label>Company Logo (optional)</label>
                 <div class="logo-drop" id="logo-drop">
-                    <input type="file" id="logo-input" accept="image/png,image/jpeg,image/svg+xml,image/webp">
+                    <input type="file" id="logo-input" accept="image/png,image/jpeg,image/svg+xml">
                     <div class="logo-icon">⊕</div>
                     <img class="logo-preview" id="logo-preview" src="" alt="logo">
                     <div class="logo-hint" id="logo-hint">Click to upload PNG / SVG / JPG</div>
                 </div>
             </div>
-
             <div id="error-box" class="error-box"></div>
-
-            <button class="btn-primary" id="gen-btn" onclick="startGeneration()">
-                🔍 &nbsp;Scan Website & Generate 3 Designs
-            </button>
-
-            <div style="margin-top:20px;padding-top:18px;border-top:1px solid var(--border);display:flex;gap:24px;justify-content:center;">
-                <div style="text-align:center;font-family:var(--mono);font-size:10px;color:#374151">
-                    <div style="color:var(--blue);font-size:16px;margin-bottom:4px">◈</div>AI scans website
-                </div>
-                <div style="text-align:center;font-family:var(--mono);font-size:10px;color:#374151">
-                    <div style="color:var(--blue);font-size:16px;margin-bottom:4px">◇</div>3 print designs
-                </div>
-                <div style="text-align:center;font-family:var(--mono);font-size:10px;color:#374151">
-                    <div style="color:var(--blue);font-size:16px;margin-bottom:4px">◆</div>PDF 200×50 mm
-                </div>
-            </div>
+            <button class="btn-primary" id="gen-btn" onclick="startGeneration()">🔍 &nbsp;Generate 3 Designs</button>
         </div>
-
-        <div class="footer">Label Studio AI &nbsp;·&nbsp; Inspired by Wildalp custom bottle labels, Czech Republic</div>
     </div>
 
-    <!-- ══════════════ LOADING VIEW ══════════════ -->
     <div id="loading-view">
         <div class="spinner"></div>
-        <div class="load-title" id="load-title">Analyzing brand...</div>
-        <div class="load-sub" id="load-sub">This takes about 30–60 seconds</div>
+        <div class="load-title" id="load-title">Configuring brand identity...</div>
+        <div class="load-sub" id="load-sub">Please wait</div>
         <div class="steps" id="load-steps">
-            <div class="lstep" id="step-0"><div class="lstep-dot"></div>Scanning website & brand identity</div>
+            <div class="lstep" id="step-0"><div class="lstep-dot"></div>Configuring brand identity</div>
             <div class="lstep" id="step-1"><div class="lstep-dot"></div>Generating design parameters</div>
             <div class="lstep" id="step-2"><div class="lstep-dot"></div>Creating illustration for label 1</div>
             <div class="lstep" id="step-3"><div class="lstep-dot"></div>Creating illustration for label 2</div>
@@ -320,101 +190,53 @@
         </div>
     </div>
 
-    <!-- ══════════════ PREVIEW VIEW ══════════════ -->
     <div id="preview-view">
         <button class="back-btn" onclick="resetToInput()">← Start over</button>
-
         <div class="preview-header">
             <div class="preview-title">Your Label Designs</div>
             <div class="preview-meta" id="preview-meta">Loading...</div>
             <div class="brand-chips" id="brand-chips"></div>
         </div>
 
-        <!-- 3 label blocks -->
         <div class="design-block" id="block-0">
             <div class="design-header">
-                <div><div class="design-name" id="name-0">Signature Dark</div><div class="design-desc" id="desc-0"></div></div>
-                <div class="design-tag" id="tag-0" style="color:#3b82f6;background:rgba(59,130,246,0.15)">DARK</div>
+                <div><div class="design-name" id="name-0">...</div><div class="design-desc" id="desc-0">...</div></div>
             </div>
-            <div id="placeholder-0" class="gen-placeholder"><div class="mini-spin"></div><span>Generating illustration...</span></div>
-            <div class="canvas-shell" id="shell-0" style="display:none">
-                <canvas id="canvas-0"></canvas>
-            </div>
-            <div class="canvas-actions" id="actions-0" style="display:none">
-                <button class="btn-secondary" onclick="downloadPNG(0)">↓ Download PNG</button>
-                <div class="swatches" id="swatches-0"></div>
-            </div>
+            <div id="placeholder-0" class="gen-placeholder"><div class="mini-spin"></div><span>Generating...</span></div>
+            <div class="canvas-shell" id="shell-0" style="display:none"><canvas id="canvas-0"></canvas></div>
+            <div class="canvas-actions" id="actions-0" style="display:none"><button class="btn-secondary" onclick="downloadPNG(0)">↓ Download PNG</button><div class="swatches" id="swatches-0"></div></div>
         </div>
-
         <div class="design-block" id="block-1">
             <div class="design-header">
-                <div><div class="design-name" id="name-1">Clean White</div><div class="design-desc" id="desc-1"></div></div>
-                <div class="design-tag" id="tag-1" style="color:#10b981;background:rgba(16,185,129,0.15)">WHITE</div>
+                <div><div class="design-name" id="name-1">...</div><div class="design-desc" id="desc-1">...</div></div>
             </div>
-            <div id="placeholder-1" class="gen-placeholder"><div class="mini-spin"></div><span>Generating illustration...</span></div>
-            <div class="canvas-shell" id="shell-1" style="display:none">
-                <canvas id="canvas-1"></canvas>
-            </div>
-            <div class="canvas-actions" id="actions-1" style="display:none">
-                <button class="btn-secondary" onclick="downloadPNG(1)">↓ Download PNG</button>
-                <div class="swatches" id="swatches-1"></div>
-            </div>
+            <div id="placeholder-1" class="gen-placeholder"><div class="mini-spin"></div><span>Generating...</span></div>
+            <div class="canvas-shell" id="shell-1" style="display:none"><canvas id="canvas-1"></canvas></div>
+            <div class="canvas-actions" id="actions-1" style="display:none"><button class="btn-secondary" onclick="downloadPNG(1)">↓ Download PNG</button><div class="swatches" id="swatches-1"></div></div>
         </div>
-
         <div class="design-block" id="block-2">
             <div class="design-header">
-                <div><div class="design-name" id="name-2">Bold Brand</div><div class="design-desc" id="desc-2"></div></div>
-                <div class="design-tag" id="tag-2" style="color:#a855f7;background:rgba(168,85,247,0.15)">BOLD</div>
+                <div><div class="design-name" id="name-2">...</div><div class="design-desc" id="desc-2">...</div></div>
             </div>
-            <div id="placeholder-2" class="gen-placeholder"><div class="mini-spin"></div><span>Generating illustration...</span></div>
-            <div class="canvas-shell" id="shell-2" style="display:none">
-                <canvas id="canvas-2"></canvas>
-            </div>
-            <div class="canvas-actions" id="actions-2" style="display:none">
-                <button class="btn-secondary" onclick="downloadPNG(2)">↓ Download PNG</button>
-                <div class="swatches" id="swatches-2"></div>
-            </div>
+            <div id="placeholder-2" class="gen-placeholder"><div class="mini-spin"></div><span>Generating...</span></div>
+            <div class="canvas-shell" id="shell-2" style="display:none"><canvas id="canvas-2"></canvas></div>
+            <div class="canvas-actions" id="actions-2" style="display:none"><button class="btn-secondary" onclick="downloadPNG(2)">↓ Download PNG</button><div class="swatches" id="swatches-2"></div></div>
         </div>
 
-        <div class="divider"></div>
         <div class="export-zone">
             <div class="export-title">Export All 3 Labels</div>
-            <div class="export-desc">Print-ready PDF &nbsp;·&nbsp; Landscape &nbsp;·&nbsp; 200 × 50 mm &nbsp;·&nbsp; 3 pages &nbsp;·&nbsp; With legal text zone</div>
-            <button class="btn-pdf" onclick="exportPDF()">📄 &nbsp;Download PDF — All 3 Labels</button>
+            <button class="btn-pdf" onclick="exportPDF()">📄 &nbsp;Download PDF</button>
         </div>
     </div>
-
 </div>
 
 <script>
-// ══════════════════════════════════════════════════════════════
-// STATE
-// ══════════════════════════════════════════════════════════════
-let state = {
-    companyName: '', companyDesc: '', companyUrl: '', companyColor: '#2563eb',
-    logoImg: null, logoData: null,
-    brandData: null,   // from /api/analyze-brand
-    images: [null, null, null], // base64 from /api/generate-image
-    qrImg: null,
-    canvases: [null, null, null]
-};
+let state = { companyName: '', companyDesc: '', companyUrl: '', companyColor: '#2563eb', logoImg: null, brandData: null, images: [null, null, null], qrImg: null, canvases: [null, null, null] };
+const CW = 1000, CH = 250, MAIN_W = 700, INFO_W = 300;
 
-// Canvas dimensions: 1000×250px = 200mm×50mm @ 5px/mm
-// LAYOUT (matching reference photos):
-//   LEFT  zone (0 to LEGAL_W=360px = 72mm) = legal text + chem table
-//   RIGHT zone (CZ_X=360 to CW=1000)       = creative brand area (640px = 128mm)
-const CW = 1000, CH = 250;
-const LEGAL_W = 360;
-const CZ_X = LEGAL_W;
-const CZ_W = CW - CZ_X;  // 640
-const MAIN_W = CZ_W;
-
-// ══════════════════════════════════════════════════════════════
-// LOGO UPLOAD
-// ══════════════════════════════════════════════════════════════
 document.getElementById('inp-color').addEventListener('input', function() {
     document.getElementById('color-swatch').style.background = this.value;
-    document.getElementById('color-info').textContent = this.value + ' · AI will override with real brand color';
+    document.getElementById('color-info').textContent = this.value;
     state.companyColor = this.value;
 });
 
@@ -425,885 +247,293 @@ document.getElementById('logo-input').addEventListener('change', function(e) {
     reader.onload = (ev) => {
         const img = new Image();
         img.onload = () => {
-            // Render logo onto canvas for consistent sizing
-            const c = document.createElement('canvas');
-            c.width = 360; c.height = 220;
-            const ctx = c.getContext('2d');
+            const c = document.createElement('canvas'); c.width = 360; c.height = 220; const ctx = c.getContext('2d');
             const sc = Math.min(340 / img.width, 200 / img.height);
             ctx.drawImage(img, (360 - img.width*sc)/2, (220 - img.height*sc)/2, img.width*sc, img.height*sc);
-            state.logoData = c.toDataURL('image/png');
-            state.logoImg = new Image();
-            state.logoImg.src = state.logoData;
-            document.getElementById('logo-preview').src = state.logoData;
+            state.logoImg = new Image(); state.logoImg.src = c.toDataURL('image/png');
+            document.getElementById('logo-preview').src = state.logoImg.src;
             document.getElementById('logo-drop').classList.add('ready');
-            document.getElementById('logo-hint').textContent = '✓ Logo ready — appears on all labels';
         };
         img.src = ev.target.result;
     };
     reader.readAsDataURL(file);
 });
 
-// ══════════════════════════════════════════════════════════════
-// MAIN GENERATION FLOW
-// ══════════════════════════════════════════════════════════════
-async function startGeneration() {
-    const name = document.getElementById('inp-name').value.trim();
-    if (!name) { showError('Enter company name first.'); return; }
-
-    state.companyName = name;
-    state.companyDesc = document.getElementById('inp-desc').value.trim();
-    state.companyUrl  = document.getElementById('inp-url').value.trim();
-    state.companyColor = document.getElementById('inp-color').value;
-    state.images = [null, null, null];
-    state.qrImg = null;
-
-    hideError();
-    showView('loading');
-    setStep(0, 'active');
-
-    try {
-        // STEP 1: Brand analysis
-        setStep(0, 'active');
-        setTitle('Scanning brand identity...', 'Claude is analyzing your website & designing label concepts');
-        const brandRes = await apiFetch('/api/analyze-brand', {
-            name: state.companyName,
-            description: state.companyDesc,
-            url: state.companyUrl,
-            color: state.companyColor
-        });
-        state.brandData = brandRes;
-        setStep(0, 'done'); setStep(1, 'done');
-
-        // STEP 2–4: Generate 3 illustrations in parallel, pre-load each Image
-        setTitle('Generating label illustrations...', 'FAL.ai is creating your brand artwork (this takes 20–40s)');
-        const imgPromises = state.brandData.designs.map((d, i) => {
-            setStep(2 + i, 'active');
-            return apiFetch('/api/generate-image', { prompt: d.imagePrompt, designIndex: i })
-                .then(async r => {
-                    if (r.imageUrl) {
-                        // CRITICAL: actually load the image before storing it
-                        const img = new Image();
-                        img.src = r.imageUrl;
-                        try { await img.decode(); }
-                        catch (e) {
-                            // Fallback for browsers without decode()
-                            await new Promise((res, rej) => { img.onload = res; img.onerror = rej; });
-                        }
-                        state.images[i] = img;
-                        console.log(`✓ Image ${i+1} loaded (${img.width}×${img.height})`);
-                    } else {
-                        console.warn(`Image ${i+1} returned null from server`);
-                    }
-                    setStep(2 + i, 'done');
-                })
-                .catch(err => {
-                    console.error(`Image ${i+1} FAILED:`, err);
-                    setStep(2 + i, 'done');
-                });
-        });
-        await Promise.all(imgPromises);
-
-        // STEP 5: QR code
-        setStep(5, 'active');
-        setTitle('Fetching QR code...', '');
-        if (state.companyUrl) {
-            state.qrImg = await loadImage(`/api/qr?url=${encodeURIComponent(state.companyUrl)}`);
-        }
-        setStep(5, 'done');
-
-        // STEP 6: Render labels
-        setStep(6, 'active');
-        setTitle('Rendering labels...', '');
-        showView('preview');
-        populatePreviewMeta();
-        await document.fonts.ready;
-        await new Promise(r => setTimeout(r, 100));
-        for (let i = 0; i < 3; i++) {
-            renderLabel(i);
-            showLabelResult(i);
-        }
-        setStep(6, 'done');
-
-    } catch (err) {
-        console.error(err);
-        showView('input');
-        showError('Error: ' + err.message);
-    }
-}
-
-// ══════════════════════════════════════════════════════════════
-// LABEL RENDERING — 3 professional layouts
-// References: Turancar, HSH Sport, Livesport, KA-Glasses
-// ══════════════════════════════════════════════════════════════
-
-function drawQR(ctx, x, y, size, light) {
-    if (!state.qrImg) return;
-    if (light) {
-        ctx.fillStyle = '#ffffff';
-        rr(ctx, x - 3, y - 3, size + 6, size + 6, 3); ctx.fill();
-    }
-    ctx.drawImage(state.qrImg, x, y, size, size);
-}
-
-function renderLabel(idx) {
-    const canvas = document.getElementById('canvas-' + idx);
-    const design  = state.brandData.designs[idx];
-    canvas.width  = CW; canvas.height = CH;
-    const ctx     = canvas.getContext('2d');
-    const { bg, primary, text } = design;
-    const dark    = isDark(bg);
-    const name    = (state.companyName || 'COMPANY').toUpperCase();
-    const tagline = (design.tagline || '').toUpperCase();
-    const urlClean = (state.companyUrl || '').replace(/^https?:\/\/(www\.)?/, '').replace(/\/$/, '');
-    const hasIllus = !!state.images[idx];
-
-    // Display font selected by Claude per design (fallback to Barlow Condensed)
-    const DISPLAY_FONT = `'${design.displayFont || 'Barlow Condensed'}', 'Barlow Condensed', Impact, sans-serif`;
-
-    // Clear full canvas first
-    ctx.fillStyle = '#ffffff';
-    ctx.fillRect(0, 0, CW, CH);
-
-    // ═══════════════ STEP 1: RENDER CREATIVE ZONE FIRST ═══════════
-    // Translate so all creative code thinks it's drawing at (0,0)
-    ctx.save();
-    ctx.translate(CZ_X, 0);
-
-    // Auto-fit font size to a max width - bigger ceiling for shelf impact
-    function fitFont(weight, maxPx, maxW, family) {
-        const fam = family || DISPLAY_FONT;
-        for (let s = maxPx; s >= 20; s -= 2) {
-            ctx.font = `${weight} ${s}px ${fam}`;
-            if (ctx.measureText(name).width <= maxW) return s;
-        }
-        return 20;
-    }
-
-    function drawIllus(x, y, w, h, clip) {
-        const img = state.images[idx];
-        if (!img || !img.complete || img.naturalWidth === 0) return false;
-        if (clip) {
-            ctx.save();
-            ctx.beginPath(); ctx.rect(x, y, w, h); ctx.clip();
-            ctx.drawImage(img, x, y, w, h);
-            ctx.restore();
-        } else {
-            ctx.drawImage(img, x, y, w, h);
-        }
-        return true;
-    }
-
-    // ════════════════════════════════════════════════════════════════
-    // LAYOUT 0 — "TYPOGRAPHY BOLD"
-    // Like Livesport / HSH Sport red / Turancar text:
-    // Brand color fills right ~60%, huge company name + tagline,
-    // URL prominent. Left ~40% has illustration OR geometric accent.
-    // No AI illustration needed — works perfectly typography-only.
-    // ════════════════════════════════════════════════════════════════
-    if (idx === 0) {
-        // Background — brand color right, slightly lighter left
-        ctx.fillStyle = bg; ctx.fillRect(0, 0, MAIN_W, CH);
-
-        const ACCENT_X = Math.round(MAIN_W * 0.35); // 245px split
-
-        if (hasIllus) {
-            // Illustration clips into left section
-            drawIllus(0, 0, ACCENT_X + 80, CH, true);
-            // Fade right edge of illustration into bg
-            const fade = ctx.createLinearGradient(ACCENT_X - 30, 0, ACCENT_X + 60, 0);
-            fade.addColorStop(0, 'rgba(0,0,0,0)'); fade.addColorStop(1, bg);
-            ctx.fillStyle = fade; ctx.fillRect(ACCENT_X - 30, 0, 90, CH);
-        } else {
-            // No illustration — rich geometric fallback
-            ctx.save();
-            // Background gradient overlay
-            const bgGrd = ctx.createLinearGradient(0, 0, MAIN_W, CH);
-            bgGrd.addColorStop(0, alpha(primary, dark ? 0.25 : 0.12));
-            bgGrd.addColorStop(0.5, alpha(primary, dark ? 0.08 : 0.04));
-            bgGrd.addColorStop(1, 'rgba(0,0,0,0)');
-            ctx.fillStyle = bgGrd; ctx.fillRect(0, 0, MAIN_W, CH);
-
-            // Large brand-color circle (off-canvas, peeks in)
-            ctx.beginPath();
-            ctx.arc(ACCENT_X - 60, CH / 2, 180, 0, Math.PI * 2);
-            ctx.fillStyle = alpha(primary, dark ? 0.35 : 0.18); ctx.fill();
-
-            // Diagonal stripe
-            ctx.beginPath();
-            ctx.moveTo(0, 0); ctx.lineTo(ACCENT_X + 60, 0);
-            ctx.lineTo(ACCENT_X - 30, CH); ctx.lineTo(0, CH);
-            ctx.closePath();
-            ctx.fillStyle = alpha(primary, dark ? 0.42 : 0.22); ctx.fill();
-
-            // Small accent dots scattered
-            for (let i = 0; i < 12; i++) {
-                ctx.beginPath();
-                ctx.arc(20 + i * 18 + Math.random() * 10, 30 + (i % 4) * 50, 3 + Math.random() * 4, 0, Math.PI * 2);
-                ctx.fillStyle = alpha(primary, 0.5 + Math.random() * 0.3);
-                ctx.fill();
-            }
-            ctx.restore();
-        }
-
-        // Right text zone
-        const TX = ACCENT_X + 20;
-        const TW = MAIN_W - TX - 14;
-
-        // Brand name — max size, left-aligned
-        const fs = fitFont(900, 110, TW);
-        ctx.font = `900 ${fs}px ${DISPLAY_FONT}`;
-        ctx.fillStyle = dark ? '#ffffff' : '#111111';
-        const nameY = Math.round(CH * 0.52 + fs * 0.38);
-        ctx.fillText(name, TX, nameY);
-
-        // Tagline — smaller, brand color
-        ctx.font = `700 13px 'Barlow Condensed', sans-serif`;
-        ctx.fillStyle = primary;
-        ctx.fillText(tagline, TX, nameY + 18);
-
-        // Top + bottom edge rules
-        ctx.fillStyle = primary;
-        ctx.fillRect(0, 0, MAIN_W, 4);
-        ctx.fillRect(0, CH - 4, MAIN_W, 4);
-
-        // QR — bottom left
-        drawQR(ctx, 10, CH - 58, 46, !dark);
-    }
-
-    // ════════════════════════════════════════════════════════════════
-    // LAYOUT 1 — "PRODUCT HERO"
-    // Like Turancar bus / HSH watch / KA-Glasses:
-    // Illustration fills right ~55%, brand name + logo zone left ~45%.
-    // Clean split — the product IS the design.
-    // ════════════════════════════════════════════════════════════════
-    else if (idx === 1) {
-        const SPLIT = Math.round(MAIN_W * 0.44); // 308px — text left, illus right
-
-        // Full bg
-        ctx.fillStyle = bg; ctx.fillRect(0, 0, MAIN_W, CH);
-
-        // Illustration fills right portion, slight fade on left edge
-        if (hasIllus) {
-            drawIllus(SPLIT - 60, 0, MAIN_W - SPLIT + 60, CH, true);
-            const fade = ctx.createLinearGradient(SPLIT - 60, 0, SPLIT + 30, 0);
-            fade.addColorStop(0, bg); fade.addColorStop(1, 'rgba(0,0,0,0)');
-            ctx.fillStyle = fade; ctx.fillRect(SPLIT - 60, 0, 90, CH);
-        } else {
-            // Rich fallback — gradient + shapes + accent dots
-            ctx.save();
-            ctx.beginPath(); ctx.rect(SPLIT, 0, MAIN_W - SPLIT, CH); ctx.clip();
-
-            // Background radial gradient
-            const radGrd = ctx.createRadialGradient(
-                MAIN_W * 0.78, CH * 0.45, 30,
-                MAIN_W * 0.78, CH * 0.45, MAIN_W * 0.5
-            );
-            radGrd.addColorStop(0, alpha(primary, dark ? 0.35 : 0.18));
-            radGrd.addColorStop(1, 'rgba(0,0,0,0)');
-            ctx.fillStyle = radGrd; ctx.fillRect(SPLIT, 0, MAIN_W - SPLIT, CH);
-
-            // Large brand-color circle (partial, peeks in)
-            ctx.beginPath();
-            ctx.arc(MAIN_W * 0.85, CH * 0.5, CH * 0.55, 0, Math.PI * 2);
-            ctx.fillStyle = alpha(primary, dark ? 0.28 : 0.14); ctx.fill();
-
-            // Inner circle for depth
-            ctx.beginPath();
-            ctx.arc(MAIN_W * 0.85, CH * 0.5, CH * 0.35, 0, Math.PI * 2);
-            ctx.fillStyle = alpha(primary, dark ? 0.40 : 0.22); ctx.fill();
-
-            // Diagonal stripes
-            ctx.strokeStyle = alpha(primary, dark ? 0.18 : 0.10); ctx.lineWidth = 1.2;
-            for (let x = SPLIT - CH; x < MAIN_W + CH; x += 28) {
-                ctx.beginPath(); ctx.moveTo(x, 0); ctx.lineTo(x + CH, CH); ctx.stroke();
-            }
-
-            // Scattered accent dots
-            for (let i = 0; i < 14; i++) {
-                const px = SPLIT + 20 + Math.random() * (MAIN_W - SPLIT - 40);
-                const py = 15 + Math.random() * (CH - 30);
-                ctx.beginPath();
-                ctx.arc(px, py, 2 + Math.random() * 4, 0, Math.PI * 2);
-                ctx.fillStyle = alpha(primary, 0.4 + Math.random() * 0.4);
-                ctx.fill();
-            }
-            ctx.restore();
-        }
-
-        // Left text zone
-        const TX = 12;
-        const TW = SPLIT - 20;
-
-        // Brand name — vertically centered, large
-        const fs = fitFont(900, 100, TW);
-        const nameY = Math.round(CH * 0.48 + fs * 0.38);
-        ctx.font = `900 ${fs}px ${DISPLAY_FONT}`;
-        ctx.fillStyle = dark ? '#ffffff' : '#111111';
-        ctx.fillText(name, TX, nameY);
-
-        // Brand color underline
-        const nw = ctx.measureText(name).width;
-        ctx.fillStyle = primary;
-        ctx.fillRect(TX, nameY + 6, Math.min(nw, TW), 3.5);
-
-        // Tagline
-        ctx.font = `700 12px 'Barlow Condensed', sans-serif`;
-        ctx.fillStyle = primary;
-        ctx.fillText(tagline, TX, nameY + 22);
-
-        // QR — bottom right corner of main zone
-        drawQR(ctx, MAIN_W - 54, CH - 56, 44, dark);
-
-        // Thin top+bottom border
-        ctx.fillStyle = primary;
-        ctx.fillRect(0, 0, MAIN_W, 3.5);
-        ctx.fillRect(0, CH - 3.5, MAIN_W, 3.5);
-    }
-
-    // ════════════════════════════════════════════════════════════════
-    // LAYOUT 2 — "DARK / INVERTED"
-    // Like HSH Sport dark / Turancar black / KA-Glasses dark:
-    // Deep dark bg (or brand-as-bg), illustration fills zone,
-    // brand name large and white. Dramatic.
-    // ════════════════════════════════════════════════════════════════
-    else {
-        // Full bg
-        ctx.fillStyle = bg; ctx.fillRect(0, 0, MAIN_W, CH);
-
-        if (hasIllus) {
-            // Full-bleed illustration
-            drawIllus(0, 0, MAIN_W, CH, false);
-            // Scrim on LEFT for text readability
-            const scrim = ctx.createLinearGradient(0, 0, MAIN_W * 0.55, 0);
-            scrim.addColorStop(0, alpha(bg, 0.92));
-            scrim.addColorStop(0.7, alpha(bg, 0.55));
-            scrim.addColorStop(1, 'rgba(0,0,0,0)');
-            ctx.fillStyle = scrim; ctx.fillRect(0, 0, MAIN_W * 0.55, CH);
-        } else {
-            // Rich fallback for dark/inverted layout — gradient + shapes + atmosphere
-            ctx.fillStyle = bg; ctx.fillRect(0, 0, MAIN_W, CH);
-
-            // Radial glow from right side
-            const radGrd = ctx.createRadialGradient(
-                MAIN_W * 0.75, CH * 0.5, 20,
-                MAIN_W * 0.75, CH * 0.5, MAIN_W * 0.7
-            );
-            radGrd.addColorStop(0, alpha(primary, 0.55));
-            radGrd.addColorStop(0.5, alpha(primary, 0.18));
-            radGrd.addColorStop(1, 'rgba(0,0,0,0)');
-            ctx.fillStyle = radGrd; ctx.fillRect(0, 0, MAIN_W, CH);
-
-            // Diagonal grain
-            ctx.strokeStyle = alpha(primary, 0.08); ctx.lineWidth = 1;
-            for (let x = -CH; x < MAIN_W + CH; x += 18) {
-                ctx.beginPath(); ctx.moveTo(x, 0); ctx.lineTo(x + CH, CH); ctx.stroke();
-            }
-
-            // Big brand-color circle on right
-            ctx.beginPath();
-            ctx.arc(MAIN_W * 0.78, CH * 0.5, CH * 0.55, 0, Math.PI * 2);
-            ctx.fillStyle = alpha(primary, 0.32); ctx.fill();
-
-            // Inner circle for depth
-            ctx.beginPath();
-            ctx.arc(MAIN_W * 0.78, CH * 0.5, CH * 0.32, 0, Math.PI * 2);
-            ctx.fillStyle = alpha(primary, 0.5); ctx.fill();
-
-            // Geometric accent shapes (bottom-right)
-            ctx.save();
-            ctx.beginPath();
-            ctx.moveTo(MAIN_W * 0.72, CH); ctx.lineTo(MAIN_W, CH * 0.3);
-            ctx.lineTo(MAIN_W, CH); ctx.closePath();
-            ctx.fillStyle = alpha(primary, 0.42); ctx.fill();
-            ctx.beginPath();
-            ctx.moveTo(MAIN_W * 0.82, CH); ctx.lineTo(MAIN_W, CH * 0.6);
-            ctx.lineTo(MAIN_W, CH); ctx.closePath();
-            ctx.fillStyle = alpha(primary, 0.65); ctx.fill();
-            ctx.restore();
-
-            // Scattered accent dots
-            for (let i = 0; i < 16; i++) {
-                const px = 30 + Math.random() * (MAIN_W - 60);
-                const py = 15 + Math.random() * (CH - 30);
-                ctx.beginPath();
-                ctx.arc(px, py, 1.5 + Math.random() * 3.5, 0, Math.PI * 2);
-                ctx.fillStyle = alpha(primary, 0.35 + Math.random() * 0.45);
-                ctx.fill();
-            }
-        }
-
-        // Left-side text
-        const TX = 14;
-        const TW = Math.round(MAIN_W * 0.55) - 20;
-
-        // Large company name
-        const fs = fitFont(900, 110, TW);
-        const nameY = Math.round(CH * 0.50 + fs * 0.38);
-        ctx.font = `900 ${fs}px ${DISPLAY_FONT}`;
-        ctx.fillStyle = dark ? '#ffffff' : '#111111';
-        ctx.shadowColor = 'rgba(0,0,0,0.6)'; ctx.shadowBlur = 8;
-        ctx.fillText(name, TX, nameY);
-        ctx.shadowBlur = 0;
-
-        // Accent rule
-        const nw3 = ctx.measureText(name).width;
-        ctx.fillStyle = primary;
-        ctx.fillRect(TX, nameY + 6, Math.min(nw3, TW), 4);
-
-        // Tagline
-        ctx.font = `600 12px 'Barlow Condensed', sans-serif`;
-        ctx.fillStyle = alpha(primary, 0.9);
-        ctx.fillText(tagline, TX, nameY + 22);
-
-        // QR — bottom right
-        drawQR(ctx, MAIN_W - 56, CH - 58, 46, true);
-
-        // Brand-color top bar
-        ctx.fillStyle = primary;
-        ctx.fillRect(0, 0, MAIN_W, 4);
-    }
-
-    // ═══════════════ END CREATIVE — restore translate ═══════════════
-    ctx.restore();
-
-    // ═══════════════════════════════════════════════════════════════════════
-    // STEP 2: LEGAL ZONE on LEFT side (x: 0 to LEGAL_W=290)
-    // Matches Turancar / HSH / Livesport / KA-Glasses reference photos
-    // Layout: paragraphs col + vertical chemical table
-    // ═══════════════════════════════════════════════════════════════════════
-    ctx.fillStyle = '#ffffff';
-    ctx.fillRect(0, 0, LEGAL_W, CH);
-
-    // Right border between legal & creative zones
-    ctx.strokeStyle = '#c8c8c8'; ctx.lineWidth = 0.75;
-    ctx.beginPath(); ctx.moveTo(LEGAL_W, 0); ctx.lineTo(LEGAL_W, CH); ctx.stroke();
-
-    // ── PARAGRAPH COLUMN ─────────────────────────────────────────
-    const COL_SPLIT = 212;            // divider between text and chem table (wider paragraph now)
-    const LX2 = 8;                    // text left x
-    const COL1_W = 198;               // wrap width (~24% wider than before)
-    const FS_BODY = 3.5;
-    const FS_BOLD = 3.8;
-    const LH_BODY = 4.6;
-    const LH_BOLD = 5.0;
-    let cy = 10;
-
-    // Helper: regular text block, optional wrap
-    function printBlock(text, bold, wrap) {
-        ctx.font = bold
-            ? `bold ${FS_BOLD}px Arial, sans-serif`
-            : `normal ${FS_BODY}px Arial, sans-serif`;
-        ctx.fillStyle = bold ? '#111' : '#222';
-        const rawLines = text.split('\n');
-        for (const raw of rawLines) {
-            const lines = wrap ? wrapText(ctx, raw, COL1_W) : [raw];
-            for (const ln of lines) {
-                if (cy > CH - 20) return;
-                ctx.fillText(ln, LX2, cy);
-                cy += bold ? LH_BOLD : LH_BODY;
-            }
-        }
-    }
-
-    // Helper: BOLD label + regular value on the SAME line (wraps to next lines in regular)
-    function printLabeled(boldLabel, regularValue) {
-        // Draw bold label
-        ctx.font = `bold ${FS_BOLD}px Arial, sans-serif`;
-        ctx.fillStyle = '#111';
-        ctx.fillText(boldLabel, LX2, cy);
-        const labelW = ctx.measureText(boldLabel).width;
-
-        // Switch to regular for value
-        ctx.font = `normal ${FS_BODY}px Arial, sans-serif`;
-        ctx.fillStyle = '#222';
-
-        // Fit as much value as possible on the same line as the label
-        const firstLineMaxW = COL1_W - labelW - 3;
-        const words = regularValue.split(' ');
-        let firstLine = '';
-        let i = 0;
-        for (; i < words.length; i++) {
-            const test = firstLine ? firstLine + ' ' + words[i] : words[i];
-            if (ctx.measureText(test).width <= firstLineMaxW) {
-                firstLine = test;
-            } else {
-                break;
-            }
-        }
-
-        if (firstLine) ctx.fillText(' ' + firstLine, LX2 + labelW, cy);
-        cy += LH_BODY;
-
-        // Remaining words wrap to full-width subsequent lines
-        if (i < words.length) {
-            const restLines = wrapText(ctx, words.slice(i).join(' '), COL1_W);
-            for (const ln of restLines) {
-                if (cy > CH - 22) return;
-                ctx.fillText(ln, LX2, cy);
-                cy += LH_BODY;
-            }
-        }
-    }
-
-    // ─── LEGAL TEXT — matches reference photo 1:1 ─────────────
-
-    // Bold product header
-    printBlock('Neperlivá pramenitá voda', true, false);
-    cy += 0.5;
-
-    // Product description paragraph (regular weight, wraps)
-    printBlock(
-        'Přírodní pramenitá voda z srdce Štýrska (Steiermark). ' +
-        'Nedotčená příroda, filtrace přes vápencové horniny ' +
-        'Alp a trvalé přísné kontroly zaručují neustále špičkovou kvalitu.',
-        false, true
-    );
-    cy += 3;
-
-    // Composition
-    printLabeled('Složení:', 'Neperlivá pramenitá voda');
-    cy += 3;
-
-    // Storage / source group — bold label + regular value, same line
-    printLabeled('Minimální trvanlivost:', 'Viz potisk na lahvi.');
-    printLabeled('Skladování:', 'Chraňte před teplem a přímým slunečním zářením.');
-    printLabeled('Název a místo pramene:', 'Seisensteinquelle, Wildalpen, Rakousko');
-    cy += 3;
-
-    // Manufacturer block (regular weight throughout)
-    printBlock('Vyrobeno a plněno / země původu:', false, false);
-    printBlock('Wildalpen Wasserverwertungs GmbH', false, false);
-    printBlock('Säusenbach 166, A-8924 Wildalpen, Rakousko', false, true);
-    cy += 2.5;
-
-    // Distributor block — ELYSSIA s.r.o. is the actual CZ distributor
-    // (matches the reference bottle template the user is producing)
-    printLabeled('Distributor:', 'ELYSSIA s.r.o.');
-    printBlock('Zenklova 24/54, 180 00 Praha 8', false, false);
-    printBlock('Česká republika', false, false);
-    printBlock('www.elyssia.cz', false, false);
-
-    // Volume — large, bottom-left
-    ctx.fillStyle = '#111';
-    ctx.font = `bold 14px Arial, sans-serif`;
-    ctx.fillText('0,33 l', LX2, CH - 7);
-
-    // PET recycling triangle (hand-drawn with canvas lines)
-    const ptX = LX2 + 54, ptY = CH - 20;
-    const ptS = 14; // size
-    ctx.strokeStyle = '#222'; ctx.lineWidth = 1.2;
-    ctx.beginPath();
-    // Triangle pointing up with rounded feel
-    ctx.moveTo(ptX, ptY + ptS);
-    ctx.lineTo(ptX + ptS * 0.5, ptY);
-    ctx.lineTo(ptX + ptS, ptY + ptS);
-    ctx.closePath(); ctx.stroke();
-    // Arrow on bottom-right leg
-    ctx.beginPath(); ctx.moveTo(ptX + ptS - 2, ptY + ptS - 4); ctx.lineTo(ptX + ptS, ptY + ptS); ctx.lineTo(ptX + ptS - 5, ptY + ptS); ctx.stroke();
-    ctx.fillStyle = '#222'; ctx.font = `bold 4px Arial`;
-    ctx.textAlign = 'center';
-    ctx.fillText('01', ptX + ptS * 0.5, ptY + ptS - 3);
-    ctx.font = `bold 4.5px Arial`;
-    ctx.fillText('PET', ptX + ptS * 0.5, ptY + ptS + 5);
-    ctx.textAlign = 'left';
-
-    // Vertical divider between text col and chem table
-    ctx.strokeStyle = '#d0d0d0'; ctx.lineWidth = 0.5;
-    ctx.beginPath(); ctx.moveTo(COL_SPLIT, 4); ctx.lineTo(COL_SPLIT, CH - 4); ctx.stroke();
-
-    // ──────────────────────────────────────────────
-    // RIGHT CHEMICAL TABLE — rotated 90° (matching photo)
-    // Each row is a horizontal strip, text rotated -90°
-    // ──────────────────────────────────────────────
-    // From photo (top to bottom when reading rotated):
-    // Bottom sub-table (left in photo, under pH):
-    //   pH hodnota: 7,99 | Kyslík (Oxygen): 9,2 mg/l | Sodík (Sodium): 2,0 mg/l
-    //   Vápník (Calcium): 45 mg/l | Hořčík (Magnesium): 13 mg/l
-    //   Hydrogenuhličitany (Hydrogen carbonate): 170 mg/l
-    // Top sub-table (right in photo):
-    //   Draslík (Potassium): 0,4 mg/l | Chloridy (Chloride): 2,6 mg/l
-    //   Dusitany (Nitrite): 0,01 mg/l | Sírany (Sulfate): 11 mg/l
-    //   Fluoridy (Fluoride): 0,1 mg/l
-
-    // We draw a vertical table: each "row" is a band across the zone width,
-    // with two text lines rotated -90°: parameter name and value.
-    const chemRows = [
-        { param: 'pH hodnota',                    unit: '',      val: '7,99'  },
-        { param: 'Kyslík (Oxygen)',                unit: 'mg/l',  val: '9,2'  },
-        { param: 'Sodík (Sodium)',                 unit: 'mg/l',  val: '2,0'  },
-        { param: 'Vápník (Calcium)',               unit: 'mg/l',  val: '45'   },
-        { param: 'Hořčík (Magnesium)',             unit: 'mg/l',  val: '13'   },
-        { param: 'Hydrogenuhličitany (Hydrogen carbonate)', unit: 'mg/l', val: '170' },
-        { param: 'Draslík (Potassium)',            unit: 'mg/l',  val: '0,4'  },
-        { param: 'Chloridy (Chloride)',            unit: 'mg/l',  val: '2,6'  },
-        { param: 'Dusitany (Nitrite)',             unit: 'mg/l',  val: '0,01' },
-        { param: 'Sírany (Sulfate)',               unit: 'mg/l',  val: '11'   },
-        { param: 'Fluoridy (Fluoride)',            unit: 'mg/l',  val: '0,1'  },
-    ];
-
-    // ── CHEMICAL TABLE — 2 sub-columns with black borders ────────
-    // Sub-table 1: 6 major minerals
-    // Sub-table 2: 5 trace minerals
-    const majorRows = chemRows.slice(0, 6);   // pH, Kyslík, Sodík, Vápník, Hořčík, Hydrogenuhličitany
-    const traceRows = chemRows.slice(6, 11);  // Draslík, Chloridy, Dusitany, Sírany, Fluoridy
-
-    const TABLE_START_X = COL_SPLIT + 2;
-    const TABLE_END_X   = LEGAL_W - 2;
-    const TABLE_W_TOTAL = TABLE_END_X - TABLE_START_X;
-    const GAP_BETWEEN   = 4;                          // visible gap between the 2 sub-tables
-    const TABLE_Y       = 2;
-    const TABLE_H       = CH - 4;
-
-    // Each band same width; 11 total bands across both sub-tables
-    const bandW       = (TABLE_W_TOTAL - GAP_BETWEEN) / 11;
-    const subT1_X     = TABLE_START_X;
-    const subT1_W     = majorRows.length * bandW;     // 6 bands
-    const subT2_X     = subT1_X + subT1_W + GAP_BETWEEN;
-    const subT2_W     = traceRows.length * bandW;     // 5 bands
-
-    function drawSubTable(startX, totalW, rows) {
-        // Black outer border
-        ctx.strokeStyle = '#000';
-        ctx.lineWidth   = 0.9;
-        ctx.strokeRect(startX, TABLE_Y, totalW, TABLE_H);
-
-        const bw = totalW / rows.length;
-
-        for (let j = 0; j < rows.length; j++) {
-            const row    = rows[j];
-            const bandX  = startX + j * bw;
-            const bandCX = bandX + bw / 2;
-
-            // Black internal band separator
-            if (j > 0) {
-                ctx.strokeStyle = '#000';
-                ctx.lineWidth   = 0.45;
-                ctx.beginPath();
-                ctx.moveTo(bandX, TABLE_Y + 0.5);
-                ctx.lineTo(bandX, TABLE_Y + TABLE_H - 0.5);
-                ctx.stroke();
-            }
-
-            // Rotated text: "ParamName: value mg/l" — param first, value after
-            ctx.save();
-            ctx.translate(bandCX, CH - 5);
-            ctx.rotate(-Math.PI / 2);
-
-            const valStr  = row.unit ? `${row.val} ${row.unit}` : row.val;
-            const fullStr = `${row.param}: ${valStr}`;
-
-            ctx.font      = `normal 3.9px Arial, sans-serif`;
-            ctx.fillStyle = '#000';
-            ctx.textAlign = 'left';
-
-            // Truncate if too long for band height
-            const maxLen = TABLE_H - 8;
-            let displayStr = fullStr;
-            if (ctx.measureText(displayStr).width > maxLen) {
-                const shortParam = row.param.replace(/\s*\([^)]*\)/, '');
-                displayStr = `${shortParam}: ${valStr}`;
-            }
-
-            ctx.fillText(displayStr, 4, 0);
-            ctx.restore();
-        }
-    }
-
-    drawSubTable(subT1_X, subT1_W, majorRows);
-    drawSubTable(subT2_X, subT2_W, traceRows);
-
-    state.canvases[idx] = canvas;
-}
-
-// ══════════════════════════════════════════════════════════════
-// HELPERS
-// ══════════════════════════════════════════════════════════════
-function wrapText(ctx, text, maxW) {
-    const lines = [];
-    for (const paragraph of text.split('\n')) {
-        const words = paragraph.split(' ');
-        let line = '';
-        for (const w of words) {
-            const test = line ? line + ' ' + w : w;
-            if (ctx.measureText(test).width > maxW && line) {
-                lines.push(line); line = w;
-            } else { line = test; }
-        }
-        if (line) lines.push(line);
-    }
-    return lines;
-}
-
-function isDark(hex) {
-    try {
-        const { r, g, b } = H2R(hex);
-        return r * 0.299 + g * 0.587 + b * 0.114 < 140;
-    } catch { return true; }
-}
-
-function H2R(hex) {
-    const h = hex.replace('#', '');
-    return {
-        r: parseInt(h.substring(0, 2), 16),
-        g: parseInt(h.substring(2, 4), 16),
-        b: parseInt(h.substring(4, 6), 16)
-    };
-}
-
-function alpha(hex, a) {
-    try {
-        const { r, g, b } = H2R(hex);
-        return `rgba(${r},${g},${b},${a})`;
-    } catch { return `rgba(0,0,0,${a})`; }
-}
-
-function darken(hex, t) {
-    const { r, g, b } = H2R(hex);
-    const f = 1 - t;
-    return `#${[r, g, b].map(v => Math.round(v * f).toString(16).padStart(2, '0')).join('')}`;
-}
-
-function rr(ctx, x, y, w, h, r) {
-    ctx.beginPath();
-    ctx.moveTo(x + r, y); ctx.lineTo(x + w - r, y); ctx.arcTo(x + w, y, x + w, y + r, r);
-    ctx.lineTo(x + w, y + h - r); ctx.arcTo(x + w, y + h, x + w - r, y + h, r);
-    ctx.lineTo(x + r, y + h); ctx.arcTo(x, y + h, x, y + h - r, r);
-    ctx.lineTo(x, y + r); ctx.arcTo(x, y, x + r, y, r);
-    ctx.closePath();
-}
-
-function loadImage(src) {
-    return new Promise((resolve) => {
-        const img = new Image();
-        img.crossOrigin = 'anonymous';
-        img.onload = () => resolve(img);
-        img.onerror = () => resolve(null);
-        img.src = src;
-    });
-}
-
+// ─── BEZPEČNÝ FETCH (OCHRANA PROTI HTML PÁDŮM) ───
 async function apiFetch(endpoint, body) {
     const res = await fetch(endpoint, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(body)
     });
-    const data = await res.json();
-    if (!res.ok) throw new Error(data.error || 'API error ' + res.status);
+
+    const text = await res.text();
+    let data;
+    try {
+        data = JSON.parse(text);
+    } catch (err) {
+        throw new Error(`Naše aplikace dostala od serveru (Render) HTML stránku místo JSON dat. Pravděpodobně je nasazena špatná verze serveru. Zmáčkni CTRL+F5 a zkus to znovu.`);
+    }
+
+    if (!res.ok) throw new Error(data.error || 'Neznámá chyba serveru');
     return data;
 }
 
-// ══════════════════════════════════════════════════════════════
-// UI HELPERS
-// ══════════════════════════════════════════════════════════════
-function showView(v) {
-    ['input-view', 'loading-view', 'preview-view'].forEach(id => {
-        const el = document.getElementById(id);
-        if (id === v + '-view') {
-            el.style.display = v === 'loading' ? 'flex' : 'block';
-        } else {
-            el.style.display = 'none';
+async function startGeneration() {
+    const name = document.getElementById('inp-name').value.trim();
+    if (!name) { showError('Enter company name first.'); return; }
+
+    state.companyName = name; state.companyDesc = document.getElementById('inp-desc').value.trim();
+    state.companyUrl = document.getElementById('inp-url').value.trim(); state.companyColor = document.getElementById('inp-color').value;
+    state.images = [null, null, null]; state.qrImg = null;
+
+    hideError(); showView('loading'); setStep(0, 'active');
+
+    try {
+        setStep(0, 'active'); setTitle('Configuring brand identity...', 'Preparing design configurations');
+        state.brandData = await apiFetch('/api/analyze-brand', { name: state.companyName, description: state.companyDesc, url: state.companyUrl, color: state.companyColor });
+        setStep(0, 'done'); setStep(1, 'done');
+
+        setTitle('Generating label illustrations...', 'FAL.ai is creating artwork');
+        const imgPromises = state.brandData.designs.map((d, i) => {
+            setStep(2 + i, 'active');
+            return apiFetch('/api/generate-image', { prompt: d.imagePrompt, designIndex: i })
+                .then(r => { state.images[i] = r.imageUrl; setStep(2 + i, 'done'); })
+                .catch(err => { console.error(err); throw err; });
+        });
+        await Promise.all(imgPromises);
+
+        setStep(5, 'active'); setTitle('Fetching QR code...', '');
+        if (state.companyUrl) {
+            state.qrImg = await new Promise(res => {
+                const img = new Image(); img.crossOrigin = 'anonymous';
+                img.onload = () => res(img); img.onerror = () => res(null);
+                img.src = `/api/qr?url=${encodeURIComponent(state.companyUrl)}`;
+            });
         }
-    });
-}
+        setStep(5, 'done');
 
-function setStep(i, state) {
-    const el = document.getElementById('step-' + i);
-    if (!el) return;
-    el.className = 'lstep ' + state;
-    if (state === 'done') {
-        const dot = el.querySelector('.lstep-dot');
-        if (dot) dot.textContent = '';
-        el.innerHTML = '<div class="lstep-dot">✓</div>' + el.textContent.replace('✓', '');
+        setStep(6, 'active'); setTitle('Rendering labels...', ''); showView('preview'); populatePreviewMeta();
+        await document.fonts.ready; await new Promise(r => setTimeout(r, 100));
+        for (let i = 0; i < 3; i++) { renderLabel(i); showLabelResult(i); }
+        setStep(6, 'done');
+
+    } catch (err) {
+        showView('input');
+        showError(err.message);
     }
 }
 
-function setTitle(title, sub) {
-    document.getElementById('load-title').textContent = title;
-    if (sub) document.getElementById('load-sub').textContent = sub;
-}
+function renderLabel(idx) {
+    const canvas = document.getElementById('canvas-' + idx);
+    const design = state.brandData.designs[idx];
+    canvas.width = CW; canvas.height = CH; const ctx = canvas.getContext('2d');
+    const { bg, primary, text, accent } = design;
 
-function showError(msg) {
-    const b = document.getElementById('error-box');
-    b.textContent = msg; b.style.display = 'block';
-}
+    const isDark = (hex) => {
+        try { const h = hex.replace('#', ''); return (parseInt(h.substring(0,2),16)*0.299 + parseInt(h.substring(2,4),16)*0.587 + parseInt(h.substring(4,6),16)*0.114) < 140; } catch { return true; }
+    };
+    const dark = isDark(bg);
 
-function hideError() {
-    document.getElementById('error-box').style.display = 'none';
-}
+    ctx.fillStyle = bg; ctx.fillRect(0, 0, CW, CH);
 
-function showLabelResult(i) {
-    document.getElementById('placeholder-' + i).style.display = 'none';
-    document.getElementById('shell-' + i).style.display = 'block';
-    document.getElementById('actions-' + i).style.display = 'flex';
-    // Color swatches
-    const d = state.brandData.designs[i];
-    const sw = document.getElementById('swatches-' + i);
-    ['bg', 'primary', 'accent'].forEach(k => {
-        const div = document.createElement('div');
-        div.className = 'swatch';
-        div.style.background = d[k];
-        div.title = k + ': ' + d[k];
-        sw.appendChild(div);
-    });
-}
-
-function populatePreviewMeta() {
-    const bd = state.brandData;
-    document.getElementById('preview-meta').textContent =
-        (bd.industry ? bd.industry + ' · ' : '') + state.companyName + ' · 200 × 50 mm print-ready';
-
-    const chips = document.getElementById('brand-chips');
-    chips.innerHTML = '';
-    if (bd.slogan) chips.innerHTML += `<div class="chip">SLOGAN: <strong>"${bd.slogan}"</strong></div>`;
-    if (bd.industry) chips.innerHTML += `<div class="chip">INDUSTRY: <strong>${bd.industry}</strong></div>`;
-    if (bd.companyColor) chips.innerHTML += `<div class="chip">BRAND COLOR: <strong style="color:${bd.companyColor}">${bd.companyColor}</strong></div>`;
-
-    // Populate design names/descs
-    bd.designs.forEach((d, i) => {
-        document.getElementById('name-' + i).textContent = d.name;
-        document.getElementById('desc-' + i).textContent = d.styleDesc;
-    });
-}
-
-function resetToInput() {
-    showView('input');
-    state.brandData = null;
-    state.images = [null, null, null];
-    state.qrImg = null;
-    // Reset placeholders
-    [0, 1, 2].forEach(i => {
-        document.getElementById('placeholder-' + i).style.display = 'flex';
-        document.getElementById('shell-' + i).style.display = 'none';
-        document.getElementById('actions-' + i).style.display = 'none';
-        document.getElementById('swatches-' + i).innerHTML = '';
-    });
-    document.getElementById('brand-chips').innerHTML = '';
-    // Reset steps
-    for (let i = 0; i < 7; i++) setStep(i, '');
-}
-
-// ══════════════════════════════════════════════════════════════
-// DOWNLOAD / EXPORT
-// ══════════════════════════════════════════════════════════════
-function downloadPNG(i) {
-    const a = document.createElement('a');
-    a.download = `label_${i + 1}_${(state.companyName || 'label').replace(/\s+/g, '_')}.png`;
-    a.href = state.canvases[i].toDataURL('image/png');
-    a.click();
-}
-
-function exportPDF() {
-    if (!window.jspdf) { alert('PDF library still loading, wait 1 second and try again.'); return; }
-    const { jsPDF } = window.jspdf;
-    const doc = new jsPDF({ orientation: 'landscape', unit: 'mm', format: [200, 50] });
-    for (let i = 0; i < 3; i++) {
-        if (!state.canvases[i]) continue;
-        if (i > 0) doc.addPage([200, 50], 'landscape');
-        doc.addImage(state.canvases[i].toDataURL('image/jpeg', 0.95), 'JPEG', 0, 0, 200, 50);
+    if (state.images[idx]) {
+        const img = new Image(); img.src = state.images[idx];
+        ctx.drawImage(img, 0, 0, MAIN_W, CH);
+        const fadeGrd = ctx.createLinearGradient(MAIN_W * 0.55, 0, MAIN_W, 0);
+        fadeGrd.addColorStop(0, 'rgba(0,0,0,0)'); fadeGrd.addColorStop(1, dark ? 'rgba(0,0,0,0.75)' : 'rgba(255,255,255,0.85)');
+        ctx.fillStyle = fadeGrd; ctx.fillRect(0, 0, MAIN_W, CH);
     }
-    doc.save(`${(state.companyName || 'labels').replace(/\s+/g, '_')}_bottle_labels.pdf`);
+
+    const TX = state.logoImg ? 470 : 440;
+    ctx.font = `900 44px 'Barlow Condensed'`; ctx.fillStyle = text; ctx.fillText((state.companyName || 'COMPANY').toUpperCase(), TX, 108);
+    ctx.fillStyle = primary; ctx.fillRect(TX, 114, 80, 3);
+
+    if (state.logoImg) {
+        const sc = Math.min(100 / state.logoImg.width, 100 / state.logoImg.height) * 0.82;
+        ctx.drawImage(state.logoImg, 24 + (100 - state.logoImg.width*sc)/2, 30 + (100 - state.logoImg.height*sc)/2, state.logoImg.width*sc, state.logoImg.height*sc);
+    }
+
+    if (state.qrImg) {
+        ctx.fillStyle = '#ffffff'; ctx.fillRect(14, CH - 80, 68, 68);
+        ctx.drawImage(state.qrImg, 16, CH - 78, 64, 64);
+    }
+
+    // ═══════════════════════════════════════════════
+    // RIGHT ZONE — White legal text area (300px)
+    // ═══════════════════════════════════════════════
+    ctx.fillStyle = '#ffffff';
+    ctx.fillRect(MAIN_W, 0, INFO_W, CH);
+
+    // Left border of the white zone
+    ctx.strokeStyle = '#e0e0e0';
+    ctx.lineWidth = 1;
+    ctx.beginPath();
+    ctx.moveTo(MAIN_W, 0);
+    ctx.lineTo(MAIN_W, CH);
+    ctx.stroke();
+
+    // ── TEXTOVÁ ČÁST (Levá strana bloku) ──
+    const leftX = MAIN_W + 14;
+    let currentY = 20;
+    ctx.fillStyle = '#000000';
+    ctx.textBaseline = 'alphabetic';
+
+    // Pomocná funkce na vykreslení textu s limitovanou šířkou proti přetečení
+    function renderTextLine(txt, isBold, yOffset) {
+        ctx.font = `${isBold ? 'bold' : 'normal'} 7.5px 'Arial', sans-serif`;
+        ctx.fillText(txt, leftX, currentY, 190);
+        currentY += yOffset;
+    }
+
+    function renderMixedLine(boldText, normalText, yOffset) {
+        ctx.font = `bold 7.5px 'Arial', sans-serif`;
+        ctx.fillText(boldText, leftX, currentY);
+        const boldWidth = ctx.measureText(boldText + " ").width;
+        ctx.font = `normal 7.5px 'Arial', sans-serif`;
+        ctx.fillText(normalText, leftX + boldWidth, currentY, 190 - boldWidth);
+        currentY += yOffset;
+    }
+
+    renderTextLine("Neperlivá pramenitá voda", true, 11);
+    renderTextLine("Přírodní pramenitá voda ze srdce Štýrska (Steiermark).", false, 11);
+    renderTextLine("Nedotčená příroda, filtrace přes vápencové horniny", false, 11);
+    renderTextLine("Alp a trvalé přísné kontroly zaručují neustále", false, 11);
+    renderTextLine("špičkovou kvalitu.", false, 18);
+
+    renderMixedLine("Složení:", "Neperlivá pramenitá voda", 18);
+
+    renderMixedLine("Minimální trvanlivost:", "Viz potisk na lahvi.", 11);
+    renderMixedLine("Skladování:", "Chraňte před teplem a přímým", 11);
+    renderTextLine("slunečním zářením.", false, 11);
+    renderMixedLine("Název a místo pramene:", "Seisensteinquelle,", 11);
+    renderTextLine("Wildalpen, Rakousko", false, 18);
+
+    renderTextLine("Vyrobeno a plněno / země původu:", true, 11);
+    renderTextLine("Wildalpen Wasserverwertungs GmbH", false, 11);
+    renderTextLine("Säusenbach 166, A-8924 Wildalpen, Rakousko", false, 18);
+
+    renderMixedLine("Distributor:", "ELYSSIA s.r.o.", 11);
+    renderTextLine("Zenklova 24/54, 180 00 Praha 8", false, 11);
+    renderTextLine("Česká republika", false, 11);
+    renderTextLine("www.elyssia.cz", false, 24);
+
+    // 0,33 l (Větší font, levý dolní roh)
+    ctx.font = "bold 26px 'Arial', sans-serif";
+    ctx.fillText("0,33 l", leftX, 235);
+
+    // PET Logo
+    const petX = leftX + 130;
+    const petY = 226;
+    ctx.lineWidth = 2.5;
+    ctx.strokeStyle = '#000000';
+
+    // Trojúhelník
+    ctx.beginPath();
+    ctx.moveTo(petX, petY);
+    ctx.lineTo(petX + 16, petY - 26);
+    ctx.lineTo(petX + 32, petY);
+    ctx.closePath();
+    ctx.stroke();
+
+    // Vnitřní čára šipky
+    ctx.beginPath();
+    ctx.moveTo(petX + 24, petY - 4);
+    ctx.lineTo(petX + 32, petY);
+    ctx.lineTo(petX + 24, petY + 5);
+    ctx.stroke();
+
+    ctx.font = "bold 14px 'Arial', sans-serif";
+    ctx.textAlign = "center";
+    ctx.fillText("01", petX + 16, petY - 4);
+    ctx.fillText("PET", petX + 16, petY + 14);
+    ctx.textAlign = "left"; // Návrat zpět
+
+    // ── TABULKA SLOŽENÍ (Pravá strana bloku, svislá dle předlohy) ──
+    const tableX = MAIN_W + 212; // Start tabulky s dostatečnou rezervou pro text
+    const tableYTop = 12;        // Horní okraj první tabulky
+    const tableYBot = 129;       // Horní okraj druhé tabulky
+    const blockH = 113;          // Výška každého bloku
+    const tableW = 76;           // Šířka tabulky
+
+    ctx.lineWidth = 1;
+    ctx.strokeStyle = '#000000';
+
+    // Horní blok tabulky
+    ctx.strokeRect(tableX, tableYTop, tableW, blockH);
+    const colWTop = tableW / 5;
+    for(let i=1; i<5; i++) {
+        ctx.beginPath();
+        ctx.moveTo(tableX + i * colWTop, tableYTop);
+        ctx.lineTo(tableX + i * colWTop, tableYTop + blockH);
+        ctx.stroke();
+    }
+
+    // Dolní blok tabulky
+    ctx.strokeRect(tableX, tableYBot, tableW, blockH);
+    const colWBot = tableW / 6;
+    for(let i=1; i<6; i++) {
+        ctx.beginPath();
+        ctx.moveTo(tableX + i * colWBot, tableYBot);
+        ctx.lineTo(tableX + i * colWBot, tableYBot + blockH);
+        ctx.stroke();
+    }
+
+    // Text do horního bloku (otočeno o -90 stupňů)
+    ctx.save();
+    ctx.translate(tableX, tableYTop + blockH);
+    ctx.rotate(-Math.PI / 2);
+    ctx.font = "normal 10px 'Arial', sans-serif";
+    ctx.fillStyle = '#000000';
+    ctx.textBaseline = "middle";
+    const maxTextWTable = blockH - 6;
+
+    const colTop = [
+        "Draslík (Potassium): 0,4 mg/l",
+        "Chloridy (Chloride): 2,6 mg/l",
+        "Dusitany (Nitrite): 0,01 mg/l",
+        "Sírany (Sulfate): 11 mg/l",
+        "Fluoridy (Fluoride): 0,1 mg/l"
+    ];
+    for(let i=0; i<colTop.length; i++) {
+        ctx.fillText(colTop[i], 5, i * colWTop + (colWTop/2) + 1, maxTextWTable);
+    }
+    ctx.restore();
+
+    // Text do dolního bloku (otočeno o -90 stupňů)
+    ctx.save();
+    ctx.translate(tableX, tableYBot + blockH);
+    ctx.rotate(-Math.PI / 2);
+    ctx.font = "normal 10px 'Arial', sans-serif";
+    ctx.fillStyle = '#000000';
+    ctx.textBaseline = "middle";
+
+    const colBot = [
+        "pH hodnota: 7,99",
+        "Kyslík (Oxygen): 9,2 mg/l",
+        "Sodík (Sodium): 2,0 mg/l",
+        "Vápník (Calcium): 45 mg/l",
+        "Hořčík (Magnesium): 13 mg/l",
+        "Hydrogenuhličitany (Hydrogen carbonate): 170 mg/l"
+    ];
+    for(let i=0; i<colBot.length; i++) {
+        ctx.fillText(colBot[i], 5, i * colWBot + (colWBot/2) + 1, maxTextWTable);
+    }
+    ctx.restore();
+
+    state.canvases[idx] = canvas;
 }
+
+function showView(v) { ['input-view', 'loading-view', 'preview-view'].forEach(id => { document.getElementById(id).style.display = (id === v + '-view') ? (v === 'loading' ? 'flex' : 'block') : 'none'; }); }
+function setStep(i, s) { const el = document.getElementById('step-' + i); if (el) { el.className = 'lstep ' + s; if (s === 'done') { const d = el.querySelector('.lstep-dot'); if(d) d.textContent = ''; el.innerHTML = '<div class="lstep-dot">✓</div>' + el.textContent.replace('✓', ''); } } }
+function setTitle(t, s) { document.getElementById('load-title').textContent = t; if (s) document.getElementById('load-sub').textContent = s; }
+function showError(m) { const b = document.getElementById('error-box'); b.textContent = m; b.style.display = 'block'; }
+function hideError() { document.getElementById('error-box').style.display = 'none'; }
+function showLabelResult(i) { document.getElementById('placeholder-' + i).style.display = 'none'; document.getElementById('shell-' + i).style.display = 'block'; document.getElementById('actions-' + i).style.display = 'flex'; document.getElementById('name-' + i).textContent = state.brandData.designs[i].name; document.getElementById('desc-' + i).textContent = state.brandData.designs[i].styleDesc; }
+function populatePreviewMeta() { document.getElementById('preview-meta').textContent = state.companyName + ' · 200 × 50 mm'; }
+function resetToInput() { showView('input'); state.images = [null, null, null]; [0, 1, 2].forEach(i => { document.getElementById('placeholder-' + i).style.display = 'flex'; document.getElementById('shell-' + i).style.display = 'none'; document.getElementById('actions-' + i).style.display = 'none'; }); for (let i = 0; i < 7; i++) setStep(i, ''); }
+function downloadPNG(i) { const a = document.createElement('a'); a.download = `label_${i}.png`; a.href = state.canvases[i].toDataURL('image/png'); a.click(); }
+function exportPDF() { if (!window.jspdf) return; const { jsPDF } = window.jspdf; const doc = new jsPDF({ orientation: 'landscape', unit: 'mm', format: [200, 50] }); for (let i = 0; i < 3; i++) { if (!state.canvases[i]) continue; if (i > 0) doc.addPage([200, 50], 'landscape'); doc.addImage(state.canvases[i].toDataURL('image/jpeg', 0.95), 'JPEG', 0, 0, 200, 50); } doc.save('labels.pdf'); }
 </script>
 </body>
 </html>
