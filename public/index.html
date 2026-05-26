@@ -287,12 +287,20 @@ document.getElementById('logo-input').addEventListener('change', function(e) {
                 if (!sw || !sh) { sw = sh = 400; }
 
                 const c = document.createElement('canvas');
-                c.width = 360; c.height = 220;
+                // CRITICAL FIX: canvas must match logo content size EXACTLY.
+                // The old code used a fixed 360×220 canvas with the logo centered
+                // and transparent padding around it. The resulting Image had
+                // naturalWidth=360 / naturalHeight=220 (canvas dims, not logo dims).
+                // So renderLabel scaled "the logo" as if it were 360×220, which
+                // shrunk the actual visible logo content to a tiny ~40px blob.
+                const TARGET_MAX = 400;
+                const sc = Math.min(TARGET_MAX / sw, TARGET_MAX / sh);
+                const dw = Math.max(1, Math.round(sw * sc));
+                const dh = Math.max(1, Math.round(sh * sc));
+                c.width = dw;
+                c.height = dh;
                 const ctx = c.getContext('2d');
-                const sc = Math.min(340 / sw, 200 / sh);
-                const dw = sw * sc;
-                const dh = sh * sc;
-                ctx.drawImage(sourceImg, (360 - dw) / 2, (220 - dh) / 2, dw, dh);
+                ctx.drawImage(sourceImg, 0, 0, dw, dh);
 
                 const finalImg = new Image();
                 finalImg.src = c.toDataURL('image/png');
@@ -309,7 +317,7 @@ document.getElementById('logo-input').addEventListener('change', function(e) {
                 document.getElementById('logo-preview').src = finalImg.src;
                 drop.classList.add('ready');
                 hint.textContent = '✓ Logo ready — will appear on all labels';
-                console.log(`✓ Logo loaded (${sw}×${sh}, rasterized to ${Math.round(dw)}×${Math.round(dh)})`);
+                console.log(`✓ Logo loaded (source ${sw}×${sh} → rasterized ${dw}×${dh}, no padding)`);
             } catch (err) {
                 hint.textContent = '✗ Could not process logo';
                 console.error('Logo processing error', err);
