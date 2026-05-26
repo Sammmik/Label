@@ -522,11 +522,11 @@ function renderLabel(idx) {
     const taglineWeight = isSerif ? '700' : '600';
 
     // ── LAYOUT GEOMETRY ─────────────────────────────
-    // Define a strict TEXT SAFE ZONE on the right side of the creative area.
-    // The illustration must NEVER intrude into this zone — text needs clean breathing room.
-    const SAFE_X    = MAIN_W - 290;         // text zone starts at x=410
-    const SAFE_W    = MAIN_W - SAFE_X - 12; // 278px wide
-    const ILLUS_W   = SAFE_X + 20;          // illustration clips here
+    // Pull SAFE_X further LEFT so the name has more room and illustrations
+    // don't feel cramped against the right edge of the creative zone.
+    const SAFE_X    = MAIN_W - 320;         // text zone starts at x=380 (was 410)
+    const SAFE_W    = MAIN_W - SAFE_X - 14; // 306px wide
+    const ILLUS_W   = SAFE_X + 30;          // illustration clips here
 
     // ── BACKGROUND ──────────────────────────────────
     ctx.fillStyle = bg; ctx.fillRect(0, 0, CW, CH);
@@ -536,27 +536,25 @@ function renderLabel(idx) {
     const hasImage = img && img.complete && img.naturalWidth > 0;
 
     if (hasImage) {
-        // Clip illustration to LEFT portion only — preserves clean text zone
         ctx.save();
         ctx.beginPath();
         ctx.rect(0, 0, ILLUS_W, CH);
         ctx.clip();
-        // Draw at full creative width, then clip away the right edge
         ctx.drawImage(img, 0, 0, MAIN_W, CH);
         ctx.restore();
 
-        // Strong fade from illustration into clean bg — no fighting with text
-        const fadeGrd = ctx.createLinearGradient(SAFE_X - 80, 0, SAFE_X + 30, 0);
+        // Strong fade — illustration dissolves into clean text zone
+        const fadeGrd = ctx.createLinearGradient(SAFE_X - 100, 0, SAFE_X + 30, 0);
         fadeGrd.addColorStop(0, 'rgba(0,0,0,0)');
-        fadeGrd.addColorStop(0.6, alpha(bg, 0.85));
+        fadeGrd.addColorStop(0.55, alpha(bg, 0.88));
         fadeGrd.addColorStop(1, bg);
         ctx.fillStyle = fadeGrd;
-        ctx.fillRect(SAFE_X - 80, 0, 130, CH);
+        ctx.fillRect(SAFE_X - 100, 0, 150, CH);
     } else {
         drawCreativeFallback(ctx, bg, primary, dark);
     }
 
-    // ── SOLID TEXT SAFE ZONE BG (no illustration overlap) ─────
+    // ── SOLID TEXT SAFE ZONE BG ─────────────────────
     ctx.fillStyle = bg;
     ctx.fillRect(SAFE_X + 30, 0, MAIN_W - SAFE_X - 30, CH);
 
@@ -565,41 +563,47 @@ function renderLabel(idx) {
     ctx.fillRect(0, 0, MAIN_W, 3);
     ctx.fillRect(0, CH - 3, MAIN_W, 3);
 
-    // ── LOGO — top-left of creative zone, with subtle vignette for visibility ─
+    // ── LOGO — top-left, with SMART vignette (only when needed) ─────────
     if (state.logoImg) {
         try {
             const lw_natural = state.logoImg.naturalWidth || state.logoImg.width;
             const lh_natural = state.logoImg.naturalHeight || state.logoImg.height;
 
             if (lw_natural > 0 && lh_natural > 0) {
-                const lSize = 96;            // logo bounding box
-                const lCenterX = 18 + lSize / 2;
-                const lCenterY = 22 + lSize / 2;
+                const lSize = 100;
+                const lCenterX = 20 + lSize / 2;
+                const lCenterY = 24 + lSize / 2;
 
-                // Subtle radial vignette behind logo — gives it breathing room
-                // WITHOUT being a hard white box. Uses the design's bg color
-                // softened, so it blends naturally.
-                const vignette = ctx.createRadialGradient(
-                    lCenterX, lCenterY, 8,
-                    lCenterX, lCenterY, lSize * 0.85
-                );
-                vignette.addColorStop(0, alpha(bg, 0.88));
-                vignette.addColorStop(0.5, alpha(bg, 0.55));
-                vignette.addColorStop(1, 'rgba(0,0,0,0)');
-                ctx.fillStyle = vignette;
-                ctx.fillRect(0, 0, lSize + 36, lSize + 36);
+                // Smart vignette: ONLY draw when the logo is competing with
+                // a busy illustration AND the bg is dark/colored.
+                // For Light Edition (white bg, no illustration here), skip
+                // the vignette entirely — it was creating a "UFO landing pad".
+                const needsVignette = hasImage && (dark || isDark(primary));
+                if (needsVignette) {
+                    const vignette = ctx.createRadialGradient(
+                        lCenterX, lCenterY, 12,
+                        lCenterX, lCenterY, lSize * 0.75
+                    );
+                    vignette.addColorStop(0, alpha(bg, 0.75));
+                    vignette.addColorStop(0.6, alpha(bg, 0.4));
+                    vignette.addColorStop(1, 'rgba(0,0,0,0)');
+                    ctx.fillStyle = vignette;
+                    ctx.fillRect(0, 0, lSize + 40, lSize + 40);
+                }
 
-                // Compute fit + draw the logo with soft drop shadow
-                const sc = Math.min(lSize / lw_natural, lh_natural ? lSize / lh_natural : 1) * 0.85;
+                const sc = Math.min(lSize / lw_natural, lSize / lh_natural) * 0.88;
                 const lw = lw_natural * sc;
                 const lh = lh_natural * sc;
-                const lx = 18 + (lSize - lw) / 2;
-                const ly = 22 + (lSize - lh) / 2;
+                const lx = 20 + (lSize - lw) / 2;
+                const ly = 24 + (lSize - lh) / 2;
 
                 ctx.save();
-                ctx.shadowColor = dark ? 'rgba(0,0,0,0.5)' : 'rgba(0,0,0,0.25)';
-                ctx.shadowBlur = 8;
-                ctx.shadowOffsetY = 1;
+                // Soft shadow only where it'll be visible
+                if (dark) {
+                    ctx.shadowColor = 'rgba(0,0,0,0.4)';
+                    ctx.shadowBlur = 6;
+                    ctx.shadowOffsetY = 1;
+                }
                 ctx.drawImage(state.logoImg, lx, ly, lw, lh);
                 ctx.restore();
 
@@ -609,50 +613,94 @@ function renderLabel(idx) {
             }
         } catch (err) {
             console.error(`Logo render failed on label ${idx + 1}:`, err);
-            // Continue with rest of label — never let logo failure break the whole render
         }
     }
 
-    // ── COMPANY NAME — large, in text safe zone ─────
+    // ── COMPANY NAME — large, anchored properly in text safe zone ────────
     const upperName = (state.companyName || 'COMPANY').toUpperCase();
 
-    // Reserve vertical space for tagline below — name sits in upper-middle of zone
-    const nameMaxFs = isSerif ? 52 : 58;
+    // Name fills available width — auto-fit, slightly bigger ceiling
+    const nameMaxFs = isSerif ? 56 : 64;
     const fs = fitFont(ctx, upperName, nameWeight, designFont, nameMaxFs, SAFE_W);
     ctx.font = `${nameWeight} ${fs}px ${designFont}`;
     ctx.fillStyle = text;
 
-    // Letter-spacing for sans-serifs — adds polish, breathing room
     if (!isSerif && ctx.letterSpacing !== undefined) {
         ctx.letterSpacing = '0.02em';
     }
 
-    // Center vertically: name + tagline together, with tagline 22px below name baseline
-    const blockH = tagline ? fs + 20 : fs;
-    const blockTop = (CH - blockH) / 2;
-    const nameBaselineY = blockTop + fs * 0.85;
+    // Vertically center the name+tagline block, but anchor it slightly higher
+    // (40% from top) so the QR code at the bottom doesn't feel cramped.
+    const taglineH = tagline ? 20 : 0;
+    const totalH = fs + taglineH;
+    const nameBaselineY = Math.round(CH * 0.46) + fs * 0.30;
     ctx.fillText(upperName, SAFE_X, nameBaselineY);
 
-    // Reset letter-spacing
     if (ctx.letterSpacing !== undefined) ctx.letterSpacing = '0em';
 
-    // ── TAGLINE — subtle hierarchy, NO underline, just spatial separation ──
+    // ── TAGLINE — auto-fit to safe zone width, never overflows ──────────
     if (tagline) {
-        ctx.font = `${taglineWeight} 12px ${designFont}`;
-        // Subtle color — primary at reduced opacity, not full bold
-        ctx.fillStyle = alpha(primary, dark ? 0.85 : 0.78);
-        if (!isSerif && ctx.letterSpacing !== undefined) {
-            ctx.letterSpacing = '0.18em';  // tracked-out tagline = professional touch
+        // Try sizes 13→9 with letter-spacing, then 9→8 without
+        let taglineFs = 13;
+        let useSpacing = true;
+
+        // Start with letter-spacing 0.18em, decrease font if doesn't fit
+        for (taglineFs = 13; taglineFs >= 9; taglineFs--) {
+            ctx.font = `${taglineWeight} ${taglineFs}px ${designFont}`;
+            const trackingAdd = !isSerif ? tagline.length * taglineFs * 0.18 : 0;
+            if (ctx.measureText(tagline).width + trackingAdd <= SAFE_W) break;
+        }
+        // If still too big, drop letter-spacing
+        if (taglineFs < 9) {
+            useSpacing = false;
+            for (taglineFs = 11; taglineFs >= 8; taglineFs--) {
+                ctx.font = `${taglineWeight} ${taglineFs}px ${designFont}`;
+                if (ctx.measureText(tagline).width <= SAFE_W) break;
+            }
+        }
+
+        ctx.font = `${taglineWeight} ${taglineFs}px ${designFont}`;
+        ctx.fillStyle = alpha(primary, dark ? 0.92 : 0.82);
+        if (useSpacing && !isSerif && ctx.letterSpacing !== undefined) {
+            ctx.letterSpacing = '0.18em';
         }
         ctx.fillText(tagline, SAFE_X, nameBaselineY + 22);
         if (ctx.letterSpacing !== undefined) ctx.letterSpacing = '0em';
     }
 
-    // ── QR CODE — bottom-left, doesn't compete with text ──
+    // ── QR CODE — refined: rounded corners + subtle border ──────────────
     if (state.qrImg) {
+        const qx = 14, qy = CH - 80, qs = 68;
+        const r = 6;  // corner radius
+
+        // Soft drop shadow
+        ctx.save();
+        ctx.shadowColor = dark ? 'rgba(0,0,0,0.5)' : 'rgba(0,0,0,0.15)';
+        ctx.shadowBlur = 8;
+        ctx.shadowOffsetY = 2;
+
+        // Rounded white card
         ctx.fillStyle = '#ffffff';
-        ctx.fillRect(14, CH - 80, 68, 68);
-        ctx.drawImage(state.qrImg, 16, CH - 78, 64, 64);
+        ctx.beginPath();
+        ctx.moveTo(qx + r, qy);
+        ctx.lineTo(qx + qs - r, qy);
+        ctx.arcTo(qx + qs, qy, qx + qs, qy + r, r);
+        ctx.lineTo(qx + qs, qy + qs - r);
+        ctx.arcTo(qx + qs, qy + qs, qx + qs - r, qy + qs, r);
+        ctx.lineTo(qx + r, qy + qs);
+        ctx.arcTo(qx, qy + qs, qx, qy + qs - r, r);
+        ctx.lineTo(qx, qy + r);
+        ctx.arcTo(qx, qy, qx + r, qy, r);
+        ctx.closePath();
+        ctx.fill();
+        ctx.restore();
+
+        // Subtle border that adapts to bg lightness
+        ctx.strokeStyle = dark ? 'rgba(255,255,255,0.12)' : 'rgba(0,0,0,0.08)';
+        ctx.lineWidth = 1;
+        ctx.stroke();
+
+        ctx.drawImage(state.qrImg, qx + 2, qy + 2, qs - 4, qs - 4);
     }
 
     // ═══════════════════════════════════════════════════════════════════════
