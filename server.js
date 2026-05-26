@@ -67,20 +67,15 @@ const COMPOSITION_HINTS = [
     "high-angle environmental"
 ];
 
-const FONT_POOL = [
-    "Anton",
-    "Bebas Neue",
-    "Oswald",
-    "Russo One",
-    "Archivo Black",
-    "Black Ops One",
-    "Bowlby One",
-    "Staatliches",
-    "Saira Condensed",
-    "Bungee",
-    "Barlow Condensed",
-    "Passion One",
-    "Big Shoulders Display"
+// Curated fonts — ALL support Czech diacritics (Latin Extended)
+// Each has a distinct personality so Claude can match brand tone
+const FONT_POOL_INFO = [
+    { name: "Inter",            personality: "modern, neutral, tech/SaaS, clean corporate" },
+    { name: "Manrope",          personality: "friendly modern sans, startups, lifestyle, approachable" },
+    { name: "Archivo",          personality: "industrial, logistics, sports, bold confident sans" },
+    { name: "Space Grotesk",    personality: "creative tech, design studios, innovation, slightly quirky" },
+    { name: "Playfair Display", personality: "elegant serif, luxury, fashion, premium, traditional" },
+    { name: "DM Serif Display", personality: "editorial serif, magazines, food, hospitality, refined" }
 ];
 
 function pickN(arr, n) {
@@ -98,7 +93,10 @@ app.post('/api/analyze-brand', async (req, res) => {
     const variationSeed = Math.floor(Math.random() * 99999);
     const moodHints = pickN(MOOD_DIRECTIONS, 3);
     const compHints = pickN(COMPOSITION_HINTS, 3);
-    const fontsThisRun = pickN(FONT_POOL, 6);
+    // Format all fonts with their personalities so Claude can match brand tone
+    const fontsThisRun = FONT_POOL_INFO
+        .map(f => `${f.name} (${f.personality})`)
+        .join('\n  - ');
 
     const body = {
         model: "claude-sonnet-4-6",
@@ -136,8 +134,20 @@ Use natural, punchy Czech marketing language with proper diacritics (á, č, ď,
 Examples of good Czech taglines: "Síla z hor", "Čistota každý den", "Pravá česká kvalita", "Vyrobeno s láskou", "Pro každého z nás".
 Examples of good Czech styleDesc: "Čistý hrdina produktu na bílém pozadí", "Produkt na firemní barvě", "Hrdina na tmavém pozadí".
 
-═══ FONT VARIETY ═══
-Use 3 different fonts from: ${fontsThisRun.join(", ")}
+═══ FONT SELECTION — match brand personality ═══
+You MUST pick the "displayFont" value for each design based on the BRAND'S personality, not at random.
+
+Available fonts (all support Czech diacritics):
+  - ${fontsThisRun}
+
+Guidance:
+- Tech, SaaS, modern corporate → Inter or Manrope
+- Logistics, sports, industrial, bold confident brands → Archivo
+- Creative agencies, design studios, innovation brands → Space Grotesk
+- Luxury, fashion, premium goods, traditional brands → Playfair Display
+- Hospitality, food, magazines, refined editorial → DM Serif Display
+
+You can use the SAME font across all 3 designs if it fits the brand. The 3 designs vary by COLOR MOOD (light / brand / dark), not by font.
 
 ═══ OUTPUT — raw JSON only ═══
 {

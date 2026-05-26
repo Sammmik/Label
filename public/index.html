@@ -6,7 +6,7 @@
     <title>Label Studio AI</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=Barlow+Condensed:wght@700;800;900&family=DM+Mono:wght@400;500&family=Barlow:wght@400;500;600&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=Manrope:wght@500;700;800&family=Archivo:wght@700;800;900&family=Space+Grotesk:wght@500;700&family=Playfair+Display:wght@700;900&family=DM+Serif+Display&family=Barlow+Condensed:wght@700;800;900&family=DM+Mono:wght@400;500&family=Barlow:wght@400;500;600&display=swap" rel="stylesheet">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
     <style>
         :root {
@@ -438,59 +438,116 @@ function renderLabel(idx) {
     const dark = isDark(bg);
     const tagline = (design.tagline || '').toUpperCase();
 
+    // ── FONT — chosen by Claude per design, all support Czech diacritics ──
+    // Pool of fonts with full Latin Extended support:
+    //   Inter, Manrope, Archivo, Space Grotesk → modern sans (tech, corporate, logistics)
+    //   Playfair Display, DM Serif Display → elegant serif (luxury, premium, traditional)
+    const FONT_POOL = {
+        'Inter':            "'Inter', sans-serif",
+        'Manrope':          "'Manrope', sans-serif",
+        'Archivo':          "'Archivo', sans-serif",
+        'Space Grotesk':    "'Space Grotesk', sans-serif",
+        'Playfair Display': "'Playfair Display', serif",
+        'DM Serif Display': "'DM Serif Display', serif"
+    };
+    const designFont = FONT_POOL[design.displayFont] || FONT_POOL['Inter'];
+    // Serifs need a slightly heavier weight to read at label size
+    const isSerif = designFont.includes('serif') && !designFont.includes('sans');
+    const nameWeight = isSerif ? '700' : '900';
+    const taglineWeight = isSerif ? '700' : '600';
+
+    // ── LAYOUT GEOMETRY ─────────────────────────────
+    // Define a strict TEXT SAFE ZONE on the right side of the creative area.
+    // The illustration must NEVER intrude into this zone — text needs clean breathing room.
+    const SAFE_X    = MAIN_W - 290;         // text zone starts at x=410
+    const SAFE_W    = MAIN_W - SAFE_X - 12; // 278px wide
+    const ILLUS_W   = SAFE_X + 20;          // illustration clips here
+
     // ── BACKGROUND ──────────────────────────────────
     ctx.fillStyle = bg; ctx.fillRect(0, 0, CW, CH);
 
-    // ── ILLUSTRATION (or rich fallback) ─────────────
+    // ── ILLUSTRATION ────────────────────────────────
     const img = state.images[idx];
     const hasImage = img && img.complete && img.naturalWidth > 0;
 
     if (hasImage) {
+        // Clip illustration to LEFT portion only — preserves clean text zone
+        ctx.save();
+        ctx.beginPath();
+        ctx.rect(0, 0, ILLUS_W, CH);
+        ctx.clip();
+        // Draw at full creative width, then clip away the right edge
         ctx.drawImage(img, 0, 0, MAIN_W, CH);
-        // Fade right edge of illustration into bg
-        const fadeGrd = ctx.createLinearGradient(MAIN_W * 0.55, 0, MAIN_W, 0);
+        ctx.restore();
+
+        // Strong fade from illustration into clean bg — no fighting with text
+        const fadeGrd = ctx.createLinearGradient(SAFE_X - 80, 0, SAFE_X + 30, 0);
         fadeGrd.addColorStop(0, 'rgba(0,0,0,0)');
-        fadeGrd.addColorStop(1, dark ? alpha(bg, 0.85) : alpha(bg, 0.92));
-        ctx.fillStyle = fadeGrd; ctx.fillRect(0, 0, MAIN_W, CH);
+        fadeGrd.addColorStop(0.6, alpha(bg, 0.85));
+        fadeGrd.addColorStop(1, bg);
+        ctx.fillStyle = fadeGrd;
+        ctx.fillRect(SAFE_X - 80, 0, 130, CH);
     } else {
         drawCreativeFallback(ctx, bg, primary, dark);
     }
 
-    // ── TOP + BOTTOM EDGE BARS (creative zone only) ──
+    // ── SOLID TEXT SAFE ZONE BG (no illustration overlap) ─────
+    ctx.fillStyle = bg;
+    ctx.fillRect(SAFE_X + 30, 0, MAIN_W - SAFE_X - 30, CH);
+
+    // ── TOP + BOTTOM EDGE BARS ─────────────────────
     ctx.fillStyle = primary;
-    ctx.fillRect(0, 0, MAIN_W, 4);
-    ctx.fillRect(0, CH - 4, MAIN_W, 4);
+    ctx.fillRect(0, 0, MAIN_W, 3);
+    ctx.fillRect(0, CH - 3, MAIN_W, 3);
 
-    // ── COMPANY NAME — auto-fit to available width ──
-    const nameMax = state.logoImg ? 230 : 260;  // available width for name
-    const TX = state.logoImg ? 470 : 440;
-    const upperName = (state.companyName || 'COMPANY').toUpperCase();
-    const fs = fitFont(ctx, upperName, '900', "'Inter'", 64, nameMax);
-    ctx.font = `900 ${fs}px 'Inter'`;
-    ctx.fillStyle = text;
-    ctx.fillText(upperName, TX, 96);
-
-    // Underline accent bar (full width of the name, not fixed 80px)
-    const nw = ctx.measureText(upperName).width;
-    ctx.fillStyle = primary;
-    ctx.fillRect(TX, 104, Math.min(nw, nameMax), 3);
-
-    // ── TAGLINE ─────────────────────────────────────
-    if (tagline) {
-        ctx.font = `700 13px 'Inter'`;
-        ctx.fillStyle = primary;
-        ctx.fillText(tagline, TX, 122);
-    }
-
-    // ── LOGO ────────────────────────────────────────
+    // ── LOGO — top-left corner of creative zone ─────
     if (state.logoImg && state.logoImg.complete && state.logoImg.naturalWidth > 0) {
-        const sc = Math.min(100 / state.logoImg.width, 100 / state.logoImg.height) * 0.82;
-        ctx.drawImage(state.logoImg, 24 + (100 - state.logoImg.width*sc)/2, 30 + (100 - state.logoImg.height*sc)/2, state.logoImg.width*sc, state.logoImg.height*sc);
+        const lSize = 88;
+        const sc = Math.min(lSize / state.logoImg.width, lSize / state.logoImg.height) * 0.85;
+        const lw = state.logoImg.width * sc;
+        const lh = state.logoImg.height * sc;
+        ctx.drawImage(state.logoImg, 18 + (lSize - lw)/2, 22 + (lSize - lh)/2, lw, lh);
     }
 
-    // ── QR CODE ─────────────────────────────────────
+    // ── COMPANY NAME — large, in text safe zone ─────
+    const upperName = (state.companyName || 'COMPANY').toUpperCase();
+
+    // Reserve vertical space for tagline below — name sits in upper-middle of zone
+    const nameMaxFs = isSerif ? 52 : 58;
+    const fs = fitFont(ctx, upperName, nameWeight, designFont, nameMaxFs, SAFE_W);
+    ctx.font = `${nameWeight} ${fs}px ${designFont}`;
+    ctx.fillStyle = text;
+
+    // Letter-spacing for sans-serifs — adds polish, breathing room
+    if (!isSerif && ctx.letterSpacing !== undefined) {
+        ctx.letterSpacing = '0.02em';
+    }
+
+    // Center vertically: name + tagline together, with tagline 22px below name baseline
+    const blockH = tagline ? fs + 20 : fs;
+    const blockTop = (CH - blockH) / 2;
+    const nameBaselineY = blockTop + fs * 0.85;
+    ctx.fillText(upperName, SAFE_X, nameBaselineY);
+
+    // Reset letter-spacing
+    if (ctx.letterSpacing !== undefined) ctx.letterSpacing = '0em';
+
+    // ── TAGLINE — subtle hierarchy, NO underline, just spatial separation ──
+    if (tagline) {
+        ctx.font = `${taglineWeight} 12px ${designFont}`;
+        // Subtle color — primary at reduced opacity, not full bold
+        ctx.fillStyle = alpha(primary, dark ? 0.85 : 0.78);
+        if (!isSerif && ctx.letterSpacing !== undefined) {
+            ctx.letterSpacing = '0.18em';  // tracked-out tagline = professional touch
+        }
+        ctx.fillText(tagline, SAFE_X, nameBaselineY + 22);
+        if (ctx.letterSpacing !== undefined) ctx.letterSpacing = '0em';
+    }
+
+    // ── QR CODE — bottom-left, doesn't compete with text ──
     if (state.qrImg) {
-        ctx.fillStyle = '#ffffff'; ctx.fillRect(14, CH - 80, 68, 68);
+        ctx.fillStyle = '#ffffff';
+        ctx.fillRect(14, CH - 80, 68, 68);
         ctx.drawImage(state.qrImg, 16, CH - 78, 64, 64);
     }
 
