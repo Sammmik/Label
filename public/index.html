@@ -743,40 +743,40 @@ function renderLabel(idx) {
     const tableX = MAIN_W + 212;
     const tableYTop = 12;
     const tableYBot = 129;
-    const blockH = 113;
+    const tableBlockH = 113;
     const tableW = 76;
 
     ctx.lineWidth = 1;
     ctx.strokeStyle = '#000000';
 
     // Top block (5 entries)
-    ctx.strokeRect(tableX, tableYTop, tableW, blockH);
+    ctx.strokeRect(tableX, tableYTop, tableW, tableBlockH);
     const colWTop = tableW / 5;
     for(let i=1; i<5; i++) {
         ctx.beginPath();
         ctx.moveTo(tableX + i * colWTop, tableYTop);
-        ctx.lineTo(tableX + i * colWTop, tableYTop + blockH);
+        ctx.lineTo(tableX + i * colWTop, tableYTop + tableBlockH);
         ctx.stroke();
     }
 
     // Bottom block (6 entries)
-    ctx.strokeRect(tableX, tableYBot, tableW, blockH);
+    ctx.strokeRect(tableX, tableYBot, tableW, tableBlockH);
     const colWBot = tableW / 6;
     for(let i=1; i<6; i++) {
         ctx.beginPath();
         ctx.moveTo(tableX + i * colWBot, tableYBot);
-        ctx.lineTo(tableX + i * colWBot, tableYBot + blockH);
+        ctx.lineTo(tableX + i * colWBot, tableYBot + tableBlockH);
         ctx.stroke();
     }
 
     // Top block text (rotated)
     ctx.save();
-    ctx.translate(tableX, tableYTop + blockH);
+    ctx.translate(tableX, tableYTop + tableBlockH);
     ctx.rotate(-Math.PI / 2);
     ctx.font = "normal 10px 'Arial', sans-serif";
     ctx.fillStyle = '#000000';
     ctx.textBaseline = "middle";
-    const maxTextWTable = blockH - 6;
+    const maxTextWTable = tableBlockH - 6;
 
     const colTop = [
         "Draslík (Potassium): 0,4 mg/l",
@@ -792,7 +792,7 @@ function renderLabel(idx) {
 
     // Bottom block text (rotated)
     ctx.save();
-    ctx.translate(tableX, tableYBot + blockH);
+    ctx.translate(tableX, tableYBot + tableBlockH);
     ctx.rotate(-Math.PI / 2);
     ctx.font = "normal 10px 'Arial', sans-serif";
     ctx.fillStyle = '#000000';
