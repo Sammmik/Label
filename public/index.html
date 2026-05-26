@@ -418,7 +418,14 @@ async function startGeneration() {
         showView('preview'); populatePreviewMeta();
         await document.fonts.ready;
         await new Promise(r => setTimeout(r, 100));
-        for (let i = 0; i < 3; i++) { renderLabel(i); showLabelResult(i); }
+        for (let i = 0; i < 3; i++) {
+            try {
+                renderLabel(i);
+            } catch (renderErr) {
+                console.error(`Label ${i + 1} render failed:`, renderErr);
+            }
+            showLabelResult(i);
+        }
         setStep(6, 'done');
 
     } catch (err) {
@@ -550,13 +557,52 @@ function renderLabel(idx) {
     ctx.fillRect(0, 0, MAIN_W, 3);
     ctx.fillRect(0, CH - 3, MAIN_W, 3);
 
-    // ── LOGO — top-left corner of creative zone ─────
-    if (state.logoImg && state.logoImg.complete && state.logoImg.naturalWidth > 0) {
-        const lSize = 88;
-        const sc = Math.min(lSize / state.logoImg.width, lSize / state.logoImg.height) * 0.85;
-        const lw = state.logoImg.width * sc;
-        const lh = state.logoImg.height * sc;
-        ctx.drawImage(state.logoImg, 18 + (lSize - lw)/2, 22 + (lSize - lh)/2, lw, lh);
+    // ── LOGO — top-left of creative zone, with subtle vignette for visibility ─
+    if (state.logoImg) {
+        try {
+            const lw_natural = state.logoImg.naturalWidth || state.logoImg.width;
+            const lh_natural = state.logoImg.naturalHeight || state.logoImg.height;
+
+            if (lw_natural > 0 && lh_natural > 0) {
+                const lSize = 96;            // logo bounding box
+                const lCenterX = 18 + lSize / 2;
+                const lCenterY = 22 + lSize / 2;
+
+                // Subtle radial vignette behind logo — gives it breathing room
+                // WITHOUT being a hard white box. Uses the design's bg color
+                // softened, so it blends naturally.
+                const vignette = ctx.createRadialGradient(
+                    lCenterX, lCenterY, 8,
+                    lCenterX, lCenterY, lSize * 0.85
+                );
+                vignette.addColorStop(0, alpha(bg, 0.88));
+                vignette.addColorStop(0.5, alpha(bg, 0.55));
+                vignette.addColorStop(1, 'rgba(0,0,0,0)');
+                ctx.fillStyle = vignette;
+                ctx.fillRect(0, 0, lSize + 36, lSize + 36);
+
+                // Compute fit + draw the logo with soft drop shadow
+                const sc = Math.min(lSize / lw_natural, lh_natural ? lSize / lh_natural : 1) * 0.85;
+                const lw = lw_natural * sc;
+                const lh = lh_natural * sc;
+                const lx = 18 + (lSize - lw) / 2;
+                const ly = 22 + (lSize - lh) / 2;
+
+                ctx.save();
+                ctx.shadowColor = dark ? 'rgba(0,0,0,0.5)' : 'rgba(0,0,0,0.25)';
+                ctx.shadowBlur = 8;
+                ctx.shadowOffsetY = 1;
+                ctx.drawImage(state.logoImg, lx, ly, lw, lh);
+                ctx.restore();
+
+                console.log(`✓ Logo rendered on label ${idx + 1}: ${Math.round(lw)}×${Math.round(lh)} at (${Math.round(lx)},${Math.round(ly)})`);
+            } else {
+                console.warn(`Logo has invalid dimensions: ${lw_natural}×${lh_natural} — skipping render`);
+            }
+        } catch (err) {
+            console.error(`Logo render failed on label ${idx + 1}:`, err);
+            // Continue with rest of label — never let logo failure break the whole render
+        }
     }
 
     // ── COMPANY NAME — large, in text safe zone ─────
