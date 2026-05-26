@@ -66,9 +66,9 @@
         .chip strong { color: var(--text); }
         .design-block { margin-bottom: 32px; }
         .design-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 12px; }
-        .design-name { font-weight: 700; font-size: 16px; }
+        .design-name { font-weight: 700; font-size: 16px; text-transform: uppercase; }
         .design-desc { font-family: var(--mono); font-size: 11px; color: var(--muted); }
-        .design-tag { font-family: var(--mono); font-size: 10px; font-weight: 600; padding: 4px 10px; border-radius: 100px; letter-spacing: .05em; }
+        .design-tag { font-family: var(--mono); font-size: 10px; font-weight: 600; padding: 4px 10px; border-radius: 100px; letter-spacing: .05em; color: #94a3b8; background: rgba(148,163,184,0.15); }
         .canvas-shell { border-radius: 12px; overflow: hidden; box-shadow: 0 16px 56px rgba(0,0,0,0.6), 0 0 0 1px rgba(255,255,255,0.06); }
         canvas { display: block; width: 100%; height: auto; }
         .canvas-actions { display: flex; gap: 10px; margin-top: 10px; align-items: center; }
@@ -127,13 +127,13 @@
         <div class="load-title" id="load-title">Configuring brand identity...</div>
         <div class="load-sub" id="load-sub">Please wait</div>
         <div class="steps" id="load-steps">
-            <div class="lstep" id="step-0"><div class="lstep-dot"></div>Configuring brand identity</div>
-            <div class="lstep" id="step-1"><div class="lstep-dot"></div>Generating design parameters</div>
-            <div class="lstep" id="step-2"><div class="lstep-dot"></div>Creating illustration for label 1</div>
-            <div class="lstep" id="step-3"><div class="lstep-dot"></div>Creating illustration for label 2</div>
-            <div class="lstep" id="step-4"><div class="lstep-dot"></div>Creating illustration for label 3</div>
-            <div class="lstep" id="step-5"><div class="lstep-dot"></div>Fetching QR code</div>
-            <div class="lstep" id="step-6"><div class="lstep-dot"></div>Rendering final labels</div>
+            <div class="lstep" id="step-0"><div class="lstep-dot"></div>Analýza značky a barev</div>
+            <div class="lstep" id="step-1"><div class="lstep-dot"></div>Výpočet vhodných designových směrů</div>
+            <div class="lstep" id="step-2"><div class="lstep-dot"></div>Vykreslování konceptu 1</div>
+            <div class="lstep" id="step-3"><div class="lstep-dot"></div>Vykreslování konceptu 2</div>
+            <div class="lstep" id="step-4"><div class="lstep-dot"></div>Vykreslování konceptu 3</div>
+            <div class="lstep" id="step-5"><div class="lstep-dot"></div>Příprava QR kódu</div>
+            <div class="lstep" id="step-6"><div class="lstep-dot"></div>Sestavování vizuálu do PDF</div>
         </div>
     </div>
 
@@ -148,6 +148,7 @@
         <div class="design-block" id="block-0">
             <div class="design-header">
                 <div><div class="design-name" id="name-0">...</div><div class="design-desc" id="desc-0">...</div></div>
+                <div class="design-tag" id="tag-0">VAR 1</div>
             </div>
             <div id="placeholder-0" class="gen-placeholder"><div class="mini-spin"></div><span>Generating...</span></div>
             <div class="canvas-shell" id="shell-0" style="display:none"><canvas id="canvas-0"></canvas></div>
@@ -156,6 +157,7 @@
         <div class="design-block" id="block-1">
             <div class="design-header">
                 <div><div class="design-name" id="name-1">...</div><div class="design-desc" id="desc-1">...</div></div>
+                <div class="design-tag" id="tag-1">VAR 2</div>
             </div>
             <div id="placeholder-1" class="gen-placeholder"><div class="mini-spin"></div><span>Generating...</span></div>
             <div class="canvas-shell" id="shell-1" style="display:none"><canvas id="canvas-1"></canvas></div>
@@ -164,6 +166,7 @@
         <div class="design-block" id="block-2">
             <div class="design-header">
                 <div><div class="design-name" id="name-2">...</div><div class="design-desc" id="desc-2">...</div></div>
+                <div class="design-tag" id="tag-2">VAR 3</div>
             </div>
             <div id="placeholder-2" class="gen-placeholder"><div class="mini-spin"></div><span>Generating...</span></div>
             <div class="canvas-shell" id="shell-2" style="display:none"><canvas id="canvas-2"></canvas></div>
@@ -206,7 +209,6 @@ document.getElementById('logo-input').addEventListener('change', function(e) {
     reader.readAsDataURL(file);
 });
 
-// ─── BEZPEČNÝ FETCH (Zabrání pádům do HTML) ───
 async function apiFetch(endpoint, body) {
     const res = await fetch(endpoint, {
         method: 'POST',
@@ -219,7 +221,7 @@ async function apiFetch(endpoint, body) {
     try {
         data = JSON.parse(text);
     } catch (err) {
-        throw new Error(`Naše aplikace dostala od serveru HTML stránku místo JSON dat. Zmáčkni CTRL+F5 a zkus to znovu.`);
+        throw new Error(`Kritická chyba serveru. Web vrátil HTML místo dat. Ujistěte se, že je nový kód správně nahrán a zmáčkněte CTRL+F5.`);
     }
 
     if (!res.ok) throw new Error(data.error || 'Neznámá chyba serveru');
@@ -237,11 +239,11 @@ async function startGeneration() {
     hideError(); showView('loading'); setStep(0, 'active');
 
     try {
-        setStep(0, 'active'); setTitle('Generování parametrů značky...', 'Probíhá příprava');
+        setStep(0, 'active'); setTitle('Algoritmus analyzuje značku...', 'Připravuji vizuální koncepty');
         state.brandData = await apiFetch('/api/analyze-brand', { name: state.companyName, description: state.companyDesc, url: state.companyUrl, color: state.companyColor });
         setStep(0, 'done'); setStep(1, 'done');
 
-        setTitle('Kreslení ilustrací přes AI...', 'FAL.ai tvoří vektory (cca 30 sekund)');
+        setTitle('Vykreslování konceptů...', 'AI generuje 3 unikátní vizuály');
         const imgPromises = state.brandData.designs.map((d, i) => {
             setStep(2 + i, 'active');
             return apiFetch('/api/generate-image', { prompt: d.imagePrompt, designIndex: i })
@@ -250,7 +252,7 @@ async function startGeneration() {
         });
         await Promise.all(imgPromises);
 
-        setStep(5, 'active'); setTitle('Příprava QR kódu...', '');
+        setStep(5, 'active'); setTitle('Příprava QR kódů...', '');
         if (state.companyUrl) {
             state.qrImg = await new Promise(res => {
                 const img = new Image(); img.crossOrigin = 'anonymous';
@@ -260,7 +262,7 @@ async function startGeneration() {
         }
         setStep(5, 'done');
 
-        setStep(6, 'active'); setTitle('Sestavování etikety...', ''); showView('preview'); populatePreviewMeta();
+        setStep(6, 'active'); setTitle('Finální sestavování etiket...', ''); showView('preview'); populatePreviewMeta();
         await document.fonts.ready; await new Promise(r => setTimeout(r, 100));
         for (let i = 0; i < 3; i++) { renderLabel(i); showLabelResult(i); }
         setStep(6, 'done');
@@ -271,20 +273,17 @@ async function startGeneration() {
     }
 }
 
-// ─── HLAVNÍ KRESLÍCÍ FUNKCE (Canvas) ───
 function renderLabel(idx) {
     const canvas = document.getElementById('canvas-' + idx);
     const design = state.brandData.designs[idx];
     canvas.width = CW; canvas.height = CH; const ctx = canvas.getContext('2d');
     const { bg, primary, text, accent } = design;
 
-    // Pomocná fce na detekci tmavého pozadí
     const isDark = (hex) => {
         try { const h = hex.replace('#', ''); return (parseInt(h.substring(0,2),16)*0.299 + parseInt(h.substring(2,4),16)*0.587 + parseInt(h.substring(4,6),16)*0.114) < 140; } catch { return true; }
     };
     const dark = isDark(bg);
 
-    // ZÁKLAD AI OBRÁZKU
     ctx.fillStyle = bg; ctx.fillRect(0, 0, CW, CH);
 
     if (state.images[idx]) {
@@ -295,30 +294,24 @@ function renderLabel(idx) {
         ctx.fillStyle = fadeGrd; ctx.fillRect(0, 0, MAIN_W, CH);
     }
 
-    // HLAVNÍ NÁZEV FIRMY a BAREVNÁ LINKA
     const TX = state.logoImg ? 470 : 440;
     ctx.font = `900 44px 'Barlow Condensed'`; ctx.fillStyle = text; ctx.fillText((state.companyName || 'COMPANY').toUpperCase(), TX, 108);
     ctx.fillStyle = primary; ctx.fillRect(TX, 114, 80, 3);
 
-    // VYKRESLENÍ UŽIVATELSKÉHO LOGA
     if (state.logoImg) {
         const sc = Math.min(100 / state.logoImg.width, 100 / state.logoImg.height) * 0.82;
         ctx.drawImage(state.logoImg, 24 + (100 - state.logoImg.width*sc)/2, 30 + (100 - state.logoImg.height*sc)/2, state.logoImg.width*sc, state.logoImg.height*sc);
     }
 
-    // VYKRESLENÍ QR KÓDU NA POZADÍ
     if (state.qrImg) {
         ctx.fillStyle = '#ffffff'; ctx.fillRect(14, CH - 80, 68, 68);
         ctx.drawImage(state.qrImg, 16, CH - 78, 64, 64);
     }
 
-    // ═══════════════════════════════════════════════
     // PRAVÁ ZÓNA — Bílý blok pro právní texty (300px)
-    // ═══════════════════════════════════════════════
     ctx.fillStyle = '#ffffff';
     ctx.fillRect(MAIN_W, 0, INFO_W, CH);
 
-    // Dělící čára mezi AI obrázkem a textem
     ctx.strokeStyle = '#e0e0e0';
     ctx.lineWidth = 1;
     ctx.beginPath();
@@ -326,20 +319,17 @@ function renderLabel(idx) {
     ctx.lineTo(MAIN_W, CH);
     ctx.stroke();
 
-    // ── LEVÁ STRANA TOHOTO BÍLÉHO BLOKU (ODSTAVCE TEXTU) ──
     const leftX = MAIN_W + 14;
     let currentY = 18;
     ctx.fillStyle = '#000000';
     ctx.textBaseline = 'alphabetic';
 
-    // Inteligentní lámání dlouhých textů v odstavci
     function renderTextLine(txt, isBold, yOffset) {
         ctx.font = `${isBold ? 'bold' : 'normal'} 7.5px 'Arial', sans-serif`;
         ctx.fillText(txt, leftX, currentY, 185);
         currentY += yOffset;
     }
 
-    // Složení dvou různých fontů na jeden řádek (Tučně nadpis + normální text)
     function renderMixedLine(boldText, normalText, yOffset) {
         ctx.font = `bold 7.5px 'Arial', sans-serif`;
         ctx.fillText(boldText, leftX, currentY);
@@ -372,105 +362,43 @@ function renderLabel(idx) {
     renderTextLine("Česká republika", false, 10);
     renderTextLine("www.elyssia.cz", false, 15);
 
-    // Objem (Levý dolní roh pod textem)
     ctx.font = "bold 28px 'Arial', sans-serif";
     ctx.fillText("0,33 l", leftX, 238);
 
-    // Trojúhelník PET (Kresleno ručně čarami na Canvas)
     const petX = leftX + 130;
     const petY = 230;
     ctx.lineWidth = 2.5;
     ctx.strokeStyle = '#000000';
 
-    ctx.beginPath();
-    ctx.moveTo(petX, petY);
-    ctx.lineTo(petX + 16, petY - 26);
-    ctx.lineTo(petX + 32, petY);
-    ctx.closePath();
-    ctx.stroke();
+    ctx.beginPath(); ctx.moveTo(petX, petY); ctx.lineTo(petX + 16, petY - 26); ctx.lineTo(petX + 32, petY); ctx.closePath(); ctx.stroke();
+    ctx.beginPath(); ctx.moveTo(petX + 24, petY - 4); ctx.lineTo(petX + 32, petY); ctx.lineTo(petX + 24, petY + 5); ctx.stroke();
 
-    ctx.beginPath();
-    ctx.moveTo(petX + 24, petY - 4);
-    ctx.lineTo(petX + 32, petY);
-    ctx.lineTo(petX + 24, petY + 5);
-    ctx.stroke();
+    ctx.font = "bold 14px 'Arial', sans-serif"; ctx.textAlign = "center";
+    ctx.fillText("01", petX + 16, petY - 4); ctx.fillText("PET", petX + 16, petY + 14); ctx.textAlign = "left";
 
-    ctx.font = "bold 14px 'Arial', sans-serif";
-    ctx.textAlign = "center";
-    ctx.fillText("01", petX + 16, petY - 4);
-    ctx.fillText("PET", petX + 16, petY + 14);
-    ctx.textAlign = "left";
-
-    // ── PRAVÁ STRANA TOHOTO BÍLÉHO BLOKU (TABULKA SLOŽENÍ) ──
+    // TABULKA
     const tableX = MAIN_W + 212;
-    const tableYTop = 12;
-    const tableYBot = 129;
-    const blockH = 113;
-    const tableW = 76;
+    const tableYTop = 12; const tableYBot = 129; const blockH = 113; const tableW = 76;
 
-    ctx.lineWidth = 1;
-    ctx.strokeStyle = '#000000';
-
-    // Rámování horního bloku
+    ctx.lineWidth = 1; ctx.strokeStyle = '#000000';
     ctx.strokeRect(tableX, tableYTop, tableW, blockH);
     const colWTop = tableW / 5;
-    for(let i=1; i<5; i++) {
-        ctx.beginPath();
-        ctx.moveTo(tableX + i * colWTop, tableYTop);
-        ctx.lineTo(tableX + i * colWTop, tableYTop + blockH);
-        ctx.stroke();
-    }
+    for(let i=1; i<5; i++) { ctx.beginPath(); ctx.moveTo(tableX + i * colWTop, tableYTop); ctx.lineTo(tableX + i * colWTop, tableYTop + blockH); ctx.stroke(); }
 
-    // Rámování dolního bloku
     ctx.strokeRect(tableX, tableYBot, tableW, blockH);
     const colWBot = tableW / 6;
-    for(let i=1; i<6; i++) {
-        ctx.beginPath();
-        ctx.moveTo(tableX + i * colWBot, tableYBot);
-        ctx.lineTo(tableX + i * colWBot, tableYBot + blockH);
-        ctx.stroke();
-    }
+    for(let i=1; i<6; i++) { ctx.beginPath(); ctx.moveTo(tableX + i * colWBot, tableYBot); ctx.lineTo(tableX + i * colWBot, tableYBot + blockH); ctx.stroke(); }
 
-    // Textování horního bloku (Zajišťuje rotaci textu o -90°)
-    ctx.save();
-    ctx.translate(tableX, tableYTop + blockH);
-    ctx.rotate(-Math.PI / 2);
-    ctx.font = "normal 10px 'Arial', sans-serif";
-    ctx.fillStyle = '#000000';
-    ctx.textBaseline = "middle";
-    const maxTextWTable = blockH - 6;
-
-    const colTop = [
-        "Draslík (Potassium): 0,4 mg/l",
-        "Chloridy (Chloride): 2,6 mg/l",
-        "Dusitany (Nitrite): 0,01 mg/l",
-        "Sírany (Sulfate): 11 mg/l",
-        "Fluoridy (Fluoride): 0,1 mg/l"
-    ];
-    for(let i=0; i<colTop.length; i++) {
-        ctx.fillText(colTop[i], 5, i * colWTop + (colWTop/2) + 1, maxTextWTable);
-    }
+    ctx.save(); ctx.translate(tableX, tableYTop + blockH); ctx.rotate(-Math.PI / 2);
+    ctx.font = "normal 10px 'Arial', sans-serif"; ctx.fillStyle = '#000000'; ctx.textBaseline = "middle";
+    const colTop = [ "Draslík (Potassium): 0,4 mg/l", "Chloridy (Chloride): 2,6 mg/l", "Dusitany (Nitrite): 0,01 mg/l", "Sírany (Sulfate): 11 mg/l", "Fluoridy (Fluoride): 0,1 mg/l" ];
+    for(let i=0; i<colTop.length; i++) { ctx.fillText(colTop[i], 5, i * colWTop + (colWTop/2) + 1, blockH - 6); }
     ctx.restore();
 
-    // Textování dolního bloku
-    ctx.save();
-    ctx.translate(tableX, tableYBot + blockH);
-    ctx.rotate(-Math.PI / 2);
-    ctx.font = "normal 10px 'Arial', sans-serif";
-    ctx.fillStyle = '#000000';
-    ctx.textBaseline = "middle";
-
-    const colBot = [
-        "pH hodnota: 7,99",
-        "Kyslík (Oxygen): 9,2 mg/l",
-        "Sodík (Sodium): 2,0 mg/l",
-        "Vápník (Calcium): 45 mg/l",
-        "Hořčík (Magnesium): 13 mg/l",
-        "Hydrogenuhličitany (Hydrogen carbonate): 170 mg/l"
-    ];
-    for(let i=0; i<colBot.length; i++) {
-        ctx.fillText(colBot[i], 5, i * colWBot + (colWBot/2) + 1, maxTextWTable);
-    }
+    ctx.save(); ctx.translate(tableX, tableYBot + blockH); ctx.rotate(-Math.PI / 2);
+    ctx.font = "normal 10px 'Arial', sans-serif"; ctx.fillStyle = '#000000'; ctx.textBaseline = "middle";
+    const colBot = [ "pH hodnota: 7,99", "Kyslík (Oxygen): 9,2 mg/l", "Sodík (Sodium): 2,0 mg/l", "Vápník (Calcium): 45 mg/l", "Hořčík (Magnesium): 13 mg/l", "Hydrogenuhličitany (Hydrogen carbonate): 170 mg/l" ];
+    for(let i=0; i<colBot.length; i++) { ctx.fillText(colBot[i], 5, i * colWBot + (colWBot/2) + 1, blockH - 6); }
     ctx.restore();
 
     state.canvases[idx] = canvas;
@@ -481,7 +409,8 @@ function setStep(i, s) { const el = document.getElementById('step-' + i); if (el
 function setTitle(t, s) { document.getElementById('load-title').textContent = t; if (s) document.getElementById('load-sub').textContent = s; }
 function showError(m) { const b = document.getElementById('error-box'); b.textContent = m; b.style.display = 'block'; }
 function hideError() { document.getElementById('error-box').style.display = 'none'; }
-function showLabelResult(i) { document.getElementById('placeholder-' + i).style.display = 'none'; document.getElementById('shell-' + i).style.display = 'block'; document.getElementById('actions-' + i).style.display = 'flex'; document.getElementById('name-' + i).textContent = state.brandData.designs[i].name; document.getElementById('desc-' + i).textContent = state.brandData.designs[i].styleDesc; }
+// Nyní se dynamicky vypisuje i TAG (Concept 01 atd.)
+function showLabelResult(i) { document.getElementById('placeholder-' + i).style.display = 'none'; document.getElementById('shell-' + i).style.display = 'block'; document.getElementById('actions-' + i).style.display = 'flex'; document.getElementById('name-' + i).textContent = state.brandData.designs[i].name; document.getElementById('desc-' + i).textContent = state.brandData.designs[i].styleDesc; document.getElementById('tag-' + i).textContent = state.brandData.designs[i].tagline;}
 function populatePreviewMeta() { document.getElementById('preview-meta').textContent = state.companyName + ' · 200 × 50 mm'; }
 function resetToInput() { showView('input'); state.images = [null, null, null]; [0, 1, 2].forEach(i => { document.getElementById('placeholder-' + i).style.display = 'flex'; document.getElementById('shell-' + i).style.display = 'none'; document.getElementById('actions-' + i).style.display = 'none'; }); for (let i = 0; i < 7; i++) setStep(i, ''); }
 function downloadPNG(i) { const a = document.createElement('a'); a.download = `label_${i}.png`; a.href = state.canvases[i].toDataURL('image/png'); a.click(); }
