@@ -13,276 +13,129 @@ app.use(cors());
 app.use(express.json({ limit: '15mb' }));
 app.use(express.static(path.join(__dirname, 'public')));
 
-// ─── RETRY FETCH ─────────────────────────────────────────────
-async function fetchWithRetry(url, options, maxRetries = 2, timeoutMs = 90000) {
+// ─── BEZPEČNÝ FETCH (Pomocná funkce pro volání API s opakováním) ───
+async function fetchWithRetry(url, options, maxRetries = 2, timeoutMs = 55000) {
     for (let i = 0; i <= maxRetries; i++) {
         const controller = new AbortController();
         const timeoutId = setTimeout(() => controller.abort(), timeoutMs);
         try {
             const response = await fetch(url, { ...options, signal: controller.signal });
             clearTimeout(timeoutId);
-            if (!response.ok) {
-                const errText = await response.text();
-                throw new Error(`HTTP ${response.status}: ${errText.substring(0, 250)}`);
-            }
             return response;
         } catch (error) {
             clearTimeout(timeoutId);
             if (i === maxRetries) throw error;
-            console.log(`Retry ${i + 1} for ${url}...`);
+            console.log(`Zkouším znovu (${i + 1}) pro ${url}...`);
             await new Promise(resolve => setTimeout(resolve, 2500 * (i + 1)));
         }
     }
 }
 
-// ─── CREATIVITY POOLS — used for randomization ──────────────
-const MOOD_DIRECTIONS = [
-    "editorial magazine cover energy",
-    "industrial brutalist poster",
-    "art deco geometric symmetry",
-    "swiss minimal corporate",
-    "retro-futurist 1980s",
-    "organic naturalistic warmth",
-    "bauhaus geometric primary-color",
-    "art nouveau ornate flourish",
-    "tech sci-fi neon",
-    "playful pop-art bold",
-    "cinematic noir dramatic",
-    "vintage travel poster",
-    "japanese minimalism mono-no-aware",
-    "memphis design 1980s zigzag",
-    "constructivist soviet-poster boldness"
-];
-
-const COMPOSITION_HINTS = [
-    "diagonal dynamic composition",
-    "centered symmetrical formal",
-    "rule-of-thirds editorial",
-    "asymmetric tension",
-    "dutch-angle dramatic tilt",
-    "layered foreground-midground-background",
-    "isometric 3/4 perspective",
-    "frontal poster-style",
-    "low-angle hero shot",
-    "high-angle environmental"
-];
-
-const FONT_POOL = [
-    "Anton",
-    "Bebas Neue",
-    "Oswald",
-    "Russo One",
-    "Archivo Black",
-    "Black Ops One",
-    "Bowlby One",
-    "Staatliches",
-    "Saira Condensed",
-    "Bungee",
-    "Barlow Condensed",
-    "Passion One",
-    "Big Shoulders Display"
-];
-
-function pickN(arr, n) {
-    const shuffled = [...arr].sort(() => Math.random() - 0.5);
-    return shuffled.slice(0, n);
-}
-
-// ─── BRAND ANALYSIS via Claude ──────────────────────────────
+// ─── ANALÝZA ZNAČKY (Lokální generátor parametrů) ───
 app.post('/api/analyze-brand', async (req, res) => {
-    const { name, description, url, color } = req.body;
-    if (!process.env.ANTHROPIC_API_KEY) {
-        return res.status(500).json({ error: "Missing ANTHROPIC_API_KEY env var." });
-    }
+    const { name, description, color } = req.body;
+    const primaryColor = color || "#1d4ed8";
+    const brandContext = description ? description : name;
 
-    const variationSeed = Math.floor(Math.random() * 99999);
-    const moodHints = pickN(MOOD_DIRECTIONS, 3);
-    const compHints = pickN(COMPOSITION_HINTS, 3);
-    const fontsThisRun = pickN(FONT_POOL, 6);
-
-    const body = {
-        model: "claude-sonnet-4-6",
-        max_tokens: 2400,
-        messages: [{
-            role: "user",
-            content: `You are a product label illustrator. You design clean, restrained bottle labels for Czech companies.
-
-═══ VARIATION SEED ═══
-Creative seed: ${variationSeed}
-Even with the same input, produce a different design each run.
-
-═══ BRAND ═══
-Company: ${name}
-Description: ${description || "Not provided"}
-Website: ${url || "Not provided"}
-Brand Color Hint: ${color || "#1d4ed8"}
-
-${url ? `Web search "${name}" to find: real brand colors, products, logo style, visual identity.` : ""}
-
-═══ ILLUSTRATION STYLE ═══
-Reference style: clean product illustrations on a SINGLE solid background color. Like the bus on the Turancar label, the watch on HSH Sport, the glasses on KA-Glasses. NOT editorial, NOT dramatic, NOT atmospheric. Just a clean product hero illustration on a plain background.
-
-For each design write a SHORT, FOCUSED image prompt:
-- The SUBJECT: their main product or brand symbol (e.g. "red and silver electric motorcycle, 3/4 angle view", "smartwatch with metallic bezel facing forward", "stack of leather wallets")
-- The BACKGROUND: just specify a solid color (matches design's bg color)
-- Style: clean modern illustration, flat shading or subtle vector shading, crisp clean outlines
-
-Keep prompts SHORT (40-60 words max). Don't request "rich atmosphere", "gradients everywhere", "dramatic lighting", "supporting objects scattered around" — those make FAL.ai produce busy AI-looking results.
-
-═══ LANGUAGE — CRITICAL ═══
-The "slogan", all "tagline" fields, and all "styleDesc" fields MUST be written in CZECH language (čeština).
-The "industry", "name" (design variation name like "Light Edition"), and "imagePrompt" fields stay in English (imagePrompt MUST be English so FAL.ai understands it).
-Use natural, punchy Czech marketing language with proper diacritics (á, č, ď, é, ě, í, ň, ó, ř, š, ť, ú, ů, ý, ž).
-Examples of good Czech taglines: "Síla z hor", "Čistota každý den", "Pravá česká kvalita", "Vyrobeno s láskou", "Pro každého z nás".
-Examples of good Czech styleDesc: "Čistý hrdina produktu na bílém pozadí", "Produkt na firemní barvě", "Hrdina na tmavém pozadí".
-
-═══ FONT VARIETY ═══
-Use 3 different fonts from: ${fontsThisRun.join(", ")}
-
-═══ OUTPUT — raw JSON only ═══
-{
-  "slogan": "punchy 4-6 word slogan",
-  "industry": "industry",
-  "companyColor": "#actual_hex_from_web",
-  "designs": [
-    {
-      "id": 1,
-      "name": "Light Edition",
-      "styleDesc": "Čistý hrdina produktu na bílém pozadí",
-      "displayFont": "<font from list>",
-      "bg": "#ffffff",
-      "primary": "#brand_color",
-      "text": "#111111",
-      "accent": "#accent_hex",
-      "tagline": "3-5 word tagline IN CZECH",
-      "imagePrompt": "Clean illustration of [SPECIFIC product/symbol for ${name}, e.g. 'silver and red motorcycle in 3/4 view, slightly tilted left']. Solid white background. Modern flat vector style with subtle shading and clean outlines. Brand color [hex] as primary accent. NO text NO letters NO words NO numbers. Landscape 4:3."
-    },
-    {
-      "id": 2,
-      "name": "Brand Color",
-      "styleDesc": "Produkt na firemní barvě",
-      "displayFont": "<different font>",
-      "bg": "#brand_color_or_tinted",
-      "primary": "#ffffff",
-      "text": "#ffffff",
-      "accent": "#accent_hex",
-      "tagline": "different 3-5 word tagline IN CZECH",
-      "imagePrompt": "Clean illustration of [SAME product type, different angle, e.g. 'side profile motorcycle silhouette']. Solid [brand_color] background. White and pale-toned flat vector illustration, clean outlines. NO text NO letters NO words NO numbers. Landscape 4:3."
-    },
-    {
-      "id": 3,
-      "name": "Dark Edition",
-      "styleDesc": "Hrdina produktu na tmavém pozadí",
-      "displayFont": "<third font>",
-      "bg": "#0d0e14",
-      "primary": "#brand_color",
-      "text": "#ffffff",
-      "accent": "#accent_hex",
-      "tagline": "third 3-5 word tagline IN CZECH",
-      "imagePrompt": "Clean illustration of [SAME product type, hero composition]. Solid dark background #0d0e14. Modern flat vector style with [brand_color] accents on the product, clean outlines, subtle shading. NO text NO letters NO words NO numbers. Landscape 4:3."
-    }
-  ]
-}`
-        }]
+    // Tady jsme nahradili Claude. Server sám poskládá 3 styly (Tmavý, Bílý, Výrazný)
+    const parsed = {
+        slogan: "Premium Quality Edition",
+        industry: description ? "Custom Brand" : "Product & Tech",
+        companyColor: primaryColor,
+        designs: [
+            {
+                id: 1, name: "Signature Dark", styleDesc: "Premium dark edition",
+                bg: "#0a0d18", primary: primaryColor, text: "#ffffff", accent: "#334155", tagline: "Pure & Essential",
+                imagePrompt: `Flat 2D vector illustration: abstract graphic representing ${brandContext}. Dark navy background #0a0d18. Flat cell-shaded vector art, bold outlines, limited color palette using ${primaryColor}. NO text, NO photorealism, NO gradients. Clean digital illustration in landscape 4:3 ratio.`
+            },
+            {
+                id: 2, name: "Clean White", styleDesc: "Professional minimal white",
+                bg: "#f8f8f8", primary: primaryColor, text: "#111111", accent: "#e2e8f0", tagline: "Refreshingly Simple",
+                imagePrompt: `Flat 2D vector illustration: abstract graphic representing ${brandContext}. White/light grey background. Clean minimal vector art, brand color ${primaryColor} as main accent. Bold flat shapes, crisp outlines. NO text, NO photorealism. Landscape 4:3.`
+            },
+            {
+                id: 3, name: "Bold Brand", styleDesc: "Full brand color statement",
+                bg: primaryColor, primary: "#ffffff", text: "#ffffff", accent: "#0f172a", tagline: "Stand Out",
+                imagePrompt: `Flat 2D vector illustration: abstract graphic representing ${brandContext}. Solid ${primaryColor} background. White and light-colored flat vector art, bold silhouette style. Dynamic composition. NO text, NO photorealism. Landscape 4:3.`
+            }
+        ]
     };
 
-    if (url) {
-        body.tools = [{ type: "web_search_20250305", name: "web_search" }];
-    }
-
-    try {
-        const response = await fetchWithRetry("https://api.anthropic.com/v1/messages", {
-            method: "POST",
-            headers: {
-                "Content-Type": "application/json",
-                "x-api-key": process.env.ANTHROPIC_API_KEY,
-                "anthropic-version": "2023-06-01"
-            },
-            body: JSON.stringify(body)
-        }, 1, 70000);
-
-        const data = await response.json();
-        const textContent = data.content.filter(b => b.type === "text").map(b => b.text).join("");
-        const match = textContent.match(/\{[\s\S]*\}/);
-        if (!match) throw new Error("AI returned unexpected format. Try again.");
-
-        const parsed = JSON.parse(match[0]);
-        res.json(parsed);
-    } catch (err) {
-        console.error("Brand analysis error:", err);
-        res.status(500).json({ error: err.message });
-    }
+    // Nasimulujeme zpoždění 800ms pro plynulý chod načítacích animací
+    setTimeout(() => { res.json(parsed); }, 800);
 });
 
-// ─── IMAGE GENERATION via FAL.ai flux-pro v1.1 ──────────────
+// ─── GENERATOR OBRÁZKŮ (Přes platformu FAL.ai) ───
 app.post('/api/generate-image', async (req, res) => {
     const { prompt, designIndex } = req.body;
     if (!process.env.FAL_KEY) {
-        return res.status(500).json({ error: "Missing FAL_KEY env var." });
+        return res.status(500).json({ error: "Na serveru chybí FAL_KEY v nastavení prostředí." });
     }
 
-    if (!prompt || prompt.trim().length < 10) {
-        return res.json({ imageUrl: null, designIndex });
-    }
-
-    // Keep enforcement minimal — match the clean restrained reference style
-    const finalPrompt = `${prompt} Subject is the focal point, fills most of the frame. Clean product illustration style. NO text, NO letters, NO words, NO numbers anywhere in image.`;
-
-    const seed = Math.floor(Math.random() * 1000000);
+    // Vynutíme si plochý vektorový vzhled
+    const enforcedStyle = "flat 2D vector graphic, bold outlines, clean cell-shaded illustration, professional brand packaging art, NO photorealism, NO 3D rendering, NO gradients, NO text in image, NO typography, landscape 4:3 aspect ratio";
+    const finalPrompt = `${prompt} Style enforcement: ${enforcedStyle}`;
 
     try {
-        // FAL.ai flux-pro v1.1 — premium quality
-        const falResponse = await fetchWithRetry("https://fal.run/fal-ai/flux-pro/v1.1", {
+        const falResponse = await fetchWithRetry("https://fal.run/fal-ai/flux/schnell", {
             method: "POST",
             headers: {
                 "Authorization": `Key ${process.env.FAL_KEY}`,
                 "Content-Type": "application/json"
             },
             body: JSON.stringify({
-                prompt: finalPrompt,
-                image_size: "landscape_4_3",
-                num_images: 1,
-                seed: seed,
-                safety_tolerance: 6,
-                enable_safety_checker: false,
-                output_format: "jpeg"
+                prompt: finalPrompt, image_size: "landscape_4_3", num_inference_steps: 8, guidance_scale: 4.5, num_images: 1
             })
-        }, 2, 90000);
+        }, 2, 55000);
 
-        const falData = await falResponse.json();
-        if (!falData.images || !falData.images[0]) {
-            throw new Error("FAL.ai returned no image");
+        const rawText = await falResponse.text();
+        if (!falResponse.ok) {
+            throw new Error(`FAL.ai API chyba (Status ${falResponse.status}): ${rawText.substring(0, 150)}`);
         }
 
+        let falData;
+        try {
+            falData = JSON.parse(rawText);
+        } catch (e) {
+            throw new Error(`FAL.ai nevrátil JSON data. Služba má výpadek.`);
+        }
+
+        if (!falData.images || !falData.images[0]) {
+            throw new Error("FAL.ai nevygeneroval žádný obrázek.");
+        }
+
+        // Stáhneme obrázek z FAL a převedeme ho do Base64 (aby šel vložit do PDF)
         const imageRes = await fetch(falData.images[0].url);
-        if (!imageRes.ok) throw new Error("Failed to download generated image");
+        if (!imageRes.ok) throw new Error("Nepodařilo se stáhnout obrázek z FAL.ai");
         const buffer = Buffer.from(await imageRes.arrayBuffer());
 
         res.json({
             imageUrl: `data:image/jpeg;base64,${buffer.toString('base64')}`,
-            designIndex,
-            seed
+            designIndex
         });
     } catch (error) {
-        console.error("Image generation error:", error);
+        console.error("Chyba při generování:", error);
         res.status(500).json({ error: error.message });
     }
 });
 
-// ─── QR CODE PROXY ──────────────────────────────────────────
+// ─── PROXY PRO QR KÓDY (Abychom obešli blokaci prohlížeče CORS) ───
 app.get('/api/qr', async (req, res) => {
     const { url } = req.query;
-    if (!url) return res.status(400).send("Missing url");
+    if (!url) return res.status(400).send("Chybí URL pro QR kód");
     try {
-        const qrRes = await fetch(
-            `https://api.qrserver.com/v1/create-qr-code/?size=300x300&data=${encodeURIComponent(url)}&bgcolor=ffffff&color=000000&margin=8`
-        );
+        const qrRes = await fetch(`https://api.qrserver.com/v1/create-qr-code/?size=300x300&data=${encodeURIComponent(url)}&bgcolor=ffffff&color=000000&margin=8`);
         const buf = Buffer.from(await qrRes.arrayBuffer());
         res.set("Content-Type", "image/png");
         res.send(buf);
     } catch (e) {
-        res.status(500).send("QR error");
+        res.status(500).send("Chyba QR API");
     }
 });
 
-app.listen(PORT, () => console.log(`🚀 Label Studio (rich mode) on port ${PORT}`));
+// ─── OCHRANA PROTI CHYBÁM (Catch-all) ───
+app.use('/api', (req, res) => {
+    res.status(404).json({ error: `API cesta nenalezena. Ujistěte se, že Render načetl nový server.js.` });
+});
+
+app.listen(PORT, () => console.log(`🚀 Label Studio běží na portu ${PORT}`));
