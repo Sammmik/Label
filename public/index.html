@@ -541,15 +541,21 @@ function renderLabel(idx) {
         ctx.rect(0, 0, ILLUS_W, CH);
         ctx.clip();
         ctx.drawImage(img, 0, 0, MAIN_W, CH);
-        ctx.restore();
 
-        // Strong fade — illustration dissolves into clean text zone
-        const fadeGrd = ctx.createLinearGradient(SAFE_X - 100, 0, SAFE_X + 30, 0);
-        fadeGrd.addColorStop(0, 'rgba(0,0,0,0)');
-        fadeGrd.addColorStop(0.55, alpha(bg, 0.88));
-        fadeGrd.addColorStop(1, bg);
-        ctx.fillStyle = fadeGrd;
+        // Clean fade: ERASE illustration alpha in the transition region
+        // instead of overlaying a semi-transparent bg color on top.
+        // This prevents the "darker band" artifact where the illustration's
+        // dark zones (subjects, shadows) showed through the overlay.
+        // destination-out: black pixels in the mask remove illustration alpha.
+        ctx.globalCompositeOperation = 'destination-out';
+        const fadeMask = ctx.createLinearGradient(SAFE_X - 100, 0, SAFE_X + 30, 0);
+        fadeMask.addColorStop(0, 'rgba(0,0,0,0)');     // keep illustration
+        fadeMask.addColorStop(1, 'rgba(0,0,0,1)');     // erase illustration
+        ctx.fillStyle = fadeMask;
         ctx.fillRect(SAFE_X - 100, 0, 150, CH);
+
+        // Restore (this also resets globalCompositeOperation to 'source-over')
+        ctx.restore();
     } else {
         drawCreativeFallback(ctx, bg, primary, dark);
     }
@@ -558,12 +564,7 @@ function renderLabel(idx) {
     ctx.fillStyle = bg;
     ctx.fillRect(SAFE_X + 30, 0, MAIN_W - SAFE_X - 30, CH);
 
-    // ── TOP + BOTTOM EDGE BARS ─────────────────────
-    ctx.fillStyle = primary;
-    ctx.fillRect(0, 0, MAIN_W, 3);
-    ctx.fillRect(0, CH - 3, MAIN_W, 3);
-
-    // ── LOGO — top-left, with SMART vignette (only when needed) ─────────
+    // ── LOGO — top-left, clean, no vignette ─────────────────────────────
     if (state.logoImg) {
         try {
             const lw_natural = state.logoImg.naturalWidth || state.logoImg.width;
@@ -571,25 +572,6 @@ function renderLabel(idx) {
 
             if (lw_natural > 0 && lh_natural > 0) {
                 const lSize = 100;
-                const lCenterX = 20 + lSize / 2;
-                const lCenterY = 24 + lSize / 2;
-
-                // Smart vignette: ONLY draw when the logo is competing with
-                // a busy illustration AND the bg is dark/colored.
-                // For Light Edition (white bg, no illustration here), skip
-                // the vignette entirely — it was creating a "UFO landing pad".
-                const needsVignette = hasImage && (dark || isDark(primary));
-                if (needsVignette) {
-                    const vignette = ctx.createRadialGradient(
-                        lCenterX, lCenterY, 12,
-                        lCenterX, lCenterY, lSize * 0.75
-                    );
-                    vignette.addColorStop(0, alpha(bg, 0.75));
-                    vignette.addColorStop(0.6, alpha(bg, 0.4));
-                    vignette.addColorStop(1, 'rgba(0,0,0,0)');
-                    ctx.fillStyle = vignette;
-                    ctx.fillRect(0, 0, lSize + 40, lSize + 40);
-                }
 
                 const sc = Math.min(lSize / lw_natural, lSize / lh_natural) * 0.88;
                 const lw = lw_natural * sc;
