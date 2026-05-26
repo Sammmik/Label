@@ -258,18 +258,68 @@ document.getElementById('inp-color').addEventListener('input', function() {
 document.getElementById('logo-input').addEventListener('change', function(e) {
     const file = e.target.files[0];
     if (!file) return;
+
+    const hint = document.getElementById('logo-hint');
+    const drop = document.getElementById('logo-drop');
+    hint.textContent = 'Loading logo...';
+
     const reader = new FileReader();
+    reader.onerror = () => {
+        hint.textContent = '✗ Could not read file';
+        console.error('FileReader error', reader.error);
+    };
     reader.onload = (ev) => {
-        const img = new Image();
-        img.onload = () => {
-            const c = document.createElement('canvas'); c.width = 360; c.height = 220; const ctx = c.getContext('2d');
-            const sc = Math.min(340 / img.width, 200 / img.height);
-            ctx.drawImage(img, (360 - img.width*sc)/2, (220 - img.height*sc)/2, img.width*sc, img.height*sc);
-            state.logoImg = new Image(); state.logoImg.src = c.toDataURL('image/png');
-            document.getElementById('logo-preview').src = state.logoImg.src;
-            document.getElementById('logo-drop').classList.add('ready');
+        const sourceImg = new Image();
+
+        sourceImg.onerror = (err) => {
+            hint.textContent = '✗ Invalid image format';
+            console.error('Source image failed to load', err);
         };
-        img.src = ev.target.result;
+
+        sourceImg.onload = async () => {
+            try {
+                // Use natural dimensions; SVG may report 0 if no width/height in markup
+                let sw = sourceImg.naturalWidth || sourceImg.width;
+                let sh = sourceImg.naturalHeight || sourceImg.height;
+                if (!sw || !sh) {
+                    // SVG without intrinsic size — assume square 400px
+                    sw = sh = 400;
+                }
+
+                // Rasterize onto a clean canvas at fixed size for consistent rendering
+                const c = document.createElement('canvas');
+                c.width = 360; c.height = 220;
+                const ctx = c.getContext('2d');
+                const sc = Math.min(340 / sw, 200 / sh);
+                const dw = sw * sc;
+                const dh = sh * sc;
+                ctx.drawImage(sourceImg, (360 - dw) / 2, (220 - dh) / 2, dw, dh);
+
+                // CRITICAL: wait for the new Image to actually decode before storing
+                const finalImg = new Image();
+                finalImg.src = c.toDataURL('image/png');
+                try {
+                    await finalImg.decode();
+                } catch (decodeErr) {
+                    // Older browsers without decode()
+                    await new Promise((res, rej) => {
+                        finalImg.onload = res;
+                        finalImg.onerror = rej;
+                    });
+                }
+
+                state.logoImg = finalImg;
+                document.getElementById('logo-preview').src = finalImg.src;
+                drop.classList.add('ready');
+                hint.textContent = '✓ Logo ready — will appear on all labels';
+                console.log(`✓ Logo loaded (${sw}×${sh}, rasterized to ${Math.round(dw)}×${Math.round(dh)})`);
+            } catch (err) {
+                hint.textContent = '✗ Could not process logo';
+                console.error('Logo processing error', err);
+            }
+        };
+
+        sourceImg.src = ev.target.result;
     };
     reader.readAsDataURL(file);
 });
