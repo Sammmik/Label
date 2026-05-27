@@ -522,11 +522,12 @@ function renderLabel(idx) {
     const taglineWeight = isSerif ? '700' : '600';
 
     // ── LAYOUT GEOMETRY ─────────────────────────────
-    // Pull SAFE_X further LEFT so the name has more room and illustrations
-    // don't feel cramped against the right edge of the creative zone.
-    const SAFE_X    = MAIN_W - 320;         // text zone starts at x=380 (was 410)
-    const SAFE_W    = MAIN_W - SAFE_X - 14; // 306px wide
-    const ILLUS_W   = SAFE_X + 30;          // illustration clips here
+    // FAL.ai is instructed to keep the RIGHT THIRD of the illustration empty.
+    // We align SAFE_X with that empty zone (66% across the creative width)
+    // so the company name sits precisely where the background is cleanest.
+    const SAFE_X    = Math.round(MAIN_W * 0.62);   // ~62% across — slight overlap into mid third for visual balance
+    const SAFE_W    = MAIN_W - SAFE_X - 14;
+    const ILLUS_W   = MAIN_W;                       // illustration fills full width (overlap protected by FAL's empty zone)
 
     // ── BACKGROUND ──────────────────────────────────
     ctx.fillStyle = bg; ctx.fillRect(0, 0, CW, CH);
