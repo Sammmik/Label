@@ -590,22 +590,44 @@ function renderLabel(idx) {
         ctx.letterSpacing = '0.02em';
     }
 
-    // Vertically center the name+tagline block, slightly above center
     const taglineH = tagline ? 20 : 0;
     const totalH = fs + taglineH;
     const nameBaselineY = Math.round(CH * 0.46) + fs * 0.30;
 
-    // Subtle text shadow — gives the name legibility on busy illustrations
-    // without creating a visible "box" around the text. Color matches the
-    // OPPOSITE of the text (so dark shadow on white text, light shadow on dark).
+    // MULTI-PASS ATMOSPHERIC HALO — builds up contrast around letters
+    // by rendering the text 3 times with progressively tighter shadows.
+    // Each pass adds another layer of halo, creating a soft glow that
+    // rescues legibility on busy backgrounds without ever looking like
+    // a box, badge, or hard outline.
+    const haloColor = isDark(text) ? '255,255,255' : '0,0,0';
+
+    // Pass 1: wide atmospheric haze (24px blur, low opacity)
     ctx.save();
-    ctx.shadowColor = isDark(text) ? 'rgba(255,255,255,0.45)' : 'rgba(0,0,0,0.55)';
-    ctx.shadowBlur = 14;
-    ctx.shadowOffsetX = 0;
-    ctx.shadowOffsetY = 1;
-    ctx.fillStyle = text;
+    ctx.fillStyle = `rgba(${haloColor},0.001)`;  // near-invisible fill, shadow does the work
+    ctx.shadowColor = `rgba(${haloColor},0.55)`;
+    ctx.shadowBlur = 24;
     ctx.fillText(upperName, SAFE_X, nameBaselineY);
     ctx.restore();
+
+    // Pass 2: medium ring (12px blur, medium opacity) — tightens halo
+    ctx.save();
+    ctx.fillStyle = `rgba(${haloColor},0.001)`;
+    ctx.shadowColor = `rgba(${haloColor},0.65)`;
+    ctx.shadowBlur = 12;
+    ctx.fillText(upperName, SAFE_X, nameBaselineY);
+    ctx.restore();
+
+    // Pass 3: tight halo (5px blur, strong) — sharp letter contrast
+    ctx.save();
+    ctx.fillStyle = `rgba(${haloColor},0.001)`;
+    ctx.shadowColor = `rgba(${haloColor},0.7)`;
+    ctx.shadowBlur = 5;
+    ctx.fillText(upperName, SAFE_X, nameBaselineY);
+    ctx.restore();
+
+    // Final pass: the actual text, no shadow
+    ctx.fillStyle = text;
+    ctx.fillText(upperName, SAFE_X, nameBaselineY);
 
     if (ctx.letterSpacing !== undefined) ctx.letterSpacing = '0em';
 
