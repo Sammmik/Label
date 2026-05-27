@@ -536,47 +536,13 @@ function renderLabel(idx) {
     const hasImage = img && img.complete && img.naturalWidth > 0;
 
     if (hasImage) {
-        ctx.save();
-        ctx.beginPath();
-        ctx.rect(0, 0, ILLUS_W, CH);
-        ctx.clip();
+        // FULL BLEED — illustration fills the entire creative zone, no clip,
+        // no fade, no mask. Like real packaging design (YUKI, Turancar, HSH).
+        // The text will float on top with a subtle shadow for legibility.
         ctx.drawImage(img, 0, 0, MAIN_W, CH);
-
-        // SOFT FEATHERED FADE — designer-quality blend.
-        // Wider transition zone (240px instead of 150px) with an S-curve
-        // alpha falloff that mimics a Photoshop soft brush mask.
-        ctx.globalCompositeOperation = 'destination-out';
-        const fadeMask = ctx.createLinearGradient(SAFE_X - 200, 0, SAFE_X + 40, 0);
-        fadeMask.addColorStop(0,    'rgba(0,0,0,0)');     // illustration fully present
-        fadeMask.addColorStop(0.25, 'rgba(0,0,0,0.05)');  // imperceptible start
-        fadeMask.addColorStop(0.5,  'rgba(0,0,0,0.35)');  // mid-fade, S-curve middle
-        fadeMask.addColorStop(0.75, 'rgba(0,0,0,0.75)');  // mostly faded
-        fadeMask.addColorStop(0.95, 'rgba(0,0,0,0.98)');  // nearly invisible
-        fadeMask.addColorStop(1,    'rgba(0,0,0,1)');     // illustration fully removed
-        ctx.fillStyle = fadeMask;
-        ctx.fillRect(SAFE_X - 200, 0, 240, CH);
-
-        ctx.restore();
-
-        // ATMOSPHERIC WASH — gentle bg-color tint over a wide area that
-        // unifies illustration and text zones. Very low opacity (8%) so it
-        // doesn't darken the artwork but creates color harmony across the
-        // whole creative zone. This is the trick that makes professional
-        // packaging feel "of one piece" instead of "glued together".
-        const wash = ctx.createLinearGradient(0, 0, MAIN_W, 0);
-        wash.addColorStop(0, 'rgba(0,0,0,0)');
-        wash.addColorStop(0.4, 'rgba(0,0,0,0)');
-        wash.addColorStop(0.7, alpha(bg, 0.04));
-        wash.addColorStop(1, alpha(bg, 0.08));
-        ctx.fillStyle = wash;
-        ctx.fillRect(0, 0, MAIN_W, CH);
     } else {
         drawCreativeFallback(ctx, bg, primary, dark);
     }
-
-    // ── SOLID TEXT SAFE ZONE BG ─────────────────────
-    ctx.fillStyle = bg;
-    ctx.fillRect(SAFE_X + 30, 0, MAIN_W - SAFE_X - 30, CH);
 
     // ── LOGO — top-left, clean, no vignette ─────────────────────────────
     if (state.logoImg) {
@@ -619,18 +585,27 @@ function renderLabel(idx) {
     const nameMaxFs = isSerif ? 56 : 64;
     const fs = fitFont(ctx, upperName, nameWeight, designFont, nameMaxFs, SAFE_W);
     ctx.font = `${nameWeight} ${fs}px ${designFont}`;
-    ctx.fillStyle = text;
 
     if (!isSerif && ctx.letterSpacing !== undefined) {
         ctx.letterSpacing = '0.02em';
     }
 
-    // Vertically center the name+tagline block, but anchor it slightly higher
-    // (40% from top) so the QR code at the bottom doesn't feel cramped.
+    // Vertically center the name+tagline block, slightly above center
     const taglineH = tagline ? 20 : 0;
     const totalH = fs + taglineH;
     const nameBaselineY = Math.round(CH * 0.46) + fs * 0.30;
+
+    // Subtle text shadow — gives the name legibility on busy illustrations
+    // without creating a visible "box" around the text. Color matches the
+    // OPPOSITE of the text (so dark shadow on white text, light shadow on dark).
+    ctx.save();
+    ctx.shadowColor = isDark(text) ? 'rgba(255,255,255,0.45)' : 'rgba(0,0,0,0.55)';
+    ctx.shadowBlur = 14;
+    ctx.shadowOffsetX = 0;
+    ctx.shadowOffsetY = 1;
+    ctx.fillStyle = text;
     ctx.fillText(upperName, SAFE_X, nameBaselineY);
+    ctx.restore();
 
     if (ctx.letterSpacing !== undefined) ctx.letterSpacing = '0em';
 
