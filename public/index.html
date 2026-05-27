@@ -521,31 +521,69 @@ function renderLabel(idx) {
     const nameWeight = isSerif ? '700' : '900';
     const taglineWeight = isSerif ? '700' : '600';
 
-    // ── LAYOUT GEOMETRY ─────────────────────────────
-    // FAL.ai is instructed to keep the RIGHT THIRD of the illustration empty.
-    // We align SAFE_X with that empty zone (66% across the creative width)
-    // so the company name sits precisely where the background is cleanest.
-    const SAFE_X    = Math.round(MAIN_W * 0.62);   // ~62% across — slight overlap into mid third for visual balance
+    // ── LAYOUT GEOMETRY — TWO HARD ZONES ────────────────────────────────
+    // The creative area is split into two physically separate regions with
+    // a clear border between them, exactly like Turancar / KP MARK / YUKI
+    // packaging. The illustration is CLIPPED to its zone and the text zone
+    // is painted SOLID — neither can overlap the other.
+    const SPLIT_X   = Math.round(MAIN_W * 0.56);   // illustration: 0 to 56%, text: 56% to 100%
+    const SAFE_X    = SPLIT_X + 16;                // text starts with 16px padding from divider
     const SAFE_W    = MAIN_W - SAFE_X - 14;
-    const ILLUS_W   = MAIN_W;                       // illustration fills full width (overlap protected by FAL's empty zone)
 
     // ── BACKGROUND ──────────────────────────────────
     ctx.fillStyle = bg; ctx.fillRect(0, 0, CW, CH);
 
-    // ── ILLUSTRATION ────────────────────────────────
+    // ── ZONE 1: ILLUSTRATION (clipped to left, cannot bleed right) ──────
     const img = state.images[idx];
     const hasImage = img && img.complete && img.naturalWidth > 0;
 
     if (hasImage) {
-        // FULL BLEED — illustration fills the entire creative zone, no clip,
-        // no fade, no mask. Like real packaging design (YUKI, Turancar, HSH).
-        // The text will float on top with a subtle shadow for legibility.
-        ctx.drawImage(img, 0, 0, MAIN_W, CH);
+        ctx.save();
+        ctx.beginPath();
+        ctx.rect(0, 0, SPLIT_X, CH);
+        ctx.clip();
+
+        // Fit illustration to fill the LEFT zone, preserving its 4:3 aspect ratio.
+        // We scale to cover the zone height — overflow is clipped away cleanly.
+        const imgRatio = img.naturalWidth / img.naturalHeight;
+        const zoneRatio = SPLIT_X / CH;
+        let drawW, drawH, drawX, drawY;
+        if (imgRatio > zoneRatio) {
+            // Image is wider than zone — fit by height, center horizontally
+            drawH = CH;
+            drawW = CH * imgRatio;
+            drawX = (SPLIT_X - drawW) / 2;
+            drawY = 0;
+        } else {
+            // Image is taller — fit by width, center vertically
+            drawW = SPLIT_X;
+            drawH = SPLIT_X / imgRatio;
+            drawX = 0;
+            drawY = (CH - drawH) / 2;
+        }
+        ctx.drawImage(img, drawX, drawY, drawW, drawH);
+        ctx.restore();
     } else {
+        // Fallback decorates only the illustration zone
+        ctx.save();
+        ctx.beginPath();
+        ctx.rect(0, 0, SPLIT_X, CH);
+        ctx.clip();
         drawCreativeFallback(ctx, bg, primary, dark);
+        ctx.restore();
     }
 
-    // ── LOGO — top-left, clean, no vignette ─────────────────────────────
+    // ── ZONE 2: TEXT — solid bg fill, no illustration possible here ─────
+    ctx.fillStyle = bg;
+    ctx.fillRect(SPLIT_X, 0, MAIN_W - SPLIT_X, CH);
+
+    // ── BORDER between the two zones — clean, intentional, brand-colored ─
+    // Thin vertical brand-color rule with 12px margins top/bottom so it
+    // doesn't run edge-to-edge (more refined). 2px thick for visibility.
+    ctx.fillStyle = primary;
+    ctx.fillRect(SPLIT_X - 1, 14, 2, CH - 28);
+
+    // ── LOGO — top-left of illustration zone, clean ─────────────────────
     if (state.logoImg) {
         try {
             const lw_natural = state.logoImg.naturalWidth || state.logoImg.width;
@@ -595,38 +633,8 @@ function renderLabel(idx) {
     const totalH = fs + taglineH;
     const nameBaselineY = Math.round(CH * 0.46) + fs * 0.30;
 
-    // MULTI-PASS ATMOSPHERIC HALO — builds up contrast around letters
-    // by rendering the text 3 times with progressively tighter shadows.
-    // Each pass adds another layer of halo, creating a soft glow that
-    // rescues legibility on busy backgrounds without ever looking like
-    // a box, badge, or hard outline.
-    const haloColor = isDark(text) ? '255,255,255' : '0,0,0';
-
-    // Pass 1: wide atmospheric haze (24px blur, low opacity)
-    ctx.save();
-    ctx.fillStyle = `rgba(${haloColor},0.001)`;  // near-invisible fill, shadow does the work
-    ctx.shadowColor = `rgba(${haloColor},0.55)`;
-    ctx.shadowBlur = 24;
-    ctx.fillText(upperName, SAFE_X, nameBaselineY);
-    ctx.restore();
-
-    // Pass 2: medium ring (12px blur, medium opacity) — tightens halo
-    ctx.save();
-    ctx.fillStyle = `rgba(${haloColor},0.001)`;
-    ctx.shadowColor = `rgba(${haloColor},0.65)`;
-    ctx.shadowBlur = 12;
-    ctx.fillText(upperName, SAFE_X, nameBaselineY);
-    ctx.restore();
-
-    // Pass 3: tight halo (5px blur, strong) — sharp letter contrast
-    ctx.save();
-    ctx.fillStyle = `rgba(${haloColor},0.001)`;
-    ctx.shadowColor = `rgba(${haloColor},0.7)`;
-    ctx.shadowBlur = 5;
-    ctx.fillText(upperName, SAFE_X, nameBaselineY);
-    ctx.restore();
-
-    // Final pass: the actual text, no shadow
+    // Text sits on guaranteed-solid bg color (two-zone layout), so no
+    // halo or shadow needed. Just clean type, like real packaging.
     ctx.fillStyle = text;
     ctx.fillText(upperName, SAFE_X, nameBaselineY);
 

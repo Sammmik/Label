@@ -165,7 +165,7 @@ You can use the SAME font across all 3 designs if it fits the brand. The 3 desig
       "text": "#111111",
       "accent": "#accent_hex",
       "tagline": "3-5 word tagline IN CZECH",
-      "imagePrompt": "Clean illustration of [SPECIFIC product/symbol for ${name}, e.g. 'silver and red motorcycle in 3/4 view, slightly tilted left']. CRITICAL COMPOSITION: subject MUST be positioned in the LEFT HALF of the frame, ideally left-of-center. The RIGHT THIRD of the image MUST be empty negative space with only the background color — this is critical for label typography. Subject faces LEFT or stays neutral, never extends into the right third. Solid white background. Modern flat vector style with subtle shading and clean outlines. Brand color [hex] as primary accent. NO text NO letters NO words NO numbers. Landscape 4:3."
+      "imagePrompt": "Clean illustration of [SPECIFIC product/symbol for ${name}, e.g. 'silver and red motorcycle in 3/4 view, slightly tilted']. Subject is the centered hero of the composition, well-framed, occupies 60-70% of the canvas. Solid white background with generous breathing room around the subject. Modern flat vector style with subtle shading and clean outlines. Brand color [hex] as primary accent. NO text NO letters NO words NO numbers. Landscape 4:3."
     },
     {
       "id": 2,
@@ -177,7 +177,7 @@ You can use the SAME font across all 3 designs if it fits the brand. The 3 desig
       "text": "#ffffff",
       "accent": "#accent_hex",
       "tagline": "different 3-5 word tagline IN CZECH",
-      "imagePrompt": "Clean illustration of [SAME product type, different angle, e.g. 'side profile motorcycle silhouette']. CRITICAL COMPOSITION: subject MUST be in the LEFT HALF of the frame. The RIGHT THIRD of the image MUST be clean empty background with no objects or details — this space is reserved for label typography. Subject faces LEFT or stays neutral. Solid [brand_color] background. White and pale-toned flat vector illustration, clean outlines. NO text NO letters NO words NO numbers. Landscape 4:3."
+      "imagePrompt": "Clean illustration of [SAME product type, different angle, e.g. 'side profile motorcycle silhouette']. Subject is the centered hero of the composition, well-framed, occupies 60-70% of the canvas with generous breathing room around it. Solid [brand_color] background. White and pale-toned flat vector illustration, clean outlines. NO text NO letters NO words NO numbers. Landscape 4:3."
     },
     {
       "id": 3,
@@ -189,7 +189,7 @@ You can use the SAME font across all 3 designs if it fits the brand. The 3 desig
       "text": "#ffffff",
       "accent": "#accent_hex",
       "tagline": "third 3-5 word tagline IN CZECH",
-      "imagePrompt": "Clean illustration of [SAME product type, hero composition]. CRITICAL COMPOSITION: subject MUST be positioned in the LEFT HALF of the frame. The RIGHT THIRD of the image MUST be clean empty background — this empty space is reserved for label typography. Subject faces LEFT or stays neutral, never centered. Solid dark background #0d0e14. Modern flat vector style with [brand_color] accents on the product, clean outlines, subtle shading. NO text NO letters NO words NO numbers. Landscape 4:3."
+      "imagePrompt": "Clean illustration of [SAME product type, hero composition]. Subject is the centered hero, occupies 60-70% of the canvas, well-framed with generous breathing room. Solid dark background #0d0e14. Modern flat vector style with [brand_color] accents on the product, clean outlines, subtle shading. NO text NO letters NO words NO numbers. Landscape 4:3."
     }
   ]
 }`
@@ -236,7 +236,7 @@ app.post('/api/generate-image', async (req, res) => {
     }
 
     // Keep enforcement minimal — match the clean restrained reference style
-    const finalPrompt = `${prompt} FINAL EMPHASIS: subject in LEFT HALF only, RIGHT THIRD of frame is empty background space, no objects or details on the right side. Clean product illustration style. NO text, NO letters, NO words, NO numbers anywhere in image.`;
+    const finalPrompt = `${prompt} Composition: subject is the centered hero with generous breathing room around it on solid bg. Clean product illustration style. NO text, NO letters, NO words, NO numbers anywhere in image.`;
 
     const seed = Math.floor(Math.random() * 1000000);
 
