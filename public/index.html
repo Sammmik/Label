@@ -609,36 +609,6 @@ function renderLabel(idx) {
 
     if (ctx.letterSpacing !== undefined) ctx.letterSpacing = '0em';
 
-    // ── TAGLINE — auto-fit to safe zone width, never overflows ──────────
-    if (tagline) {
-        // Try sizes 13→9 with letter-spacing, then 9→8 without
-        let taglineFs = 13;
-        let useSpacing = true;
-
-        // Start with letter-spacing 0.18em, decrease font if doesn't fit
-        for (taglineFs = 13; taglineFs >= 9; taglineFs--) {
-            ctx.font = `${taglineWeight} ${taglineFs}px ${designFont}`;
-            const trackingAdd = !isSerif ? tagline.length * taglineFs * 0.18 : 0;
-            if (ctx.measureText(tagline).width + trackingAdd <= SAFE_W) break;
-        }
-        // If still too big, drop letter-spacing
-        if (taglineFs < 9) {
-            useSpacing = false;
-            for (taglineFs = 11; taglineFs >= 8; taglineFs--) {
-                ctx.font = `${taglineWeight} ${taglineFs}px ${designFont}`;
-                if (ctx.measureText(tagline).width <= SAFE_W) break;
-            }
-        }
-
-        ctx.font = `${taglineWeight} ${taglineFs}px ${designFont}`;
-        ctx.fillStyle = alpha(primary, dark ? 0.92 : 0.82);
-        if (useSpacing && !isSerif && ctx.letterSpacing !== undefined) {
-            ctx.letterSpacing = '0.18em';
-        }
-        ctx.fillText(tagline, SAFE_X, nameBaselineY + 22);
-        if (ctx.letterSpacing !== undefined) ctx.letterSpacing = '0em';
-    }
-
     // ── QR CODE — refined: rounded corners + subtle border ──────────────
     if (state.qrImg) {
         const qx = 14, qy = CH - 80, qs = 68;
