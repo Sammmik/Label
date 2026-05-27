@@ -542,20 +542,34 @@ function renderLabel(idx) {
         ctx.clip();
         ctx.drawImage(img, 0, 0, MAIN_W, CH);
 
-        // Clean fade: ERASE illustration alpha in the transition region
-        // instead of overlaying a semi-transparent bg color on top.
-        // This prevents the "darker band" artifact where the illustration's
-        // dark zones (subjects, shadows) showed through the overlay.
-        // destination-out: black pixels in the mask remove illustration alpha.
+        // SOFT FEATHERED FADE — designer-quality blend.
+        // Wider transition zone (240px instead of 150px) with an S-curve
+        // alpha falloff that mimics a Photoshop soft brush mask.
         ctx.globalCompositeOperation = 'destination-out';
-        const fadeMask = ctx.createLinearGradient(SAFE_X - 100, 0, SAFE_X + 30, 0);
-        fadeMask.addColorStop(0, 'rgba(0,0,0,0)');     // keep illustration
-        fadeMask.addColorStop(1, 'rgba(0,0,0,1)');     // erase illustration
+        const fadeMask = ctx.createLinearGradient(SAFE_X - 200, 0, SAFE_X + 40, 0);
+        fadeMask.addColorStop(0,    'rgba(0,0,0,0)');     // illustration fully present
+        fadeMask.addColorStop(0.25, 'rgba(0,0,0,0.05)');  // imperceptible start
+        fadeMask.addColorStop(0.5,  'rgba(0,0,0,0.35)');  // mid-fade, S-curve middle
+        fadeMask.addColorStop(0.75, 'rgba(0,0,0,0.75)');  // mostly faded
+        fadeMask.addColorStop(0.95, 'rgba(0,0,0,0.98)');  // nearly invisible
+        fadeMask.addColorStop(1,    'rgba(0,0,0,1)');     // illustration fully removed
         ctx.fillStyle = fadeMask;
-        ctx.fillRect(SAFE_X - 100, 0, 150, CH);
+        ctx.fillRect(SAFE_X - 200, 0, 240, CH);
 
-        // Restore (this also resets globalCompositeOperation to 'source-over')
         ctx.restore();
+
+        // ATMOSPHERIC WASH — gentle bg-color tint over a wide area that
+        // unifies illustration and text zones. Very low opacity (8%) so it
+        // doesn't darken the artwork but creates color harmony across the
+        // whole creative zone. This is the trick that makes professional
+        // packaging feel "of one piece" instead of "glued together".
+        const wash = ctx.createLinearGradient(0, 0, MAIN_W, 0);
+        wash.addColorStop(0, 'rgba(0,0,0,0)');
+        wash.addColorStop(0.4, 'rgba(0,0,0,0)');
+        wash.addColorStop(0.7, alpha(bg, 0.04));
+        wash.addColorStop(1, alpha(bg, 0.08));
+        ctx.fillStyle = wash;
+        ctx.fillRect(0, 0, MAIN_W, CH);
     } else {
         drawCreativeFallback(ctx, bg, primary, dark);
     }
