@@ -149,6 +149,16 @@ Guidance:
 
 You can use the SAME font across all 3 designs if it fits the brand. The 3 designs vary by COLOR MOOD (light / brand / dark), not by font.
 
+═══ LAYOUT SELECTION — pick the best per design ═══
+Each design has a "layout" field. Choose from these 5 archetypes (the company name and illustration NEVER overlap in any of them):
+- "split"   → illustration left half, name in solid color panel on right (classic, safe, works for anything)
+- "band"    → illustration fills the zone, name sits in a solid horizontal color band across the lower third (bold, modern)
+- "stack"   → big name on top, illustration below it (energetic, good for short names)
+- "frame"   → illustration inside a rounded inset card, name beside it (refined, premium, editorial)
+- "sidebar" → narrow vertical color stripe holds the name stacked, illustration takes the rest (distinctive, design-forward)
+
+Assign a DIFFERENT layout to each of the 3 designs for variety, choosing ones that suit the brand's personality. Put the chosen archetype string in each design's "layout" field.
+
 ═══ OUTPUT — raw JSON only ═══
 {
   "slogan": "punchy 4-6 word slogan",
@@ -159,6 +169,7 @@ You can use the SAME font across all 3 designs if it fits the brand. The 3 desig
       "id": 1,
       "name": "Light Edition",
       "styleDesc": "Čistý hrdina produktu na bílém pozadí",
+      "layout": "<one of: split / band / stack / frame / sidebar>",
       "displayFont": "<font from list>",
       "bg": "#ffffff",
       "primary": "#brand_color",
@@ -171,6 +182,7 @@ You can use the SAME font across all 3 designs if it fits the brand. The 3 desig
       "id": 2,
       "name": "Brand Color",
       "styleDesc": "Produkt na firemní barvě",
+      "layout": "<a DIFFERENT one of: split / band / stack / frame / sidebar>",
       "displayFont": "<different font>",
       "bg": "#brand_color_or_tinted",
       "primary": "#ffffff",
@@ -183,6 +195,7 @@ You can use the SAME font across all 3 designs if it fits the brand. The 3 desig
       "id": 3,
       "name": "Dark Edition",
       "styleDesc": "Hrdina produktu na tmavém pozadí",
+      "layout": "<the THIRD different one of: split / band / stack / frame / sidebar>",
       "displayFont": "<third font>",
       "bg": "#0d0e14",
       "primary": "#brand_color",

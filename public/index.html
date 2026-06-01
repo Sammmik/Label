@@ -444,46 +444,44 @@ async function startGeneration() {
 
 // ─── DRAW FALLBACK PATTERN when no illustration loaded ──
 function drawCreativeFallback(ctx, bg, primary, dark) {
-    // Radial brand-color glow from right side of creative zone
-    const radGrd = ctx.createRadialGradient(MAIN_W * 0.6, CH * 0.5, 30, MAIN_W * 0.6, CH * 0.5, MAIN_W * 0.6);
+    drawCreativeFallbackRegion(ctx, bg, primary, dark, MAIN_W, CH);
+}
+
+// Region-aware fallback — draws decorative pattern within a w×h box
+// starting at the current transform origin (0,0 after a translate).
+function drawCreativeFallbackRegion(ctx, bg, primary, dark, w, h) {
+    // Radial brand-color glow
+    const radGrd = ctx.createRadialGradient(w * 0.55, h * 0.5, 20, w * 0.55, h * 0.5, w * 0.6);
     radGrd.addColorStop(0, alpha(primary, dark ? 0.55 : 0.30));
     radGrd.addColorStop(0.5, alpha(primary, dark ? 0.22 : 0.12));
     radGrd.addColorStop(1, 'rgba(0,0,0,0)');
-    ctx.fillStyle = radGrd; ctx.fillRect(0, 0, MAIN_W, CH);
+    ctx.fillStyle = radGrd; ctx.fillRect(0, 0, w, h);
 
-    // Large brand-color circle
+    // Concentric brand-color circles for depth
     ctx.beginPath();
-    ctx.arc(MAIN_W * 0.55, CH * 0.5, CH * 0.55, 0, Math.PI * 2);
+    ctx.arc(w * 0.5, h * 0.5, h * 0.55, 0, Math.PI * 2);
     ctx.fillStyle = alpha(primary, dark ? 0.30 : 0.16); ctx.fill();
-
-    // Inner circle for depth
     ctx.beginPath();
-    ctx.arc(MAIN_W * 0.55, CH * 0.5, CH * 0.32, 0, Math.PI * 2);
+    ctx.arc(w * 0.5, h * 0.5, h * 0.32, 0, Math.PI * 2);
     ctx.fillStyle = alpha(primary, dark ? 0.45 : 0.24); ctx.fill();
 
     // Diagonal stripe pattern
     ctx.save();
-    ctx.beginPath(); ctx.rect(0, 0, MAIN_W, CH); ctx.clip();
+    ctx.beginPath(); ctx.rect(0, 0, w, h); ctx.clip();
     ctx.strokeStyle = alpha(primary, dark ? 0.14 : 0.08);
     ctx.lineWidth = 1.2;
-    for (let x = -CH; x < MAIN_W + CH; x += 28) {
-        ctx.beginPath(); ctx.moveTo(x, 0); ctx.lineTo(x + CH, CH); ctx.stroke();
+    for (let x = -h; x < w + h; x += 28) {
+        ctx.beginPath(); ctx.moveTo(x, 0); ctx.lineTo(x + h, h); ctx.stroke();
     }
     ctx.restore();
 
     // Scattered accent dots
-    for (let i = 0; i < 16; i++) {
+    for (let i = 0; i < 14; i++) {
         ctx.beginPath();
-        ctx.arc(20 + Math.random() * (MAIN_W - 40), 15 + Math.random() * (CH - 30), 1.5 + Math.random() * 3.5, 0, Math.PI * 2);
+        ctx.arc(15 + Math.random() * (w - 30), 12 + Math.random() * (h - 24), 1.5 + Math.random() * 3.5, 0, Math.PI * 2);
         ctx.fillStyle = alpha(primary, 0.4 + Math.random() * 0.4);
         ctx.fill();
     }
-
-    // Geometric corner shapes
-    ctx.beginPath();
-    ctx.moveTo(MAIN_W * 0.72, CH); ctx.lineTo(MAIN_W, CH * 0.3);
-    ctx.lineTo(MAIN_W, CH); ctx.closePath();
-    ctx.fillStyle = alpha(primary, 0.35); ctx.fill();
 }
 
 // ─── AUTO-FIT FONT SIZE TO MAX WIDTH ────────────────
@@ -521,158 +519,185 @@ function renderLabel(idx) {
     const nameWeight = isSerif ? '700' : '900';
     const taglineWeight = isSerif ? '700' : '600';
 
-    // ── LAYOUT GEOMETRY — TWO HARD ZONES ────────────────────────────────
-    // The creative area is split into two physically separate regions with
-    // a clear border between them, exactly like Turancar / KP MARK / YUKI
-    // packaging. The illustration is CLIPPED to its zone and the text zone
-    // is painted SOLID — neither can overlap the other.
-    const SPLIT_X   = Math.round(MAIN_W * 0.56);   // illustration: 0 to 56%, text: 56% to 100%
-    const SAFE_X    = SPLIT_X + 16;                // text starts with 16px padding from divider
-    const SAFE_W    = MAIN_W - SAFE_X - 14;
-
-    // ── BACKGROUND ──────────────────────────────────
-    ctx.fillStyle = bg; ctx.fillRect(0, 0, CW, CH);
-
-    // ── ZONE 1: ILLUSTRATION (clipped to left, cannot bleed right) ──────
+    // ── SHARED STATE ────────────────────────────────────────────────────
     const img = state.images[idx];
     const hasImage = img && img.complete && img.naturalWidth > 0;
-
-    if (hasImage) {
-        ctx.save();
-        ctx.beginPath();
-        ctx.rect(0, 0, SPLIT_X, CH);
-        ctx.clip();
-
-        // Fit illustration to fill the LEFT zone, preserving its 4:3 aspect ratio.
-        // We scale to cover the zone height — overflow is clipped away cleanly.
-        const imgRatio = img.naturalWidth / img.naturalHeight;
-        const zoneRatio = SPLIT_X / CH;
-        let drawW, drawH, drawX, drawY;
-        if (imgRatio > zoneRatio) {
-            // Image is wider than zone — fit by height, center horizontally
-            drawH = CH;
-            drawW = CH * imgRatio;
-            drawX = (SPLIT_X - drawW) / 2;
-            drawY = 0;
-        } else {
-            // Image is taller — fit by width, center vertically
-            drawW = SPLIT_X;
-            drawH = SPLIT_X / imgRatio;
-            drawX = 0;
-            drawY = (CH - drawH) / 2;
-        }
-        ctx.drawImage(img, drawX, drawY, drawW, drawH);
-        ctx.restore();
-    } else {
-        // Fallback decorates only the illustration zone
-        ctx.save();
-        ctx.beginPath();
-        ctx.rect(0, 0, SPLIT_X, CH);
-        ctx.clip();
-        drawCreativeFallback(ctx, bg, primary, dark);
-        ctx.restore();
-    }
-
-    // ── ZONE 2: TEXT — solid bg fill, no illustration possible here ─────
-    ctx.fillStyle = bg;
-    ctx.fillRect(SPLIT_X, 0, MAIN_W - SPLIT_X, CH);
-
-    // ── BORDER between the two zones — clean, intentional, brand-colored ─
-    // Thin vertical brand-color rule with 12px margins top/bottom so it
-    // doesn't run edge-to-edge (more refined). 2px thick for visibility.
-    ctx.fillStyle = primary;
-    ctx.fillRect(SPLIT_X - 1, 14, 2, CH - 28);
-
-    // ── LOGO — top-left of illustration zone, clean ─────────────────────
-    if (state.logoImg) {
-        try {
-            const lw_natural = state.logoImg.naturalWidth || state.logoImg.width;
-            const lh_natural = state.logoImg.naturalHeight || state.logoImg.height;
-
-            if (lw_natural > 0 && lh_natural > 0) {
-                const lSize = 100;
-
-                const sc = Math.min(lSize / lw_natural, lSize / lh_natural) * 0.88;
-                const lw = lw_natural * sc;
-                const lh = lh_natural * sc;
-                const lx = 20 + (lSize - lw) / 2;
-                const ly = 24 + (lSize - lh) / 2;
-
-                ctx.save();
-                // Soft shadow only where it'll be visible
-                if (dark) {
-                    ctx.shadowColor = 'rgba(0,0,0,0.4)';
-                    ctx.shadowBlur = 6;
-                    ctx.shadowOffsetY = 1;
-                }
-                ctx.drawImage(state.logoImg, lx, ly, lw, lh);
-                ctx.restore();
-
-                console.log(`✓ Logo rendered on label ${idx + 1}: ${Math.round(lw)}×${Math.round(lh)} at (${Math.round(lx)},${Math.round(ly)})`);
-            } else {
-                console.warn(`Logo has invalid dimensions: ${lw_natural}×${lh_natural} — skipping render`);
-            }
-        } catch (err) {
-            console.error(`Logo render failed on label ${idx + 1}:`, err);
-        }
-    }
-
-    // ── COMPANY NAME — large, anchored properly in text safe zone ────────
     const upperName = (state.companyName || 'COMPANY').toUpperCase();
 
-    // Name fills available width — auto-fit, slightly bigger ceiling
-    const nameMaxFs = isSerif ? 56 : 64;
-    const fs = fitFont(ctx, upperName, nameWeight, designFont, nameMaxFs, SAFE_W);
-    ctx.font = `${nameWeight} ${fs}px ${designFont}`;
-
-    if (!isSerif && ctx.letterSpacing !== undefined) {
-        ctx.letterSpacing = '0.02em';
+    // ── SHARED HELPER: draw illustration cover-fitted into a clipped rect ─
+    function drawIllustrationIn(x, y, w, h) {
+        ctx.save();
+        ctx.beginPath();
+        ctx.rect(x, y, w, h);
+        ctx.clip();
+        if (hasImage) {
+            const imgRatio = img.naturalWidth / img.naturalHeight;
+            const zoneRatio = w / h;
+            let dW, dH, dX, dY;
+            if (imgRatio > zoneRatio) {
+                dH = h; dW = h * imgRatio; dX = x + (w - dW) / 2; dY = y;
+            } else {
+                dW = w; dH = w / imgRatio; dX = x; dY = y + (h - dH) / 2;
+            }
+            ctx.drawImage(img, dX, dY, dW, dH);
+        } else {
+            ctx.translate(x, y);
+            // fallback expects to draw from 0,0 within MAIN_W — scale region
+            ctx.beginPath(); ctx.rect(0, 0, w, h); ctx.clip();
+            drawCreativeFallbackRegion(ctx, bg, primary, dark, w, h);
+        }
+        ctx.restore();
     }
 
-    const taglineH = tagline ? 20 : 0;
-    const totalH = fs + taglineH;
-    const nameBaselineY = Math.round(CH * 0.46) + fs * 0.30;
+    // ── SHARED HELPER: draw logo at given top-left with bounding size ────
+    function drawLogoAt(lx0, ly0, lSize) {
+        if (!state.logoImg) return;
+        try {
+            const lwN = state.logoImg.naturalWidth || state.logoImg.width;
+            const lhN = state.logoImg.naturalHeight || state.logoImg.height;
+            if (lwN > 0 && lhN > 0) {
+                const sc = Math.min(lSize / lwN, lSize / lhN) * 0.9;
+                const lw = lwN * sc, lh = lhN * sc;
+                const lx = lx0 + (lSize - lw) / 2, ly = ly0 + (lSize - lh) / 2;
+                ctx.save();
+                if (dark) { ctx.shadowColor = 'rgba(0,0,0,0.4)'; ctx.shadowBlur = 6; ctx.shadowOffsetY = 1; }
+                ctx.drawImage(state.logoImg, lx, ly, lw, lh);
+                ctx.restore();
+            }
+        } catch (err) { console.error(`Logo render failed label ${idx+1}:`, err); }
+    }
 
-    // Text sits on guaranteed-solid bg color (two-zone layout), so no
-    // halo or shadow needed. Just clean type, like real packaging.
-    ctx.fillStyle = text;
-    ctx.fillText(upperName, SAFE_X, nameBaselineY);
-
-    if (ctx.letterSpacing !== undefined) ctx.letterSpacing = '0em';
-
-    // ── QR CODE — refined: rounded corners + subtle border ──────────────
-    if (state.qrImg) {
-        const qx = 14, qy = CH - 80, qs = 68;
-        const r = 6;  // corner radius
-
-        // Soft drop shadow
+    // ── SHARED HELPER: QR card at given top-left ────────────────────────
+    function drawQRAt(qx, qy, qs) {
+        if (!state.qrImg) return;
+        const r = 6;
         ctx.save();
         ctx.shadowColor = dark ? 'rgba(0,0,0,0.5)' : 'rgba(0,0,0,0.15)';
-        ctx.shadowBlur = 8;
-        ctx.shadowOffsetY = 2;
-
-        // Rounded white card
+        ctx.shadowBlur = 8; ctx.shadowOffsetY = 2;
         ctx.fillStyle = '#ffffff';
         ctx.beginPath();
-        ctx.moveTo(qx + r, qy);
-        ctx.lineTo(qx + qs - r, qy);
-        ctx.arcTo(qx + qs, qy, qx + qs, qy + r, r);
-        ctx.lineTo(qx + qs, qy + qs - r);
-        ctx.arcTo(qx + qs, qy + qs, qx + qs - r, qy + qs, r);
-        ctx.lineTo(qx + r, qy + qs);
-        ctx.arcTo(qx, qy + qs, qx, qy + qs - r, r);
-        ctx.lineTo(qx, qy + r);
-        ctx.arcTo(qx, qy, qx + r, qy, r);
-        ctx.closePath();
-        ctx.fill();
+        ctx.moveTo(qx+r,qy); ctx.lineTo(qx+qs-r,qy); ctx.arcTo(qx+qs,qy,qx+qs,qy+r,r);
+        ctx.lineTo(qx+qs,qy+qs-r); ctx.arcTo(qx+qs,qy+qs,qx+qs-r,qy+qs,r);
+        ctx.lineTo(qx+r,qy+qs); ctx.arcTo(qx,qy+qs,qx,qy+qs-r,r);
+        ctx.lineTo(qx,qy+r); ctx.arcTo(qx,qy,qx+r,qy,r);
+        ctx.closePath(); ctx.fill();
         ctx.restore();
-
-        // Subtle border that adapts to bg lightness
         ctx.strokeStyle = dark ? 'rgba(255,255,255,0.12)' : 'rgba(0,0,0,0.08)';
-        ctx.lineWidth = 1;
-        ctx.stroke();
+        ctx.lineWidth = 1; ctx.stroke();
+        ctx.drawImage(state.qrImg, qx+2, qy+2, qs-4, qs-4);
+    }
 
-        ctx.drawImage(state.qrImg, qx + 2, qy + 2, qs - 4, qs - 4);
+    // ── SHARED HELPER: draw the company name fitted into a box ──────────
+    // align: 'left' | 'center'. Returns nothing; draws clean type on solid bg.
+    function drawName(boxX, boxW, centerY, maxFs, align) {
+        const f = fitFont(ctx, upperName, nameWeight, designFont, maxFs, boxW);
+        ctx.font = `${nameWeight} ${f}px ${designFont}`;
+        ctx.fillStyle = text;
+        if (!isSerif && ctx.letterSpacing !== undefined) ctx.letterSpacing = '0.02em';
+        ctx.textAlign = align === 'center' ? 'center' : 'left';
+        const tx = align === 'center' ? boxX + boxW / 2 : boxX;
+        ctx.fillText(upperName, tx, centerY + f * 0.34);
+        ctx.textAlign = 'left';
+        if (ctx.letterSpacing !== undefined) ctx.letterSpacing = '0em';
+        return f;
+    }
+
+    // ── BACKGROUND ──────────────────────────────────────────────────────
+    ctx.fillStyle = bg; ctx.fillRect(0, 0, CW, CH);
+
+    // ── LAYOUT DISPATCHER ───────────────────────────────────────────────
+    const layout = (design.layout || 'split').toLowerCase();
+
+    if (layout === 'band') {
+        // Illustration fills whole zone; name in solid color band, lower third
+        drawIllustrationIn(0, 0, MAIN_W, CH);
+        const bandH = 64, bandY = CH - bandH;
+        ctx.fillStyle = bg;
+        ctx.fillRect(0, bandY, MAIN_W, bandH);
+        ctx.fillStyle = primary;
+        ctx.fillRect(0, bandY, MAIN_W, 3);
+        drawName(20, MAIN_W - 40, bandY + bandH / 2, 40, 'left');
+        drawLogoAt(18, 16, 76);
+        drawQRAt(MAIN_W - 76, 14, 56);
+
+    } else if (layout === 'stack') {
+        // Big name on top, illustration below
+        const headH = 78;
+        ctx.fillStyle = bg;
+        ctx.fillRect(0, 0, MAIN_W, headH);
+        drawName(116, MAIN_W - 230, headH / 2, 50, 'left');
+        drawLogoAt(18, 8, 62);
+        ctx.fillStyle = primary;
+        ctx.fillRect(0, headH - 2, MAIN_W, 2);
+        drawIllustrationIn(0, headH, MAIN_W, CH - headH);
+        drawQRAt(MAIN_W - 70, CH - 70, 56);
+
+    } else if (layout === 'frame') {
+        // Illustration inside a rounded inset card, name beside it on right
+        const pad = 16, cardW = Math.round(MAIN_W * 0.50);
+        const cardX = pad, cardY = pad, cardH = CH - pad * 2;
+        // card shadow
+        ctx.save();
+        ctx.shadowColor = 'rgba(0,0,0,0.18)'; ctx.shadowBlur = 12; ctx.shadowOffsetY = 3;
+        ctx.fillStyle = dark ? '#1a1d26' : '#ffffff';
+        const cr = 14;
+        ctx.beginPath();
+        ctx.moveTo(cardX+cr,cardY); ctx.lineTo(cardX+cardW-cr,cardY); ctx.arcTo(cardX+cardW,cardY,cardX+cardW,cardY+cr,cr);
+        ctx.lineTo(cardX+cardW,cardY+cardH-cr); ctx.arcTo(cardX+cardW,cardY+cardH,cardX+cardW-cr,cardY+cardH,cr);
+        ctx.lineTo(cardX+cr,cardY+cardH); ctx.arcTo(cardX,cardY+cardH,cardX,cardY+cardH-cr,cr);
+        ctx.lineTo(cardX,cardY+cr); ctx.arcTo(cardX,cardY,cardX+cr,cardY,cr);
+        ctx.closePath(); ctx.fill();
+        ctx.restore();
+        // clip illustration to rounded card
+        ctx.save();
+        ctx.beginPath();
+        ctx.moveTo(cardX+cr,cardY); ctx.lineTo(cardX+cardW-cr,cardY); ctx.arcTo(cardX+cardW,cardY,cardX+cardW,cardY+cr,cr);
+        ctx.lineTo(cardX+cardW,cardY+cardH-cr); ctx.arcTo(cardX+cardW,cardY+cardH,cardX+cardW-cr,cardY+cardH,cr);
+        ctx.lineTo(cardX+cr,cardY+cardH); ctx.arcTo(cardX,cardY+cardH,cardX,cardY+cardH-cr,cr);
+        ctx.lineTo(cardX,cardY+cr); ctx.arcTo(cardX,cardY,cardX+cr,cardY,cr);
+        ctx.closePath(); ctx.clip();
+        drawIllustrationIn(cardX, cardY, cardW, cardH);
+        ctx.restore();
+        // name to the right of the card
+        const nx = cardX + cardW + 18;
+        drawName(nx, MAIN_W - nx - 12, CH / 2, 46, 'left');
+        drawLogoAt(nx, 16, 54);
+        drawQRAt(MAIN_W - 66, CH - 66, 52);
+
+    } else if (layout === 'sidebar') {
+        // Narrow vertical color stripe on the right holds name stacked;
+        // illustration takes the rest
+        const barW = 150, barX = MAIN_W - barW;
+        drawIllustrationIn(0, 0, barX, CH);
+        ctx.fillStyle = primary;
+        ctx.fillRect(barX, 0, barW, CH);
+        // name centered in the bar, in contrast color
+        const f = fitFont(ctx, upperName, nameWeight, designFont, 38, CH - 40);
+        ctx.save();
+        ctx.translate(barX + barW / 2, CH / 2);
+        ctx.rotate(-Math.PI / 2);
+        ctx.font = `${nameWeight} ${f}px ${designFont}`;
+        ctx.fillStyle = isDark(primary) ? '#ffffff' : '#111111';
+        ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+        if (!isSerif && ctx.letterSpacing !== undefined) ctx.letterSpacing = '0.04em';
+        ctx.fillText(upperName, 0, 0);
+        ctx.textAlign = 'left'; ctx.textBaseline = 'alphabetic';
+        if (ctx.letterSpacing !== undefined) ctx.letterSpacing = '0em';
+        ctx.restore();
+        drawLogoAt(16, 16, 72);
+        drawQRAt(16, CH - 70, 56);
+
+    } else {
+        // DEFAULT: "split" — illustration left, name in solid panel right
+        const SPLIT_X = Math.round(MAIN_W * 0.56);
+        drawIllustrationIn(0, 0, SPLIT_X, CH);
+        ctx.fillStyle = bg;
+        ctx.fillRect(SPLIT_X, 0, MAIN_W - SPLIT_X, CH);
+        ctx.fillStyle = primary;
+        ctx.fillRect(SPLIT_X - 1, 14, 2, CH - 28);
+        drawName(SPLIT_X + 16, MAIN_W - SPLIT_X - 30, Math.round(CH * 0.5), 60, 'left');
+        drawLogoAt(20, 20, 96);
+        drawQRAt(14, CH - 80, 68);
     }
 
     // ═══════════════════════════════════════════════════════════════════════
@@ -845,7 +870,9 @@ function showLabelResult(i) {
     document.getElementById('shell-' + i).style.display = 'block';
     document.getElementById('actions-' + i).style.display = 'flex';
     document.getElementById('name-' + i).textContent = state.brandData.designs[i].name;
-    document.getElementById('desc-' + i).textContent = state.brandData.designs[i].styleDesc;
+    const d = state.brandData.designs[i];
+    const layoutName = (d.layout || 'split');
+    document.getElementById('desc-' + i).textContent = d.styleDesc + '  ·  ' + layoutName;
     // Color swatches
     const sw = document.getElementById('swatches-' + i);
     sw.innerHTML = '';
